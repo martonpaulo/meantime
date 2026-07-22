@@ -88,15 +88,19 @@ One-time per machine:
 
 ```bash
 make keys   # generates the Sparkle key in your Keychain, sets the public key
+xcrun notarytool store-credentials <profile> \
+  --apple-id <you@example.com> --team-id TBN79KU9ML --password <app-specific>
 ```
 
-Then, with a Developer ID identity available:
+Then, per release, with a Developer ID identity available:
 
 ```bash
 DEVELOPER_ID_IDENTITY="Developer ID Application: …" make dmg
-# notarize + staple the DMG, sign the update, then:
+NOTARY_PROFILE=<profile> make notarize DMG=artifacts/Meantime-x.y.z.dmg
+make sign-update ZIP=artifacts/Meantime-x.y.z.zip        # prints SIG=…
 make appcast VERSION=x.y.z BUILD=<n> ZIP=artifacts/Meantime-x.y.z.zip SIG='sparkle:edSignature="…" length="…"'
-git tag vx.y.z
+git tag vx.y.z && git push --tags
+# then upload the .dmg and .zip to the GitHub Release for the tag
 ```
 
 See [docs/architecture.md](docs/architecture.md) and

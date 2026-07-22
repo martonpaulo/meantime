@@ -48,7 +48,7 @@ regions: ## Regenerate the time-zone → region table from the system tz databas
 
 # -- Release ------------------------------------------------------------------
 
-.PHONY: app dmg appcast keys
+.PHONY: app dmg notarize sign-update appcast keys
 
 app: ## Build the Release .app (ad-hoc unless DEVELOPER_ID_IDENTITY is set)
 	@bash scripts/package-app.sh
@@ -56,7 +56,13 @@ app: ## Build the Release .app (ad-hoc unless DEVELOPER_ID_IDENTITY is set)
 dmg: app installer-assets ## Build the installer DMG
 	@bash scripts/make-dmg.sh
 
-appcast: ## Update appcast.xml — args: VERSION BUILD ZIP "SIGNATURE_ATTRS"
+notarize: ## Notarize + staple a signed DMG — args: DMG, env NOTARY_PROFILE
+	@bash scripts/notarize.sh $(DMG)
+
+sign-update: ## Print the appcast signature for a release zip — args: ZIP
+	@bash scripts/sign-update.sh $(ZIP)
+
+appcast: ## Update appcast.xml — args: VERSION BUILD ZIP "SIG"
 	@bash scripts/make-appcast.sh $(VERSION) $(BUILD) $(ZIP) "$(SIG)"
 
 keys: ## Generate the Sparkle signing key (Keychain) and set the public key

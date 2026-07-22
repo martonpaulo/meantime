@@ -1,0 +1,25 @@
+# Build products
+.build/
+build/
+*.o
+*.swiftmodule
+
+# Xcode / SwiftPM local state
+.swiftpm/xcode/xcuserdata/
+.swiftpm/configuration/
+*.xcodeproj
+DerivedData/
+
+# Task logs and generated release artifacts (never durable)
+artifacts/
+
+# Disposable agent scratch space (see AGENTS.md → Personal skill paths)
+.scratch/
+
+# Local secrets and signing configuration — never committed
+.env
+*.p12
+*.cer.private
+
+# macOS
+.DS_Store

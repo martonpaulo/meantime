@@ -10,7 +10,14 @@ struct GeneralPane: View {
     @State private var launchAtLogin = LoginItem.isEnabled
     @State private var launchAtLoginFailed = false
     @State private var restoreConfirmationShown = false
-    @State private var automaticChecks = false
+    @State private var automaticChecks: Bool
+
+    @MainActor
+    init(updateManager: UpdateManager) {
+        self.updateManager = updateManager
+        // Seed from Sparkle's real state so the toggle never renders off and then flips.
+        _automaticChecks = State(initialValue: updateManager.automaticallyChecksForUpdates)
+    }
 
     var body: some View {
         Form {
@@ -73,6 +80,5 @@ struct GeneralPane: View {
         .formStyle(.grouped)
         .scrollIndicators(.hidden)
         .frame(width: Token.Size.paneWidth, height: Token.Size.paneHeight)
-        .onAppear { automaticChecks = updateManager.automaticallyChecksForUpdates }
     }
 }

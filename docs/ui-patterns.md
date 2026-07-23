@@ -59,6 +59,15 @@ ticks.
   preview, grouped scrolling form, and explicit Cancel/Save actions. New items
   are also drafts and use Add Clock. Leaving a dirty editor offers commit,
   discard, and cancel.
+- **One exit control position across a multi-step flow.** Every step of the Add
+  flow (list → time-zone picker → editor) keeps its dismissal in a bottom action
+  bar (Cancel on the left), so the control never jumps corners between steps. The
+  picker's inline search field lives in its header, above the list it filters
+  (`SearchField`, a native `NSSearchField`; `.searchable` needs a navigation host
+  the tab window doesn't provide).
+- **Save-gated surfaces flag pending work with the shared `UnsavedBadge`**
+  (attention color), and keep Save as the prominent default action, so "there is
+  something to save" reads the same in every such surface.
 - **Choices render as their result**: format options show live samples of the
   exact fragment they contribute; sliders show their current value; previews
   update as you type.

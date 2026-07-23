@@ -32,19 +32,29 @@ struct TimeZonePickerView: View {
             } else {
                 zoneList
             }
+            Divider()
+            footer
         }
-        .searchable(text: $query, prompt: "City, time zone, or abbreviation")
         .onAppear {
             entries = TimeZoneCatalog.entries()
         }
     }
 
     private var header: some View {
-        HStack {
+        VStack(alignment: .leading, spacing: Token.Space.sm) {
             Text("Choose a Time Zone").font(.headline)
-            Spacer()
+            SearchField(text: $query, prompt: "City, time zone, or abbreviation")
+        }
+        .padding(Token.Space.lg)
+    }
+
+    /// Dismissal lives in a bottom action bar, so the exit control stays in the same
+    /// place across the Add flow (list → picker → editor) instead of jumping corners.
+    private var footer: some View {
+        HStack {
             Button("Cancel", action: onCancel)
                 .keyboardShortcut(.cancelAction)
+            Spacer()
         }
         .padding(Token.Space.lg)
     }
@@ -55,7 +65,7 @@ struct TimeZonePickerView: View {
         } description: {
             Text("Try a city, IANA identifier, GMT offset, or abbreviation.")
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var zoneList: some View {

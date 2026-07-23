@@ -6,6 +6,12 @@ import MeantimeKit
 /// calendar day is meaningless; only hour/minute carry information.
 @MainActor
 enum ScheduleTime {
+    /// The fixed zone the schedule fields display and edit in. A minute-of-day is
+    /// zone-agnostic, so editing it here (and at runtime, in the clock's own zone)
+    /// must both use one stable calendar; otherwise a local GMT offset shifts what
+    /// the user types away from what is stored.
+    static let zone = TimeZone(identifier: "UTC")!
+
     private static let labelFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = .current
@@ -36,5 +42,17 @@ enum ScheduleTime {
 
     static func label(fromMinute minute: Int) -> String {
         labelFormatter.string(from: date(fromMinute: minute))
+    }
+}
+
+/// Shared "changes are pending a Save" indicator. One definition, reused by every
+/// Save-gated action bar (Format and the clock editor) so the cue reads the same
+/// everywhere and stands out against the surrounding secondary text.
+struct UnsavedBadge: View {
+    var body: some View {
+        Label("Unsaved changes", systemImage: "exclamationmark.circle.fill")
+            .font(.callout)
+            .foregroundStyle(Token.Color.attention)
+            .accessibilityLabel("Unsaved changes")
     }
 }

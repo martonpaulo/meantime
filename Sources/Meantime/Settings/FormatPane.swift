@@ -165,10 +165,7 @@ struct FormatPane: View {
             .disabled(!settingsPreview.hasAppearanceChanges)
             Spacer()
             if settingsPreview.hasAppearanceChanges {
-                Text("Unsaved changes")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .accessibilityLabel("Unsaved changes")
+                UnsavedBadge()
             }
             Button("Save") { settingsPreview.saveAppearance() }
                 .keyboardShortcut(.defaultAction)

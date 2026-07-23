@@ -189,53 +189,40 @@ private struct TimeTravelSection: View {
         )
     }
 
-    private var previewSummary: String {
-        panelModel.previewDate(from: timeSource.now).formatted(
-            .dateTime.weekday(.abbreviated).month(.abbreviated).day().year()
-                .hour().minute())
+    /// The left label carries the action name, or the previewed day while traveling.
+    /// The time stays in the field on the right and the "Now" button only changes the
+    /// row's width, so entering time travel never changes the row (or panel) height.
+    private var travelLabel: String {
+        guard panelModel.isTraveling else { return String(localized: "Time Travel") }
+        let day = panelModel.previewDate(from: timeSource.now).formatted(
+            .dateTime.weekday(.abbreviated).month(.abbreviated).day())
+        return String(localized: "Previewing \(day)")
     }
 
     var body: some View {
-        Grid(alignment: .leading, horizontalSpacing: Token.Space.sm,
-             verticalSpacing: Token.Space.xs) {
-            GridRow {
-                Label("Time Travel", systemImage: "clock.arrow.2.circlepath")
-                    .labelStyle(PanelActionLabelStyle())
-                    .font(Token.Font.action)
-                    .foregroundStyle(Token.Color.secondaryText)
-                HStack(spacing: Token.Space.sm) {
-                    Spacer()
-                    DatePicker("Time", selection: timeBinding,
-                               displayedComponents: [.hourAndMinute])
-                        .datePickerStyle(.field)
-                        .controlSize(.small)
-                        .fixedSize()
-                        .accessibilityLabel("Preview time")
-                }
-            }
+        HStack(spacing: Token.Space.sm) {
+            Label(travelLabel, systemImage: "clock.arrow.2.circlepath")
+                .labelStyle(PanelActionLabelStyle())
+                .font(Token.Font.action)
+                .foregroundStyle(Token.Color.secondaryText)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .accessibilityLabel(travelLabel)
+            Spacer(minLength: Token.Space.sm)
             if panelModel.isTraveling {
-                GridRow {
-                    HStack(spacing: Token.Space.sm) {
-                        Text("Previewing \(previewSummary)")
-                            .font(Token.Font.secondary)
-                            .foregroundStyle(Token.Color.primaryText)
-                            .lineLimit(2)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .accessibilityLabel("Previewing \(previewSummary)")
-                        Spacer(minLength: Token.Space.xs)
-                        Button("Now") {
-                            withAnimation(Token.Motion.quick) { panelModel.reset() }
-                        }
-                        .buttonStyle(.link)
-                        .font(Token.Font.action)
-                        .help("Return to the current date and time")
-                        .accessibilityLabel("Return to now")
-                    }
-                    .gridCellColumns(2)
+                Button("Now") {
+                    withAnimation(Token.Motion.quick) { panelModel.reset() }
                 }
+                .buttonStyle(.link)
+                .font(Token.Font.action)
+                .help("Return to the current date and time")
+                .accessibilityLabel("Return to now")
             }
+            TimeField(date: timeBinding, accessibilityLabel: "Preview time")
+                .fixedSize()
         }
         .padding(.horizontal, Token.Space.xl)
-        .padding(.vertical, Token.Space.xs)
+        .padding(.vertical, Token.Space.sm)
+        .frame(minHeight: Token.Size.hitTarget)
     }
 }

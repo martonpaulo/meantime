@@ -11,13 +11,9 @@ enum StatusItemTitle {
         let result = NSMutableAttributedString()
         for (index, entry) in entries.enumerated() {
             if index > 0 {
-                let separatorAttributes: [NSAttributedString.Key: Any] = [
-                    .font: NSFont.systemFont(ofSize: textSize),
-                    .kern: spacing,
-                ]
                 let separatorText = separator.isEmpty ? " " : " \(separator) "
-                result.append(NSAttributedString(string: separatorText,
-                                                 attributes: separatorAttributes))
+                result.append(run(separatorText, font: NSFont.systemFont(ofSize: textSize),
+                                  trailingKern: spacing))
             }
             result.append(attributed(adornment: entry.adornment, time: entry.time,
                                      textSize: textSize, spacing: spacing))
@@ -30,17 +26,28 @@ enum StatusItemTitle {
         let result = NSMutableAttributedString()
 
         if let adornment, !adornment.isEmpty {
-            // Kerning after the adornment is the gap; a small base keeps it legible at 0.
-            let adornmentAttributes: [NSAttributedString.Key: Any] = [
-                .font: NSFont.systemFont(ofSize: textSize),
-                .kern: spacing + Token.Space.xxs,
-            ]
-            result.append(NSAttributedString(string: adornment, attributes: adornmentAttributes))
+            // The gap belongs after the adornment, not between its letters, so a
+            // multi-character leading text ("br") reads as one word rather than "b r".
+            result.append(run(adornment, font: NSFont.systemFont(ofSize: textSize),
+                              trailingKern: spacing + Token.Space.xxs))
         }
 
         result.append(NSAttributedString(string: time, attributes: [
             .font: NSFont.monospacedDigitSystemFont(ofSize: textSize, weight: .regular),
         ]))
         return result
+    }
+
+    /// A run whose spacing lives only after its last glyph, so kerning never spreads
+    /// the characters of a multi-letter adornment or separator.
+    private static func run(_ string: String, font: NSFont,
+                            trailingKern: CGFloat) -> NSAttributedString {
+        let piece = NSMutableAttributedString(string: string, attributes: [.font: font])
+        let length = (string as NSString).length
+        if length > 0 {
+            piece.addAttribute(.kern, value: trailingKern,
+                               range: NSRange(location: length - 1, length: 1))
+        }
+        return piece
     }
 }

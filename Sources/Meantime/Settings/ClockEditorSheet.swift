@@ -11,7 +11,13 @@ struct ClockEditorView: View {
 
     @State private var restoreConfirmationShown = false
 
-    private var editDraft: ClockEditDraft { editingSession.draft! }
+    // `body` renders `editorContent` only while the session holds a draft; the fallback
+    // keeps this non-optional (so the form's bindings stay simple) and is never reached
+    // on screen. It replaces a force-unwrap that could crash if the draft cleared while a
+    // confirmation dialog was still dismissing.
+    private var editDraft: ClockEditDraft {
+        editingSession.draft ?? ClockEditDraft(existing: WorldClock(timeZoneID: "UTC"))
+    }
     private var clock: WorldClock { editDraft.clock }
     private var issues: [ClockValidationIssue] { editDraft.validationIssues }
     private var actionTitle: String { editDraft.isNew ? "Add Clock" : "Save" }
@@ -35,7 +41,7 @@ struct ClockEditorView: View {
             actions
         }
         .confirmationDialog(
-            editDraft.isNew ? "Add this clock before leaving?" : "Save changes before leaving?",
+            editDraft.isNew ? "Add this clock before leaving?" : "Save changes to this clock?",
             isPresented: pendingExitPresented
         ) {
             if editDraft.canCommit {
@@ -163,10 +169,7 @@ struct ClockEditorView: View {
                 .keyboardShortcut(.cancelAction)
             Spacer()
             if editDraft.hasChanges {
-                Text("Unsaved changes")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .accessibilityLabel("Unsaved changes")
+                UnsavedBadge()
             }
             Button(actionTitle, action: commit)
                 .keyboardShortcut(.defaultAction)
@@ -246,7 +249,7 @@ private struct EditorPreview: View {
 
     var body: some View {
         Grid(alignment: .leading, horizontalSpacing: Token.Space.md,
-             verticalSpacing: Token.Space.xxs) {
+             verticalSpacing: Token.Space.sm) {
             GridRow {
                 Text("Preview")
                     .font(.headline)
@@ -322,16 +325,8 @@ private struct ScheduleSection: View {
             ForEach($clock.activeWindows) { $window in
                 Grid(alignment: .center, horizontalSpacing: Token.Space.sm) {
                     GridRow {
-                        DatePicker(
-                            "From",
-                            selection: minuteBinding($window.startMinute),
-                            displayedComponents: [.hourAndMinute])
-                            .datePickerStyle(.field)
-                        DatePicker(
-                            "To",
-                            selection: minuteBinding($window.endMinute),
-                            displayedComponents: [.hourAndMinute])
-                            .datePickerStyle(.field)
+                        scheduleField("From", date: minuteBinding($window.startMinute))
+                        scheduleField("To", date: minuteBinding($window.endMinute))
                         Button {
                             clock.activeWindows.removeAll { $0.id == window.id }
                         } label: {
@@ -364,6 +359,18 @@ private struct ScheduleSection: View {
             Text("Schedule")
         } footer: {
             Text("Times use this clock's own time zone. If an end time is earlier than its start, the schedule continues overnight. Outside these hours, the clock stays in the panel.")
+        }
+    }
+
+    /// A labeled hour-and-minute field for one schedule edge. Fixed to the schedule's
+    /// stable zone so "5 PM" typed here is stored (and read at runtime) as 5 PM in the
+    /// clock's own zone, never shifted by the editor's local GMT offset.
+    private func scheduleField(_ title: String, date: Binding<Date>) -> some View {
+        HStack(spacing: Token.Space.xs) {
+            Text(title).foregroundStyle(.secondary)
+            TimeField(date: date, timeZone: ScheduleTime.zone,
+                      controlSize: .small, accessibilityLabel: title)
+                .fixedSize()
         }
     }
 

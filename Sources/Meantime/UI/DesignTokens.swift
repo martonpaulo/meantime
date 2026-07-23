@@ -76,6 +76,8 @@ enum Token {
         static let subordinateText = secondaryText.opacity(0.5)
         static let weekendText = SwiftUI.Color(nsColor: .systemBlue).opacity(0.85)
         static let errorText = SwiftUI.Color(nsColor: .systemRed)
+        /// Draws attention to a pending, not-yet-saved change (unsaved badge).
+        static let attention = SwiftUI.Color(nsColor: .systemOrange)
         static let previewBackground = SwiftUI.Color(nsColor: .controlBackgroundColor)
     }
 

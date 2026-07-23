@@ -1,6 +1,7 @@
 #!/usr/bin/env swift
-// Renders the Meantime app icon (a clean clock on an indigo-to-blue plate) at
-// every required macOS resolution and writes Support/AppIcon.icns.
+// Renders the Meantime app icon: a premium "world time" identity — a deep-space
+// blue plate holding a glassy globe dial (meridians as the clock face), lit with
+// a specular top-left highlight, white hands and an orange second hand.
 // Usage: swift scripts/make-icon.swift
 import AppKit
 
@@ -14,60 +15,100 @@ func drawIcon() -> NSImage {
     let canvas: CGFloat = 1024
     let image = NSImage(size: NSSize(width: canvas, height: canvas))
     image.lockFocus()
-
-    // Rounded-square plate with a vertical indigo → blue gradient.
-    let plate = NSBezierPath(roundedRect: NSRect(x: 100, y: 100, width: 824, height: 824),
-                             xRadius: 185, yRadius: 185)
-    NSGradient(starting: NSColor(calibratedRed: 0.16, green: 0.20, blue: 0.48, alpha: 1),
-               ending: NSColor(calibratedRed: 0.30, green: 0.48, blue: 0.94, alpha: 1))!
-        .draw(in: plate, angle: -90)
+    defer { image.unlockFocus() }
 
     let center = NSPoint(x: 512, y: 512)
-    let faceRadius: CGFloat = 300
 
-    // Clock face.
-    let faceRect = NSRect(x: center.x - faceRadius, y: center.y - faceRadius,
-                          width: faceRadius * 2, height: faceRadius * 2)
-    NSColor(calibratedWhite: 0.98, alpha: 1).setFill()
-    NSBezierPath(ovalIn: faceRect).fill()
+    // ── Plate: luminous azure-to-indigo gradient, gently glowing top-center —
+    //    the vibrant-gradient-plus-white-glyph language of first-party icons.
+    let plateRect = NSRect(x: 100, y: 100, width: 824, height: 824)
+    let plate = NSBezierPath(roundedRect: plateRect, xRadius: 185, yRadius: 185)
+    NSGradient(colors: [
+        NSColor(calibratedRed: 0.28, green: 0.55, blue: 0.98, alpha: 1),
+        NSColor(calibratedRed: 0.12, green: 0.20, blue: 0.60, alpha: 1),
+    ])!.draw(in: plate, angle: -90)
 
-    let ink = NSColor(calibratedRed: 0.16, green: 0.20, blue: 0.48, alpha: 1)
+    NSGraphicsContext.current?.saveGraphicsState()
+    plate.addClip()
+    // Soft light bloom behind the dial.
+    NSGradient(colors: [
+        NSColor(calibratedWhite: 1, alpha: 0.22),
+        NSColor(calibratedWhite: 1, alpha: 0.0),
+    ])!.draw(in: NSBezierPath(rect: plateRect), relativeCenterPosition: NSPoint(x: 0, y: 0.45))
+    // Rim light on the plate's top edge.
+    let rim = NSBezierPath(roundedRect: plateRect.insetBy(dx: 2, dy: 2), xRadius: 183, yRadius: 183)
+    rim.lineWidth = 4
+    NSColor(calibratedWhite: 1, alpha: 0.22).setStroke()
+    rim.stroke()
+    NSGraphicsContext.current?.restoreGraphicsState()
 
-    // Hour ticks.
-    ink.withAlphaComponent(0.85).setStroke()
-    for hour in 0..<12 {
-        let angle = CGFloat(hour) / 12 * 2 * .pi
-        let isMajor = hour % 3 == 0
-        let inner = faceRadius - (isMajor ? 46 : 28)
-        let tick = NSBezierPath()
-        tick.move(to: NSPoint(x: center.x + cos(angle) * inner, y: center.y + sin(angle) * inner))
-        tick.line(to: NSPoint(x: center.x + cos(angle) * (faceRadius - 14),
-                              y: center.y + sin(angle) * (faceRadius - 14)))
-        tick.lineWidth = isMajor ? 20 : 10
-        tick.lineCapStyle = .round
-        tick.stroke()
+    // ── Dial: a thin glass ring — nothing else. The plate is the face.
+    let dialRadius: CGFloat = 318
+    let dialRect = NSRect(x: center.x - dialRadius, y: center.y - dialRadius,
+                          width: dialRadius * 2, height: dialRadius * 2)
+
+    NSGraphicsContext.current?.saveGraphicsState()
+    let ringShadow = NSShadow()
+    ringShadow.shadowColor = NSColor.black.withAlphaComponent(0.35)
+    ringShadow.shadowBlurRadius = 30
+    ringShadow.shadowOffset = NSSize(width: 0, height: -12)
+    ringShadow.set()
+    let ring = NSBezierPath(ovalIn: dialRect)
+    ring.lineWidth = 22
+    NSColor(calibratedWhite: 1, alpha: 0.95).setStroke()
+    ring.stroke()
+    NSGraphicsContext.current?.restoreGraphicsState()
+
+    // ── Minimal markers: four quarter dots inside the ring.
+    for mark in stride(from: 0, to: 12, by: 3) {
+        let angle = CGFloat(mark) / 12 * 2 * .pi
+        let radius = dialRadius - 58
+        let dot: CGFloat = 24
+        NSColor(calibratedWhite: 1, alpha: 0.9).setFill()
+        NSBezierPath(ovalIn: NSRect(
+            x: center.x + cos(angle) * radius - dot / 2,
+            y: center.y + sin(angle) * radius - dot / 2,
+            width: dot, height: dot)).fill()
     }
 
-    // Hands at a classic 10:10.
-    func hand(angle: CGFloat, length: CGFloat, width: CGFloat) {
+    // ── Hands at 10:09:30 — white with depth shadows; orange second hand.
+    func hand(angle: CGFloat, length: CGFloat, tail: CGFloat, width: CGFloat,
+              color: NSColor, shadowBlur: CGFloat) {
+        NSGraphicsContext.current?.saveGraphicsState()
+        let shadow = NSShadow()
+        shadow.shadowColor = NSColor.black.withAlphaComponent(0.45)
+        shadow.shadowBlurRadius = shadowBlur
+        shadow.shadowOffset = NSSize(width: 0, height: -9)
+        shadow.set()
         let path = NSBezierPath()
-        path.move(to: center)
+        path.move(to: NSPoint(x: center.x - cos(angle) * tail, y: center.y - sin(angle) * tail))
         path.line(to: NSPoint(x: center.x + cos(angle) * length, y: center.y + sin(angle) * length))
         path.lineWidth = width
         path.lineCapStyle = .round
-        ink.setStroke()
+        color.setStroke()
         path.stroke()
+        NSGraphicsContext.current?.restoreGraphicsState()
     }
-    let minuteAngle = CGFloat.pi / 2 - (10.0 / 60) * 2 * .pi
-    let hourAngle = CGFloat.pi / 2 - ((10.0 + 10.0 / 60) / 12) * 2 * .pi
-    hand(angle: hourAngle, length: 150, width: 30)
-    hand(angle: minuteAngle, length: 226, width: 22)
 
-    // Center hub.
-    ink.setFill()
-    NSBezierPath(ovalIn: NSRect(x: center.x - 22, y: center.y - 22, width: 44, height: 44)).fill()
+    let seconds = 30.0
+    let minutes = 9.0 + seconds / 60
+    let hours = 10.0 + minutes / 60
+    let hourAngle = CGFloat.pi / 2 - CGFloat(hours.truncatingRemainder(dividingBy: 12) / 12) * 2 * .pi
+    let minuteAngle = CGFloat.pi / 2 - CGFloat(minutes / 60) * 2 * .pi
+    let secondAngle = CGFloat.pi / 2 - CGFloat(seconds / 60) * 2 * .pi
 
-    image.unlockFocus()
+    let handColor = NSColor(calibratedWhite: 1, alpha: 1)
+    hand(angle: hourAngle, length: 158, tail: 0, width: 40, color: handColor, shadowBlur: 14)
+    hand(angle: minuteAngle, length: 238, tail: 0, width: 30, color: handColor, shadowBlur: 18)
+    let orange = NSColor(calibratedRed: 1.0, green: 0.62, blue: 0.04, alpha: 1) // Apple orange
+    hand(angle: secondAngle, length: 258, tail: 64, width: 10, color: orange, shadowBlur: 18)
+
+    // ── Hub: white base, orange pin.
+    handColor.setFill()
+    NSBezierPath(ovalIn: NSRect(x: center.x - 28, y: center.y - 28, width: 56, height: 56)).fill()
+    orange.setFill()
+    NSBezierPath(ovalIn: NSRect(x: center.x - 13, y: center.y - 13, width: 26, height: 26)).fill()
+
     return image
 }
 

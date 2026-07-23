@@ -1,0 +1,78 @@
+import SwiftUI
+import MeantimeKit
+
+/// Startup, updates, and reset. Launch-at-login reflects the real system state
+/// so an external change (System Settings) stays in sync.
+struct GeneralPane: View {
+    @Environment(Preferences.self) private var preferences
+    let updateManager: UpdateManager
+
+    @State private var launchAtLogin = LoginItem.isEnabled
+    @State private var launchAtLoginFailed = false
+    @State private var restoreConfirmationShown = false
+    @State private var automaticChecks = false
+
+    var body: some View {
+        Form {
+            Section {
+                Toggle("Open Meantime at login", isOn: $launchAtLogin)
+                    .onChange(of: launchAtLogin) { _, newValue in
+                        do {
+                            try LoginItem.setEnabled(newValue)
+                            launchAtLoginFailed = false
+                        } catch {
+                            launchAtLoginFailed = true
+                        }
+                        launchAtLogin = LoginItem.isEnabled
+                    }
+                if launchAtLoginFailed {
+                    Text("Login could not be configured. Run Meantime from the Applications folder and try again.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Section {
+                Toggle("Automatically check for updates", isOn: $automaticChecks)
+                    .onChange(of: automaticChecks) { _, newValue in
+                        updateManager.automaticallyChecksForUpdates = newValue
+                    }
+                    .disabled(!updateManager.isAvailable)
+                LabeledContent("Version \(updateManager.currentVersion)") {
+                    Button("Check for Updates…") { updateManager.checkForUpdates() }
+                        .disabled(!updateManager.isAvailable)
+                }
+                if !updateManager.isAvailable {
+                    Text("Updates work in the installed app (Meantime.app), not in development builds.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+            } footer: {
+                Text("Update checks against GitHub are Meantime's only network activity. No accounts, no telemetry.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                LabeledContent("Return every setting to its default") {
+                    Button("Restore Defaults…", role: .destructive) {
+                        restoreConfirmationShown = true
+                    }
+                }
+                .confirmationDialog("Restore all settings to their defaults?",
+                                    isPresented: $restoreConfirmationShown) {
+                    Button("Restore Defaults", role: .destructive) {
+                        preferences.restoreDefaults()
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("Your clocks, format, and appearance return to the defaults. Login and update settings are not affected.")
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .frame(width: Token.Size.paneWidth)
+        .fixedSize()
+        .onAppear { automaticChecks = updateManager.automaticallyChecksForUpdates }
+    }
+}

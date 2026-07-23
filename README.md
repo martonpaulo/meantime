@@ -1,113 +1,95 @@
+<div align="center">
+
+<img src="docs/assets/app-icon.png" width="128" alt="Meantime app icon">
+
 # Meantime
 
 **World clocks in your macOS menu bar.**
 
-Meantime keeps the time in the places you care about one glance away — pinned
-right in the menu bar, or tucked into a tidy dropdown. Add any time zone, name
-it, give it an emoji, and check what time it is for your team, your family, or
-your next trip without leaving what you're doing.
+[![CI](https://github.com/martonpaulo/meantime/actions/workflows/ci.yml/badge.svg)](https://github.com/martonpaulo/meantime/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/martonpaulo/meantime)](https://github.com/martonpaulo/meantime/releases/latest)
+[![macOS 26+](https://img.shields.io/badge/macOS-26%2B-blue)](#install)
+[![MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-Native, fast, and private. No accounts, no sync, no telemetry.
+<img src="docs/screenshots/menu-bar.png" alt="Two world clocks in the macOS menu bar" width="260">
 
-## Features
+<img src="docs/screenshots/panel.png" alt="The Meantime panel: clocks, month calendar, and time travel" width="400">
 
-- **Menu-bar clocks** — pin any time zone directly in the menu bar. Show one
-  clock or several; the rest live in a click-to-open panel.
-- **Three display styles per clock** — time only (`09:47`), flag + time
-  (`🇺🇸 09:47`), or a small analog face with no text.
-- **Time travel** — a slider previews what every clock reads hours from now, so
-  planning a call across zones takes a second.
-- **Fully custom time format** — pick a preset with a live example, write any
-  Unicode date pattern, or just follow your Mac's system format.
-- **Custom labels and emoji** — call a clock "Mom" or "Tokyo Office"; pick any
-  emoji, or let Meantime use the region's flag.
-- **Adjustable text size and spacing** — make the menu bar comfortable to read.
-- **Open at login** — always there when you need it.
-- **Energy-aware and always correct** — the time comes straight from the system
-  clock and updates align to the coarsest unit you actually show. A bar that
-  shows only the hour wakes about once an hour, not every minute; a bar that
-  shows nothing that changes runs no timer at all. It re-syncs instantly on
-  sleep/wake, clock changes, and time-zone changes.
+</div>
 
-## Install
+Your team is in New York. Your mom is in Recife. Your client is in Tokyo.
+**Meantime keeps their clocks one glance away** — right in the menu bar.
 
-### Download
+## ⚡ Install
 
-Download the latest notarized `Meantime-x.y.z.dmg` from the
-[Releases](https://github.com/martonpaulo/meantime/releases) page, open it, and
-drag **Meantime** onto **Applications**. Launch it and a clock appears in your
-menu bar. Meantime keeps itself up to date automatically.
+**[Download the latest DMG →](https://github.com/martonpaulo/meantime/releases/latest)**
 
-### Build from source
+Open it, drag Meantime onto Applications, launch. Done — it updates itself.
 
-Requires macOS 26 or later and the Swift 6.2 toolchain.
+> Free · open source · notarized by Apple · macOS 26+
+
+## ✨ What it does
+
+| | |
+|---|---|
+| 🕐 **Clocks in the menu bar** | One item per clock, or every clock combined into a single item |
+| 🎨 **Three styles per clock** | `09:47` · `🇺🇸 09:47` · a tiny analog face |
+| 📅 **Quick calendar** | Click the menu bar → see the month. "The 15th is a… Tuesday." |
+| 🔮 **Time travel** | Pick a day, type a time — every clock previews that moment |
+| ⏰ **Scheduled clocks** | Show the NY clock only 8–12 and 13–17 *NY time*; it hides itself outside those hours |
+| ✏️ **Your format, your pattern** | Write any Unicode pattern — or assemble one visually in the [interactive format builder](https://martonpaulo.github.io/meantime/format.html) |
+| 🏷️ **Labels & emoji** | "Mom", "Tokyo Office" — any name, any emoji, or the country's flag |
+| 🚀 **Open at login** | Set it once, forget it |
+
+## 🔋 Fast and honest about energy
+
+- The time comes **straight from the system clock** — never a private counter,
+  never a delayed repaint. Updates land exactly on the minute (or hour) boundary.
+- Meantime wakes **only as often as what you show changes**. Hour-only in the
+  menu bar? It wakes ~once an hour. Nothing visible ticking? No timer at all.
+- Sleep/wake, time-zone changes, clock changes → instant resync.
+
+## 🔒 Simple by design
+
+No accounts. No sync. No widgets. No telemetry. The only network request
+Meantime ever makes is checking this repository for updates ([Sparkle](https://sparkle-project.org)).
+
+## 🖼️ Settings
+
+<div align="center">
+<img src="docs/screenshots/settings-clocks.png" alt="Clocks settings" width="440">
+<img src="docs/screenshots/settings-format.png" alt="Format builder settings" width="440">
+</div>
+
+## 🛠 Build from source
 
 ```bash
 make run    # build and run the debug app
-make dmg    # build the installer DMG
-make check  # build, test, and validate
+make check  # build (warning-free) + tests + validation
+make dmg    # the full installer DMG
 ```
 
-Run `make` with no target to see everything available.
+`make` with no target lists everything. Docs: [architecture](docs/architecture.md) ·
+[UI patterns](docs/ui-patterns.md) · [feature defaults](docs/feature-defaults.md) ·
+[agent policy](AGENTS.md).
 
-## Using Meantime
+## 📦 Releasing (maintainers)
 
-Click any menu-bar clock to open the panel: every clock, the time-travel
-slider, and app actions live there. Open **Settings** from the panel's `…` menu
-to add clocks, rename them, choose emoji, pick each clock's menu-bar style, and
-set the time format.
-
-### Time format
-
-Meantime formats time with standard Unicode date patterns, so you can shape it
-exactly how you like:
-
-| Pattern         | Example        |
-| --------------- | -------------- |
-| `System`        | follows macOS  |
-| `HH:mm`         | `09:47`        |
-| `H:mm`          | `9:47`         |
-| `h:mm a`        | `9:47 AM`      |
-| `HH:mm:ss`      | `09:47:30`     |
-| `HH`            | `09`           |
-| `EEE HH:mm`     | `Thu 09:47`    |
-| `d MMM, HH:mm`  | `23 Jul, 09:47`|
-
-Wrap literal text in single quotes (`HH'h'mm` → `09h47`). "Reset to system
-default" returns to whatever your Mac is set to.
-
-## Updating
-
-Release builds use [Sparkle](https://sparkle-project.org) to check an appcast
-hosted in this repository and update in place. Update checks are the only
-network requests Meantime ever makes.
-
-## Releasing (maintainers)
-
-One-time per machine:
-
-```bash
-make keys   # generates the Sparkle key in your Keychain, sets the public key
-xcrun notarytool store-credentials <profile> \
-  --apple-id <you@example.com> --team-id TBN79KU9ML --password <app-specific>
-```
-
-Then, per release, with a Developer ID identity available:
+One-time: `make keys` (Sparkle key → Keychain) and a `notarytool`
+credentials profile. Per release:
 
 ```bash
 DEVELOPER_ID_IDENTITY="Developer ID Application: …" make dmg
 NOTARY_PROFILE=<profile> make notarize DMG=artifacts/Meantime-x.y.z.dmg
-make sign-update ZIP=artifacts/Meantime-x.y.z.zip        # prints SIG=…
-make appcast VERSION=x.y.z BUILD=<n> ZIP=artifacts/Meantime-x.y.z.zip SIG='sparkle:edSignature="…" length="…"'
+make sign-update ZIP=artifacts/Meantime-x.y.z.zip
+make appcast VERSION=x.y.z BUILD=<n> ZIP=… SIG='…'
 git tag vx.y.z && git push --tags
-# then upload the .dmg and .zip to the GitHub Release for the tag
 ```
 
-See [docs/architecture.md](docs/architecture.md) and
-[docs/ui-patterns.md](docs/ui-patterns.md) for how the app is built, and
-[AGENTS.md](AGENTS.md) for the working agreement.
+Then upload the DMG + zip to the GitHub release. `make screenshots` refreshes
+every image on this page from the real running app.
 
-## License
+## 📄 License
 
-[MIT](LICENSE) © 2026 Marton Paulo. Meantime bundles Sparkle in release builds;
-see [ATTRIBUTIONS.md](ATTRIBUTIONS.md).
+[MIT](LICENSE) © 2026 Marton Paulo · Sparkle attribution in
+[ATTRIBUTIONS.md](ATTRIBUTIONS.md)

@@ -3,75 +3,126 @@ import MeantimeKit
 import Observation
 import SwiftUI
 
-/// Owns the menu-bar surface: one status item per pinned clock (or a single
-/// fallback item when none are pinned), the shared panel popover, and the
-/// boundary-aligned ticker that refreshes both without ever spinning idly.
+/// Owns the menu-bar surface: status items for the currently *shown* clocks
+/// (pinned, and inside their scheduled hours), in either individual or combined
+/// layout; the anchored dropdown panel; and the boundary-aligned ticker that
+/// refreshes everything without ever spinning idly.
 @MainActor
-final class MenuBarController: NSObject, NSPopoverDelegate {
+final class MenuBarController: NSObject {
     private let preferences: Preferences
     private let timeSource: TimeSource
     private let formatter: ClockFormatter
     private let panelModel = PanelModel()
     private let ticker = ClockTicker()
-    private let popover = NSPopover()
+    private let panel: PanelController
 
     private var entries: [(item: NSStatusItem, clockID: UUID?)] = []
-    private var statusSignature = ""
+    private var shownSignature = ""
 
     init(preferences: Preferences, timeSource: TimeSource,
          formatter: ClockFormatter, actions: PanelActions) {
         self.preferences = preferences
         self.timeSource = timeSource
         self.formatter = formatter
+
+        let root = PanelView(formatter: formatter, actions: actions)
+            .environment(preferences)
+            .environment(timeSource)
+            .environment(panelModel)
+        panel = PanelController(content: AnyView(root))
+
         super.init()
 
-        configurePopover(actions: actions)
-
+        panel.onVisibilityChange = { [weak self] shown in
+            if shown { self?.panelModel.reset() }
+            self?.ticker.refresh() // panel open ⇒ finer cadence; closed ⇒ relax
+        }
         ticker.onTick = { [weak self] in self?.handleTick() }
-        ticker.visibleProvider = { [weak self] in self?.currentVisible() ?? [] }
+        ticker.planProvider = { [weak self] in self?.plan() ?? (visible: [], transitions: []) }
 
-        rebuildStatusItems()
         observePreferences()
-        ticker.refresh()
+        ticker.refresh() // first paint + arm
     }
 
     // MARK: Ticking
 
     private func handleTick() {
-        timeSource.advance()   // drives the SwiftUI panel
-        refreshStatusTitles()  // drives the AppKit items
+        timeSource.advance()  // drives the SwiftUI panel
+        syncItems()           // drives the AppKit items (and scheduled hide/show)
     }
 
-    /// Every visible contribution to the update cadence. Empty ⇒ no timer runs.
-    private func currentVisible() -> [ClockUpdatePlanner.Visible] {
+    /// The wake plan: granularity of everything visible, plus the next
+    /// scheduled-visibility transition of any pinned clock.
+    private func plan() -> (visible: [ClockUpdatePlanner.Visible], transitions: [Date]) {
+        let now = Date()
         var visible: [ClockUpdatePlanner.Visible] = []
-        for clock in preferences.clocks where clock.isPinned {
-            let granularity = TimeGranularity.finest(renderMode: clock.renderMode, format: preferences.timeFormat)
-            visible.append(.init(granularity: granularity, timeZone: clock.timeZone))
+
+        for clock in shownClocks(at: now) {
+            let mode = preferences.menuBarLayout == .combined ? textualMode(for: clock) : clock.renderMode
+            visible.append(.init(
+                granularity: TimeGranularity.finest(renderMode: mode, format: preferences.timeFormat),
+                timeZone: clock.timeZone))
         }
-        if popover.isShown {
-            let panelGranularity = TimeGranularity.finest(renderMode: .timeOnly, format: preferences.timeFormat)
+        if panel.isShown {
+            // Panel rows always show complete time, even for hour-only bars.
+            let panelGranularity = TimeGranularity.finest(
+                renderMode: .timeOnly,
+                format: PanelRowFormatter.effectiveFormat(preferences.timeFormat))
             for clock in preferences.clocks {
                 visible.append(.init(granularity: panelGranularity, timeZone: clock.timeZone))
             }
         }
-        return visible
+        let transitions = preferences.clocks.compactMap { clock -> Date? in
+            guard clock.isPinned else { return nil }
+            return ClockSchedule.nextTransition(after: now, windows: clock.activeWindows,
+                                                timeZone: clock.timeZone)
+        }
+        return (visible, transitions)
+    }
+
+    // MARK: Shown clocks
+
+    private func shownClocks(at date: Date) -> [WorldClock] {
+        preferences.clocks.filter { $0.isActiveInMenuBar(at: date) }
+    }
+
+    /// The combined item is a single text run; an analog-face clock contributes
+    /// its textual form there (flag + time) since a glyph cannot ride along.
+    private func textualMode(for clock: WorldClock) -> ClockRenderMode {
+        clock.renderMode == .analogClock ? .flagAndTime : clock.renderMode
+    }
+
+    private func signature(shown: [WorldClock]) -> String {
+        let ids = shown.map(\.id.uuidString).joined(separator: ",")
+        return "\(preferences.menuBarLayout.rawValue)|\(ids)"
     }
 
     // MARK: Status items
 
-    private func rebuildStatusItems() {
+    /// Rebuilds items only when the shown set or layout changes; otherwise just
+    /// refreshes titles, so a slider drag never flickers the menu bar.
+    private func syncItems() {
+        let shown = shownClocks(at: timeSource.now)
+        let newSignature = signature(shown: shown)
+        if newSignature != shownSignature {
+            rebuildStatusItems(shown: shown)
+            shownSignature = newSignature
+        }
+        refreshStatusTitles(shown: shown)
+    }
+
+    private func rebuildStatusItems(shown: [WorldClock]) {
         for entry in entries { NSStatusBar.system.removeStatusItem(entry.item) }
         entries.removeAll()
 
-        let pinned = preferences.clocks.filter(\.isPinned)
-        if pinned.isEmpty {
+        switch (shown.isEmpty, preferences.menuBarLayout) {
+        case (true, _):
             entries.append((makeStatusItem(), nil)) // always reachable
-        } else {
-            for clock in pinned { entries.append((makeStatusItem(), clock.id)) }
+        case (false, .combined):
+            entries.append((makeStatusItem(), nil))
+        case (false, .individual):
+            for clock in shown { entries.append((makeStatusItem(), clock.id)) }
         }
-        statusSignature = signature(of: pinned)
-        refreshStatusTitles()
     }
 
     private func makeStatusItem() -> NSStatusItem {
@@ -81,12 +132,14 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         return item
     }
 
-    private func refreshStatusTitles() {
+    private func refreshStatusTitles(shown: [WorldClock]) {
         let now = timeSource.now
         for entry in entries {
             guard let button = entry.item.button else { continue }
-            if let id = entry.clockID, let clock = preferences.clocks.first(where: { $0.id == id }) {
+            if let id = entry.clockID, let clock = shown.first(where: { $0.id == id }) {
                 apply(clock, to: button, now: now)
+            } else if !shown.isEmpty, preferences.menuBarLayout == .combined {
+                applyCombined(shown, to: button, now: now)
             } else {
                 applyFallback(to: button)
             }
@@ -117,6 +170,21 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         button.setAccessibilityLabel("\(clock.displayLabel), \(time)")
     }
 
+    private func applyCombined(_ shown: [WorldClock], to button: NSStatusBarButton, now: Date) {
+        let entries = shown.map { clock -> (emoji: String?, time: String) in
+            let time = formatter.string(for: now, clock: clock, format: preferences.timeFormat)
+            return (textualMode(for: clock) == .timeOnly ? nil : clock.displayEmoji, time)
+        }
+        button.image = nil
+        button.imagePosition = .noImage
+        button.attributedTitle = StatusItemTitle.combined(
+            entries: entries, textSize: preferences.textSize, spacing: preferences.elementSpacing)
+        let summary = shown.map { "\($0.displayLabel) \(formatter.string(for: now, clock: $0, format: preferences.timeFormat))" }
+            .joined(separator: ", ")
+        button.toolTip = summary
+        button.setAccessibilityLabel(summary)
+    }
+
     private func applyFallback(to button: NSStatusBarButton) {
         button.image = NSImage(systemSymbolName: "clock", accessibilityDescription: "Meantime")
         button.image?.isTemplate = true
@@ -126,62 +194,28 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         button.setAccessibilityLabel("Meantime")
     }
 
-    private func signature(of pinned: [WorldClock]) -> String {
-        pinned.isEmpty ? "fallback" : pinned.map(\.id.uuidString).joined(separator: ",")
-    }
-
-    // MARK: Popover
-
-    private func configurePopover(actions: PanelActions) {
-        popover.behavior = .transient
-        popover.animates = true
-        popover.delegate = self
-        let root = PanelView(formatter: formatter, actions: actions)
-            .environment(preferences)
-            .environment(timeSource)
-            .environment(panelModel)
-        popover.contentViewController = NSHostingController(rootView: AnyView(root))
-    }
+    // MARK: Panel
 
     @objc private func statusItemClicked(_ sender: NSStatusBarButton) {
-        if popover.isShown {
-            popover.performClose(sender)
-            return
-        }
-        panelModel.reset()
-        popover.show(relativeTo: sender.bounds, of: sender, preferredEdge: .minY)
-        ticker.refresh() // panel open ⇒ finer cadence
-    }
-
-    func popoverDidClose(_ notification: Notification) {
-        ticker.refresh() // panel closed ⇒ relax cadence
+        panel.toggle(from: sender)
     }
 
     // MARK: Observation
 
-    /// Reacts to preference changes: rebuild items only when the pinned set
-    /// changes (avoids flicker while dragging a slider); otherwise just refresh.
     private func observePreferences() {
         withObservationTracking {
             _ = preferences.clocks
             _ = preferences.timeFormat
+            _ = preferences.menuBarLayout
             _ = preferences.textSize
             _ = preferences.elementSpacing
         } onChange: { [weak self] in
             Task { @MainActor in
                 guard let self else { return }
-                self.syncFromPreferences()
+                self.syncItems()
+                self.ticker.refresh()
                 self.observePreferences()
             }
         }
-    }
-
-    private func syncFromPreferences() {
-        if signature(of: preferences.clocks.filter(\.isPinned)) != statusSignature {
-            rebuildStatusItems()
-        } else {
-            refreshStatusTitles()
-        }
-        ticker.refresh()
     }
 }

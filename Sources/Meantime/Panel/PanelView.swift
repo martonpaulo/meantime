@@ -2,17 +2,15 @@ import SwiftUI
 import MeantimeKit
 
 /// Actions the panel can trigger, wired by the app so the view stays decoupled
-/// from lifecycle and updates.
+/// from lifecycle. Updates and About live in Settings and the app menu.
 struct PanelActions {
     var openSettings: () -> Void
-    var checkForUpdates: () -> Void
-    var about: () -> Void
     var quit: () -> Void
 }
 
-/// The dropdown shown from a menu-bar item: every clock, the time-travel control,
-/// and app actions. It renders prepared `PanelRow`s and observes the shared time
-/// source, so it re-reads the same instant the menu bar shows.
+/// The menu-bar dropdown: every clock at a glance, a quick month calendar for
+/// day checking, and typed time travel. Renders prepared `PanelRow`s and reads
+/// the shared time source, so it always matches the menu bar exactly.
 struct PanelView: View {
     @Environment(Preferences.self) private var preferences
     @Environment(TimeSource.self) private var timeSource
@@ -30,126 +28,185 @@ struct PanelView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if rows.isEmpty {
-                emptyState
-            } else {
+            clockList
+            PanelDivider()
+            MonthCalendarView(formatter: formatter)
+            PanelDivider()
+            TimeTravelSection()
+            PanelDivider()
+            footer
+        }
+        .padding(.vertical, Token.Space.sm)
+        .frame(width: Token.Size.panelWidth)
+        .background(PanelBackground())
+        .clipShape(RoundedRectangle(cornerRadius: Token.Radius.panel, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Token.Radius.panel, style: .continuous)
+                .strokeBorder(Token.Color.separator.opacity(0.5), lineWidth: 0.5)
+        )
+    }
+
+    @ViewBuilder private var clockList: some View {
+        if rows.isEmpty {
+            VStack(alignment: .leading, spacing: Token.Space.xs) {
+                Text("No clocks yet")
+                    .font(Token.Font.label)
+                    .foregroundStyle(Token.Color.secondaryText)
+                Button("Add a clock…") { actions.openSettings() }
+                    .buttonStyle(.link)
+            }
+            .padding(.horizontal, Token.Space.lg)
+            .padding(.vertical, Token.Space.sm)
+        } else {
+            VStack(spacing: 0) {
                 ForEach(rows) { row in
-                    ClockRowView(row: row,
-                                 textSize: preferences.textSize,
+                    ClockRowView(row: row, textSize: preferences.textSize,
                                  spacing: preferences.elementSpacing)
                 }
             }
-
-            Divider().padding(.vertical, Token.Space.sm)
-            TimeTravelView()
-            Divider().padding(.vertical, Token.Space.sm)
-            footer
+            .padding(.horizontal, Token.Space.sm)
         }
-        .padding(Token.Space.md)
-        .frame(width: Token.Size.panelWidth)
     }
 
-    private var emptyState: some View {
-        VStack(alignment: .leading, spacing: Token.Space.xs) {
-            Text("No clocks yet").font(Token.Font.label)
-            Button("Add a clock…") { actions.openSettings() }
-                .buttonStyle(.link)
-        }
-        .padding(.vertical, Token.Space.sm)
-    }
-
+    /// Direct actions — no nested menus inside a menu-bar dropdown.
     private var footer: some View {
-        HStack(spacing: Token.Space.sm) {
-            Spacer()
-            Menu {
-                Button("Add Clock…") { actions.openSettings() }
-                Button("Settings…") { actions.openSettings() }
-                Button("Check for Updates…") { actions.checkForUpdates() }
-                Divider()
-                Button("About Meantime") { actions.about() }
-                Button("Quit Meantime") { actions.quit() }
-            } label: {
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Token.Color.secondaryText)
-                    .frame(width: Token.Size.hitTarget, height: Token.Size.hitTarget, alignment: .trailing)
-                    .contentShape(Rectangle())
+        HStack(spacing: Token.Space.lg) {
+            FooterButton(title: String(localized: "Settings…"), symbol: "gearshape") {
+                actions.openSettings()
             }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .fixedSize()
-            .accessibilityLabel("More")
+            Spacer()
+            FooterButton(title: String(localized: "Quit"), symbol: "power") {
+                actions.quit()
+            }
         }
+        .padding(.horizontal, Token.Space.lg)
+        .padding(.top, Token.Space.xs)
     }
 }
 
-/// One clock line: emoji, label (with an optional day caption), and the time.
+/// Quiet icon+text action for the panel footer; brightens on hover.
+private struct FooterButton: View {
+    let title: String
+    let symbol: String
+    let action: () -> Void
+
+    @State private var isHovering = false
+
+    var body: some View {
+        Button(action: action) {
+            Label(title, systemImage: symbol)
+                .labelStyle(PanelActionLabelStyle())
+                .font(Token.Font.secondary)
+                .foregroundStyle(isHovering ? Token.Color.primaryText : Token.Color.secondaryText)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovering = $0 }
+    }
+}
+
+/// Hairline divider with the panel's standard vertical rhythm.
+private struct PanelDivider: View {
+    var body: some View {
+        Divider().padding(.vertical, Token.Space.sm)
+    }
+}
+
+/// One clock line: emoji, label with offset/day caption, monospaced time.
 private struct ClockRowView: View {
     let row: PanelRow
     let textSize: Double
     let spacing: Double
 
+    private var caption: String {
+        if let day = row.dayCaption { return "\(row.offsetCaption) · \(day)" }
+        return row.offsetCaption
+    }
+
     var body: some View {
-        LabeledContent {
-            Text(row.time)
-                .font(Token.Font.time(textSize))
-                .foregroundStyle(Token.Color.primaryText)
-        } label: {
-            HStack(spacing: spacing + Token.Space.xs) {
-                Text(row.emoji)
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(row.label)
-                        .font(Token.Font.label)
-                        .foregroundStyle(Token.Color.primaryText)
-                    if let caption = row.dayCaption {
-                        Text(caption)
-                            .font(Token.Font.secondary)
-                            .foregroundStyle(Token.Color.secondaryText)
-                    }
-                }
+        HStack(spacing: spacing + Token.Space.sm) {
+            Text(row.emoji)
+                .font(.system(size: textSize + 2))
+            VStack(alignment: .leading, spacing: 0) {
+                Text(row.label)
+                    .font(Token.Font.label)
+                    .foregroundStyle(Token.Color.primaryText)
+                Text(caption)
+                    .font(Token.Font.secondary)
+                    .foregroundStyle(Token.Color.secondaryText)
             }
+            Spacer(minLength: Token.Space.md)
+            Text(row.time)
+                .font(Token.Font.time(textSize + 1))
+                .foregroundStyle(Token.Color.primaryText)
         }
-        .padding(.vertical, Token.Space.xxs)
+        .padding(.horizontal, Token.Space.sm)
+        .padding(.vertical, Token.Space.xs)
         .frame(minHeight: Token.Size.rowMinHeight)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(row.label), \(row.time), \(caption)")
     }
 }
 
-/// The time-travel control: a slider that offsets every clock, with a live
-/// offset readout and a one-tap return to now.
-private struct TimeTravelView: View {
+/// Quick month calendar for checking which weekday a date falls on. Picking a
+/// day previews it across all clocks; it resets when the panel closes.
+private struct CalendarSection: View {
     @Environment(PanelModel.self) private var panelModel
+    @Environment(TimeSource.self) private var timeSource
 
-    var body: some View {
-        @Bindable var model = panelModel
-        VStack(alignment: .leading, spacing: Token.Space.xs) {
-            HStack {
-                Label("Time travel", systemImage: "clock.arrow.2.circlepath")
-                    .font(Token.Font.secondary)
-                    .foregroundStyle(Token.Color.secondaryText)
-                Spacer()
-                Text(offsetLabel(model.travelHours))
-                    .font(Token.Font.time(11))
-                    .foregroundStyle(model.isTraveling ? Token.Color.accent : Token.Color.secondaryText)
-                if model.isTraveling {
-                    Button("Now") { withAnimation(Token.Motion.quick) { model.reset() } }
-                        .buttonStyle(.link)
-                        .font(Token.Font.secondary)
-                }
-            }
-            Slider(value: $model.travelHours, in: -24 ... 24, step: 0.5)
-                .controlSize(.small)
-        }
+    private var dayBinding: Binding<Date> {
+        Binding(
+            get: { panelModel.selectedDay ?? timeSource.now },
+            set: { panelModel.selectedDay = $0 }
+        )
     }
 
-    private func offsetLabel(_ hours: Double) -> String {
-        let totalMinutes = Int((hours * 60).rounded())
-        guard totalMinutes != 0 else { return "Now" }
-        let sign = totalMinutes > 0 ? "+" : "−"
-        let magnitude = abs(totalMinutes)
-        let h = magnitude / 60
-        let m = magnitude % 60
-        if h == 0 { return "\(sign)\(m)m" }
-        return m == 0 ? "\(sign)\(h)h" : "\(sign)\(h)h \(m)m"
+    var body: some View {
+        DatePicker("Calendar", selection: dayBinding, displayedComponents: [.date])
+            .datePickerStyle(.graphical)
+            .labelsHidden()
+            .focusEffectDisabled()
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.horizontal, Token.Space.md)
+            .accessibilityLabel("Month calendar")
+    }
+}
+
+/// Typed time travel — no slider. Type (or step) a time to preview it across
+/// every clock; "Now" returns instantly.
+private struct TimeTravelSection: View {
+    @Environment(PanelModel.self) private var panelModel
+    @Environment(TimeSource.self) private var timeSource
+
+    private var timeBinding: Binding<Date> {
+        Binding(
+            get: { panelModel.selectedTime ?? timeSource.now },
+            set: { panelModel.selectedTime = $0 }
+        )
+    }
+
+    var body: some View {
+        HStack(spacing: Token.Space.sm) {
+            Label("Time travel", systemImage: "clock.arrow.2.circlepath")
+                .labelStyle(PanelActionLabelStyle())
+                .font(Token.Font.secondary)
+                .foregroundStyle(Token.Color.secondaryText)
+            Spacer()
+            if panelModel.isTraveling {
+                Button("Now") {
+                    withAnimation(Token.Motion.quick) { panelModel.reset() }
+                }
+                .buttonStyle(.link)
+                .font(Token.Font.secondary)
+                .help("Back to the current time")
+            }
+            DatePicker("Preview time", selection: timeBinding, displayedComponents: [.hourAndMinute])
+                .datePickerStyle(.field)
+                .labelsHidden()
+                .fixedSize()
+                .accessibilityLabel("Preview time")
+        }
+        .padding(.horizontal, Token.Space.lg)
     }
 }

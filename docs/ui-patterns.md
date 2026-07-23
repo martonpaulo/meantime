@@ -40,6 +40,30 @@ Formatting, day-difference captions, sorting, and filtering happen outside
 Time is always drawn with monospaced digits so an item never changes width as it
 ticks.
 
+## Surface conventions
+
+- **Menu-bar panel**: a borderless, popover-material window anchored flush
+  under its status item (no arrow, `panel` corner radius, hairline border). It
+  opens unfocused — no control grabs a focus ring on a glance surface. Sections
+  are separated by hairline dividers with the panel's standard rhythm; action
+  rows share one label style with a fixed icon column so everything aligns;
+  actions are **direct** (icon + text footer buttons) — never a nested menu
+  inside a menu-bar dropdown. ⌘W and Escape close it like any transient window.
+- **Sheets and transient windows** always answer ⌘W and Escape as dismissal,
+  and size to their content — no inner scroll bars on short forms.
+- **Settings**: a toolbar-style tab window (System Settings look) of fixed-width
+  grouped-form panes. Every pane is a `Form` with `.grouped` style; explanatory
+  copy lives in section footers, callout + secondary.
+- **Editing a list item** happens in a sheet with a header identifying the item,
+  a grouped form, and a trailing Done button (default action).
+- **Choices render as their result**: format options show live samples of the
+  exact fragment they contribute; sliders show their current value; previews
+  update as you type.
+- **Hover states** on custom rows use the shared row-highlight token; buttons in
+  quiet surfaces brighten from secondary to primary on hover.
+- **Destructive flows** (restore defaults, remove) confirm via
+  `confirmationDialog` with the destructive role.
+
 ## Before changing UI
 
 Briefly critique what's there, then plan layout, controls, every interaction

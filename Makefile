@@ -46,6 +46,9 @@ installer-assets: icon ## Regenerate the DMG volume icon and background art
 regions: ## Regenerate the time-zone → region table from the system tz database
 	@bash scripts/make-regions.sh
 
+screenshots: ## Refresh README/website screenshots from the real app
+	@bash scripts/capture-screenshots.sh
+
 # -- Release ------------------------------------------------------------------
 
 .PHONY: app dmg notarize sign-update appcast keys

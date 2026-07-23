@@ -53,6 +53,20 @@ private final class MemoryStore: PreferenceStore {
         #expect(Preferences(store: store).clocks.count == 1)
     }
 
+    @Test func moveClockNudgesWithinBounds() {
+        let prefs = Preferences(store: MemoryStore())
+        prefs.clocks = [WorldClock(timeZoneID: "Asia/Tokyo"),
+                        WorldClock(timeZoneID: "Europe/Paris"),
+                        WorldClock(timeZoneID: "America/Lima")]
+        let paris = prefs.clocks[1].id
+        prefs.moveClock(id: paris, by: -1)
+        #expect(prefs.clocks[0].id == paris)
+        prefs.moveClock(id: paris, by: -1) // already first: no-op
+        #expect(prefs.clocks[0].id == paris)
+        prefs.moveClock(id: paris, by: 1)
+        #expect(prefs.clocks[1].id == paris)
+    }
+
     @Test func updateReplacesMatchingClock() {
         let prefs = Preferences(store: MemoryStore())
         var clock = WorldClock(timeZoneID: "Europe/Paris")

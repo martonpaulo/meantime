@@ -18,15 +18,19 @@ public enum ClockUpdatePlanner {
     }
 
     /// The next instant to refresh, or nil when nothing visible shows changing
-    /// time (in which case the app should run no timer at all).
+    /// time and no transition is pending (in which case no timer runs at all).
+    /// `transitions` are extra wake instants — e.g. a scheduled clock appearing
+    /// or disappearing — that must fire even if nothing else is visible.
     public static func nextUpdate(
         after now: Date,
         visible: [Visible],
+        transitions: [Date] = [],
         calendar: Calendar = Calendar(identifier: .gregorian)
     ) -> Date? {
-        visible
-            .map { nextBoundary(after: now, granularity: $0.granularity, timeZone: $0.timeZone, calendar: calendar) }
-            .min()
+        let boundaries = visible.map {
+            nextBoundary(after: now, granularity: $0.granularity, timeZone: $0.timeZone, calendar: calendar)
+        }
+        return (boundaries + transitions.filter { $0 > now }).min()
     }
 
     /// The next instant strictly after `now` at which a value shown at

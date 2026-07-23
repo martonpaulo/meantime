@@ -21,6 +21,11 @@ public final class Preferences {
         didSet { save(timeFormat, forKey: Key.timeFormat) }
     }
 
+    /// One status item per pinned clock, or a single combined item.
+    public var menuBarLayout: MenuBarLayout {
+        didSet { store.set(menuBarLayout.rawValue, forKey: Key.menuBarLayout) }
+    }
+
     /// Font size, in points, for menu-bar and panel time text.
     public var textSize: Double {
         didSet { store.set(textSize, forKey: Key.textSize) }
@@ -37,6 +42,8 @@ public final class Preferences {
             ?? PreferenceDefaults.clocks
         self.timeFormat = Self.decode(TimeFormat.self, forKey: Key.timeFormat, from: store)
             ?? PreferenceDefaults.timeFormat
+        self.menuBarLayout = (store.object(forKey: Key.menuBarLayout) as? String)
+            .flatMap { MenuBarLayout(rawValue: $0) } ?? PreferenceDefaults.menuBarLayout
         self.textSize = Self.readDouble(Key.textSize, from: store)
             ?? PreferenceDefaults.textSize
         self.elementSpacing = Self.readDouble(Key.elementSpacing, from: store)
@@ -77,6 +84,14 @@ public final class Preferences {
         clocks[index] = clock
     }
 
+    /// Nudges a clock one position up (-1) or down (+1); no-op at the edges.
+    public func moveClock(id: WorldClock.ID, by offset: Int) {
+        guard let index = clocks.firstIndex(where: { $0.id == id }) else { return }
+        let target = index + offset
+        guard clocks.indices.contains(target) else { return }
+        clocks.swapAt(index, target)
+    }
+
     // MARK: Restore Defaults
 
     /// Resets configurable preferences to their defaults. Does not touch the
@@ -84,6 +99,7 @@ public final class Preferences {
     public func restoreDefaults() {
         clocks = PreferenceDefaults.clocks
         timeFormat = PreferenceDefaults.timeFormat
+        menuBarLayout = PreferenceDefaults.menuBarLayout
         textSize = PreferenceDefaults.textSize
         elementSpacing = PreferenceDefaults.elementSpacing
     }
@@ -108,6 +124,7 @@ public final class Preferences {
     private enum Key {
         static let clocks = "clocks.v1"
         static let timeFormat = "timeFormat.v1"
+        static let menuBarLayout = "menuBarLayout.v1"
         static let textSize = "textSize"
         static let elementSpacing = "elementSpacing"
     }

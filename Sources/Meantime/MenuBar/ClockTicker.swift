@@ -12,8 +12,9 @@ import MeantimeKit
 final class ClockTicker {
     /// Called on every boundary and system change; refresh the UI here.
     var onTick: (() -> Void)?
-    /// Supplies the currently visible clocks so the next boundary can be planned.
-    var visibleProvider: (() -> [ClockUpdatePlanner.Visible])?
+    /// Supplies the currently visible clocks and pending visibility transitions
+    /// (scheduled clocks appearing/disappearing) so the next wake can be planned.
+    var planProvider: (() -> (visible: [ClockUpdatePlanner.Visible], transitions: [Date]))?
 
     private var timer: Timer?
 
@@ -40,9 +41,10 @@ final class ClockTicker {
         timer?.invalidate()
         timer = nil
 
-        guard let visible = visibleProvider?(),
-              let next = ClockUpdatePlanner.nextUpdate(after: Date(), visible: visible)
-        else { return } // nothing visible shows changing time → no timer at all
+        guard let plan = planProvider?(),
+              let next = ClockUpdatePlanner.nextUpdate(after: Date(), visible: plan.visible,
+                                                       transitions: plan.transitions)
+        else { return } // nothing visible changes and nothing scheduled → no timer
 
         // Scheduled to an absolute date in common modes so it still fires while a
         // menu/panel is tracking, and re-armed each time to avoid drift.

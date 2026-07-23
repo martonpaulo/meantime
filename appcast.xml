@@ -5,5 +5,21 @@
     <link>https://github.com/martonpaulo/meantime</link>
     <description>Most recent updates to Meantime</description>
     <language>en</language>
+    <item>
+      <title>1.1.0</title>
+      <pubDate>Thu, 23 Jul 2026 00:20:33 +0000</pubDate>
+      <sparkle:version>10100</sparkle:version>
+      <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <enclosure url="https://github.com/martonpaulo/meantime/releases/download/v1.1.0/Meantime-1.1.0.zip" sparkle:edSignature="XNYBvaulmMxqmJ7ERUlyeFbV+/YaEnWO8cfcRK3Igf2QXIh091jJ3mrwhtHiUGNw2a7os/+1hxGBLIYbFrB5Aw==" length="2163553" type="application/octet-stream"/>
+    </item>
+    <item>
+      <title>1.0.0</title>
+      <pubDate>Wed, 22 Jul 2026 23:24:23 +0000</pubDate>
+      <sparkle:version>10000</sparkle:version>
+      <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <enclosure url="https://github.com/martonpaulo/meantime/releases/download/v1.0.0/Meantime-1.0.0.zip" sparkle:edSignature="IZ6TyEZuTYLGuDYNErQ+rWWhL8LjNf9jhdzfwM170oCrFRTfRDm02qAn4Tnau72O0t9yELjd7+lOk9FV2pXGAg==" length="1461833" type="application/octet-stream"/>
+    </item>
   </channel>
 </rss>

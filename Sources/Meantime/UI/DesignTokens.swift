@@ -18,17 +18,27 @@ enum Token {
     enum Radius {
         static let sm: CGFloat = 6
         static let md: CGFloat = 10
-        static let lg: CGFloat = 14
+        /// Menu-bar dropdown panel corners (matches system menu panels).
+        static let panel: CGFloat = 12
     }
 
     /// Fixed dimensions (points).
     enum Size {
-        static let panelWidth: CGFloat = 300
+        static let panelWidth: CGFloat = 320
         static let rowMinHeight: CGFloat = 28
-        static let emojiColumn: CGFloat = 24
-        static let menuBarGlyph: CGFloat = 16
         static let analogClock: CGFloat = 18
         static let hitTarget: CGFloat = 22
+        /// Width of every settings pane (windowhop-style fixed panes).
+        static let paneWidth: CGFloat = 560
+        /// Gap between the menu bar and the anchored panel.
+        static let panelGap: CGFloat = 5
+        /// Screen-edge margin the panel never crosses.
+        static let screenMargin: CGFloat = 8
+        /// Calendar day-cell height and selection-circle diameter.
+        static let calendarCell: CGFloat = 27
+        static let calendarSelection: CGFloat = 24
+        /// Fixed icon column in panel action rows, so labels align.
+        static let actionIconColumn: CGFloat = 16
     }
 
     /// Typography. Time uses monospaced digits so it never jitters as it ticks.
@@ -55,5 +65,17 @@ enum Token {
     /// Animation used for lightweight state changes (never for the ticking time).
     enum Motion {
         static let quick = Animation.easeOut(duration: 0.15)
+    }
+}
+
+/// Icon + text with a fixed icon column, so every action row in the panel
+/// (time travel, footer buttons) aligns on the same grid.
+struct PanelActionLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: Token.Space.sm) {
+            configuration.icon
+                .frame(width: Token.Size.actionIconColumn, alignment: .center)
+            configuration.title
+        }
     }
 }

@@ -36,12 +36,28 @@ public final class ClockFormatter: @unchecked Sendable {
             formatter.dateStyle = .none
             formatter.timeStyle = .short
         case let .custom(pattern):
-            // Honor the user's explicit pattern verbatim. (Using a localized
-            // template would reorder fields per locale, which is not wanted.)
+            // Honor the user's explicit pattern verbatim. macOS rewrites explicit
+            // hour fields (H ↔ h a) to match the system 12/24-hour override, so
+            // pin the locale's hour cycle to what the pattern actually asks for —
+            // keeping localized weekday/month names intact.
+            formatter.locale = Self.pinningHourCycle(of: locale, to: pattern)
             formatter.dateFormat = pattern
         }
         cache.setObject(formatter, forKey: key)
         return formatter
+    }
+
+    /// A copy of `locale` whose hour cycle matches the pattern's hour fields,
+    /// so the system 12/24-hour preference can never rewrite them.
+    private static func pinningHourCycle(of locale: Locale, to pattern: String) -> Locale {
+        let fields = TimeGranularity.patternFields(in: pattern)
+        var components = Locale.Components(locale: locale)
+        if fields.contains("H") || fields.contains("k") {
+            components.hourCycle = .zeroToTwentyThree
+        } else if fields.contains("h") || fields.contains("K") {
+            components.hourCycle = .oneToTwelve
+        }
+        return Locale(components: components)
     }
 
     private func cacheKey(timeZone: TimeZone, format: TimeFormat, locale: Locale) -> String {

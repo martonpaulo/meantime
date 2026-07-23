@@ -4,6 +4,7 @@ import Foundation
 /// controllers, tests, or migrations — read it from here.
 public enum PreferenceDefaults {
     public static let timeFormat: TimeFormat = .system
+    public static let menuBarLayout: MenuBarLayout = .individual
     public static let textSize: Double = 13
     public static let elementSpacing: Double = 4
 

@@ -1,22 +1,32 @@
 import Foundation
+import MeantimeKit
 import Observation
 
-/// Transient panel state. The time-travel offset is deliberately not persisted —
-/// it is a "peek" that resets every time the panel opens.
+/// Transient panel state. The time-travel preview is a typed time and/or a day
+/// picked on the calendar — deliberately not persisted; it resets every time
+/// the panel opens, so the panel always opens on "now".
 @MainActor
 @Observable
 final class PanelModel {
-    /// Hours added to "now" across every clock. Range is owned by the view.
-    var travelHours: Double = 0
+    /// The calendar day being previewed; nil = today.
+    var selectedDay: Date?
+    /// The typed clock time being previewed (local zone); nil = current time.
+    var selectedTime: Date?
+    /// The month the calendar is browsing; nil = the current month. Browsing
+    /// alone never changes the preview — only picking a day does.
+    var displayedMonth: Date?
 
-    var isTraveling: Bool { abs(travelHours) >= 0.25 }
+    var isTraveling: Bool { selectedDay != nil || selectedTime != nil }
 
     func reset() {
-        travelHours = 0
+        selectedDay = nil
+        selectedTime = nil
+        displayedMonth = nil
     }
 
     /// The instant the panel is previewing, given the real current time.
     func previewDate(from now: Date) -> Date {
-        now.addingTimeInterval(travelHours * 3600)
+        guard isTraveling else { return now }
+        return TimeTravel.combine(day: selectedDay ?? now, time: selectedTime ?? now)
     }
 }

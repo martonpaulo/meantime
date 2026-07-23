@@ -8,6 +8,8 @@ struct PanelRow: Identifiable {
     let emoji: String
     let label: String
     let time: String
+    /// Always present: the zone's GMT offset ("GMT−3"), DST-aware.
+    let offsetCaption: String
     /// Set only when the clock's calendar day differs from the local day.
     let dayCaption: String?
 }
@@ -16,14 +18,25 @@ struct PanelRow: Identifiable {
 /// caption ("Tomorrow", "Yesterday", or a weekday) that makes world clocks
 /// readable at a glance.
 enum PanelRowFormatter {
-    static func rows(clocks: [WorldClock], at date: Date, format: TimeFormat,
+    /// Panel rows always show a complete time of day. A menu-bar format coarser
+    /// than minutes (hour-only, weekday-only) falls back to the system short
+    /// time here; formats that already include minutes are honored as-is.
+    static func effectiveFormat(_ format: TimeFormat) -> TimeFormat {
+        TimeGranularity.finest(renderMode: .timeOnly, format: format) >= .minute
+            ? format
+            : .system
+    }
+
+    static func rows(clocks: [WorldClock], at date: Date, format menuBarFormat: TimeFormat,
                      formatter: ClockFormatter, locale: Locale = .current) -> [PanelRow] {
-        clocks.map { clock in
+        let format = effectiveFormat(menuBarFormat)
+        return clocks.map { clock in
             PanelRow(
                 id: clock.id,
                 emoji: clock.displayEmoji,
                 label: clock.displayLabel,
                 time: formatter.string(for: date, clock: clock, format: format, locale: locale),
+                offsetCaption: ZoneOffset.caption(for: clock.timeZone, at: date),
                 dayCaption: dayCaption(for: clock.timeZone, at: date, locale: locale)
             )
         }

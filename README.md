@@ -13,7 +13,7 @@
 
 <img src="docs/screenshots/menu-bar.png" alt="Two world clocks in the macOS menu bar" width="260">
 
-<img src="docs/screenshots/panel.png" alt="The Meantime panel: clocks, month calendar, and time travel" width="400">
+<img src="docs/screenshots/panel-current.png" alt="The Meantime panel: clocks, month calendar, and time travel" width="320">
 
 </div>
 
@@ -26,7 +26,7 @@ Your team is in New York. Your mom is in Recife. Your client is in Tokyo.
 
 Open it, drag Meantime onto Applications, launch. Done — it updates itself.
 
-> Free · open source · notarized by Apple · macOS 26+
+> Open source · direct download · macOS 26+
 
 ## ✨ What it does
 
@@ -56,10 +56,9 @@ Meantime ever makes is checking this repository for updates ([Sparkle](https://s
 
 ## 🖼️ Settings
 
-<div align="center">
-<img src="docs/screenshots/settings-clocks.png" alt="Clocks settings" width="440">
-<img src="docs/screenshots/settings-format.png" alt="Format builder settings" width="440">
-</div>
+Native toolbar panes keep clock management, format presets, appearance,
+startup, updates, and app information separate. Clock and format edits preview
+live, remain unsaved until you choose Save, and ask before discarding changes.
 
 ## 🛠 Build from source
 

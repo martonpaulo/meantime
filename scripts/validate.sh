@@ -32,12 +32,14 @@ if ! grep -q 'view.material = \.menu' Sources/Meantime/MenuBar/PanelController.s
 fi
 
 # Website navigation stays identical across the landing page and builder.
+expected_navigation="Features|Format Builder|Download|GitHub"
 for page in docs/index.html docs/format.html; do
-    for label in "Features" "Format Builder" "Download" "GitHub"; do
-        if ! grep -q ">$label</a>" "$page"; then
-            note "$page navigation is missing $label"
-        fi
-    done
+    navigation=$(sed -n '/<nav aria-label="Page sections">/,/<\/nav>/p' "$page" \
+        | sed -E -n 's/.*>([^<]+)<\/a>.*/\1/p' | paste -sd '|' -)
+    [ "$navigation" = "$expected_navigation" ] \
+        || note "$page navigation order must be $expected_navigation"
+    grep -q 'aria-current="page"' "$page" \
+        || note "$page must identify the current page"
 done
 
 # The guided builder exposes every product-supported field and separator. The
@@ -50,8 +52,19 @@ done
 if ! grep -q 'tr35-dates.html#Date_Format_Patterns' docs/format.html; then
     note "format builder must link to the official Unicode pattern documentation"
 fi
-if grep -qi 'free tool' docs/format.html; then
-    note "format builder must not advertise itself as a free tool"
+for separator in '/' '-' '.' ' ' ':' ',' '·'; do
+    if ! grep -Fq "data-token=\"$separator\"" docs/format.html; then
+        note "format builder is missing separator '$separator'"
+    fi
+done
+if ! grep -q 'id="add-literal"' docs/format.html; then
+    note "format builder must support literal text"
+fi
+if grep -Eqi 'free[[:space:]-]+tool' docs/*.html; then
+    note "website must not advertise itself as a free tool"
+fi
+if grep -Eq 'screenshots/settings-(clocks|format)\\.png' README.md docs/*.html; then
+    note "public pages must not reference the obsolete Settings screenshots"
 fi
 
 # Never publish a known-dead updater enclosure.

@@ -20,6 +20,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- The calendar now respects the time zone of its supplied calendar, including month boundaries.
+- Returning to Today also clears a previously selected day instead of silently previewing it.
+- Clock rows no longer claim a scheduled clock is visible “now” from stale, unscheduled view state.
+- Public pages no longer claim a release is notarized while Apple's submission is still pending.
+- README and website no longer present screenshots of settings removed by the current interface.
 - Removed the permanently unavailable 1.0.0 enclosure from the Sparkle appcast.
 
 ## [1.1.0] - 2026-07-23

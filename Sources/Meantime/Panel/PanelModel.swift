@@ -24,6 +24,12 @@ final class PanelModel {
         displayedMonth = nil
     }
 
+    /// Return the calendar to today's date without discarding a typed time.
+    func returnToToday() {
+        selectedDay = nil
+        displayedMonth = nil
+    }
+
     /// The instant the panel is previewing, given the real current time.
     func previewDate(from now: Date) -> Date {
         guard isTraveling else { return now }

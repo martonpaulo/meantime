@@ -62,4 +62,21 @@ import Testing
                 && week.dropFirst().dropLast().allSatisfy { !$0.isWeekend }
         })
     }
+
+    @Test func monthFollowsTheProvidedCalendarTimeZone() {
+        var kiritimati = calendar
+        kiritimati.timeZone = TimeZone(identifier: "Pacific/Kiritimati")!
+        let instant = calendar.date(
+            from: DateComponents(year: 2026, month: 12, day: 31, hour: 11, minute: 30))!
+
+        let grid = MonthGrid.make(containing: instant, calendar: kiritimati)
+        let components = kiritimati.dateComponents(
+            [.year, .month, .day],
+            from: grid.monthStart)
+
+        #expect(components.year == 2027)
+        #expect(components.month == 1)
+        #expect(components.day == 1)
+        #expect(grid.weeks.flatMap(\.self).first(where: \.isInMonth)?.dayNumber == 1)
+    }
 }

@@ -42,7 +42,7 @@ struct PanelView: View {
         .clipShape(RoundedRectangle(cornerRadius: Token.Radius.panel, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: Token.Radius.panel, style: .continuous)
-                .strokeBorder(Token.Color.separator.opacity(0.5), lineWidth: 0.5)
+                .strokeBorder(Token.Color.hairlineSeparator, lineWidth: Token.Size.hairline)
         )
     }
 

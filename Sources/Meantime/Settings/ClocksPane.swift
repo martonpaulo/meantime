@@ -127,11 +127,11 @@ private struct ClockRow: View {
     let onEdit: () -> Void
     let onRemove: () -> Void
 
-    private var scheduleCaption: String? {
-        guard clock.isPinned, !clock.activeWindows.isEmpty else { return nil }
-        return clock.isActiveInMenuBar(at: Date())
-            ? String(localized: "Scheduled · visible now")
-            : String(localized: "Scheduled · hidden now")
+    private var detailCaption: String {
+        guard clock.isPinned, !clock.activeWindows.isEmpty else {
+            return clock.timeZoneID
+        }
+        return "\(clock.timeZoneID) · \(String(localized: "Scheduled"))"
     }
 
     var body: some View {
@@ -141,13 +141,13 @@ private struct ClockRow: View {
             }
             VStack(alignment: .leading, spacing: 0) {
                 Text(clock.displayLabel)
-                Text(scheduleCaption.map { "\(clock.timeZoneID) · \($0)" } ?? clock.timeZoneID)
+                Text(detailCaption)
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
             Spacer()
             ReorderButtons(clockID: clock.id)
-            Label(clock.isPinned ? "In Menu Bar" : "Dropdown Only",
+            Label(clock.isPinned ? "Menu Bar" : "Dropdown Only",
                   systemImage: clock.isPinned ? "menubar.rectangle" : "rectangle.bottomthird.inset.filled")
                 .font(.callout)
                 .foregroundStyle(.secondary)

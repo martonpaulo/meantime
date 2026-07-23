@@ -41,6 +41,7 @@ enum Token {
         /// Fixed icon column in panel action rows, so labels align.
         static let actionIconColumn: CGFloat = 16
         static let adornmentColumn: CGFloat = 22
+        static let hairline: CGFloat = 0.5
     }
 
     /// Typography. Time uses monospaced digits so it never jitters as it ticks.
@@ -65,6 +66,8 @@ enum Token {
         static let accent = SwiftUI.Color.accentColor
         static let rowHighlight = SwiftUI.Color.primary.opacity(0.06)
         static let separator = SwiftUI.Color(nsColor: .separatorColor)
+        static let hairlineSeparator = separator.opacity(0.5)
+        static let subordinateText = secondaryText.opacity(0.5)
         static let weekendText = SwiftUI.Color(nsColor: .systemRed)
         static let errorText = SwiftUI.Color(nsColor: .systemRed)
     }

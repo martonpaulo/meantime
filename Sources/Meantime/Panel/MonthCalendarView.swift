@@ -58,7 +58,9 @@ struct MonthCalendarView: View {
             CalendarNavButton(symbol: "chevron.left.2", label: "Previous year") { step(years: -1) }
             CalendarNavButton(symbol: "chevron.left", label: "Previous month") { step(months: -1) }
             Button("Today") {
-                panelModel.displayedMonth = nil
+                withAnimation(Token.Motion.quick) {
+                    panelModel.returnToToday()
+                }
             }
             .buttonStyle(.plain)
             .font(Token.Font.calendarNavigation)
@@ -139,7 +141,7 @@ private struct DayCell: View {
         if isSelected { return .white }
         if isToday { return Token.Color.accent }
         if day.isWeekend, day.isInMonth { return Token.Color.weekendText }
-        return day.isInMonth ? Token.Color.primaryText : Token.Color.secondaryText.opacity(0.5)
+        return day.isInMonth ? Token.Color.primaryText : Token.Color.subordinateText
     }
 
     var body: some View {

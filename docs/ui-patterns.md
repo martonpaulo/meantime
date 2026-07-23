@@ -62,8 +62,9 @@ ticks.
   update as you type.
 - **Hover states** on custom rows use the shared row-highlight token; buttons in
   quiet surfaces brighten from secondary to primary on hover.
-- **Destructive flows** (restore defaults, remove) confirm via
-  `confirmationDialog` with the destructive role.
+- **Destructive flows** always name the affected data and use a destructive
+  action role. Rare irreversible removal uses a native alert with an explicit
+  Cancel action; restore/discard choices use `confirmationDialog`.
 
 ## Before changing UI
 

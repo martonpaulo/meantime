@@ -23,9 +23,6 @@ public struct MonthGrid: Equatable, Sendable {
     /// The grid containing `date`'s month.
     public static func make(containing date: Date,
                             calendar: Calendar = .current) -> MonthGrid {
-        var calendar = calendar
-        calendar.timeZone = .current
-
         let monthStart = calendar.date(
             from: calendar.dateComponents([.year, .month], from: date)) ?? date
 

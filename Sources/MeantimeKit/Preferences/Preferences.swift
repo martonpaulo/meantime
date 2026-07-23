@@ -71,7 +71,11 @@ public final class Preferences {
     }
 
     public func removeClock(id: WorldClock.ID) {
-        clocks.removeAll { $0.id == id }
+        removeClocks(ids: [id])
+    }
+
+    public func removeClocks(ids: Set<WorldClock.ID>) {
+        clocks.removeAll { ids.contains($0.id) }
     }
 
     /// Reorders clocks with SwiftUI `onMove` semantics (Foundation-only, since

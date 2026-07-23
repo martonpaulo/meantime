@@ -8,6 +8,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Discoverable per-clock removal controls with destructive confirmation.
 - Per-clock country flag, custom emoji, custom text, or no leading item.
 - Save-gated live previews, per-clock Restore Defaults, format presets, and a configurable combined-item separator.
 - Calendar year navigation, labeled Today action, stable six-week layout, and locale-aware weekend styling.

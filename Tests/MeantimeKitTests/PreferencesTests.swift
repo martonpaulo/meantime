@@ -80,4 +80,30 @@ private final class MemoryStore: PreferenceStore {
         prefs.update(clock)
         #expect(prefs.clocks.last?.customLabel == "Paris Team")
     }
+
+    @Test func removingClockPersistsWriteThrough() {
+        let store = MemoryStore()
+        let prefs = Preferences(store: store)
+        let clock = WorldClock(timeZoneID: "Asia/Tokyo")
+        prefs.addClock(clock)
+
+        prefs.removeClock(id: clock.id)
+
+        #expect(!prefs.clocks.contains { $0.id == clock.id })
+        #expect(!Preferences(store: store).clocks.contains { $0.id == clock.id })
+    }
+
+    @Test func removingMultipleClocksByIDPreservesUnselectedClocks() {
+        let store = MemoryStore()
+        let prefs = Preferences(store: store)
+        let tokyo = WorldClock(timeZoneID: "Asia/Tokyo")
+        let sydney = WorldClock(timeZoneID: "Australia/Sydney")
+        let paris = WorldClock(timeZoneID: "Europe/Paris")
+        prefs.clocks = [tokyo, sydney, paris]
+
+        prefs.removeClocks(ids: [tokyo.id, paris.id])
+
+        #expect(prefs.clocks == [sydney])
+        #expect(Preferences(store: store).clocks == [sydney])
+    }
 }

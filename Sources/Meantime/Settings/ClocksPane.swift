@@ -1,12 +1,13 @@
 import SwiftUI
 import MeantimeKit
 
-/// Manage the clock list. Field edits happen in a Save-gated sheet; list-level
-/// commands such as add, remove, and reorder remain direct actions.
+/// Manage the clock list. Field edits happen in a Save-gated sheet; destructive
+/// removal is explicit and confirmed, while add and reorder remain direct.
 struct ClocksPane: View {
     @Environment(Preferences.self) private var preferences
     @Environment(SettingsPreview.self) private var settingsPreview
     @State private var editingClockID: WorldClock.ID?
+    @State private var clocksPendingRemoval: [WorldClock] = []
     @State private var isAdding = false
 
     var body: some View {
@@ -15,10 +16,16 @@ struct ClocksPane: View {
                 ForEach(preferences.clocks) { clock in
                     ClockRow(clock: clock,
                              onEdit: { editingClockID = clock.id },
-                             onRemove: { preferences.removeClock(id: clock.id) })
+                             onRemove: { clocksPendingRemoval = [clock] })
                 }
                 .onMove { preferences.moveClocks(from: $0, to: $1) }
-                .onDelete { preferences.removeClocks(at: $0) }
+                .onDelete { offsets in
+                    clocksPendingRemoval = offsets.compactMap { index in
+                        preferences.clocks.indices.contains(index)
+                            ? preferences.clocks[index]
+                            : nil
+                    }
+                }
 
                 Button {
                     isAdding = true
@@ -59,6 +66,12 @@ struct ClocksPane: View {
                     editingClockID = nil
                 })
         }
+        .alert(removalTitle, isPresented: removalConfirmationPresented) {
+            Button(removalActionTitle, role: .destructive, action: removePendingClocks)
+            Button("Cancel", role: .cancel) { clocksPendingRemoval = [] }
+        } message: {
+            Text(removalMessage)
+        }
     }
 
     /// Sheet identity for the editor: resolves the id to the live clock value.
@@ -74,6 +87,38 @@ struct ClocksPane: View {
         )
     }
 
+    private var removalConfirmationPresented: Binding<Bool> {
+        Binding(
+            get: { !clocksPendingRemoval.isEmpty },
+            set: { isPresented in
+                if !isPresented { clocksPendingRemoval = [] }
+            }
+        )
+    }
+
+    private var removalTitle: String {
+        guard clocksPendingRemoval.count == 1,
+              let clock = clocksPendingRemoval.first else {
+            return "Remove \(clocksPendingRemoval.count) clocks?"
+        }
+        return "Remove “\(clock.displayLabel)”?"
+    }
+
+    private var removalActionTitle: String {
+        clocksPendingRemoval.count == 1 ? "Remove Clock" : "Remove Clocks"
+    }
+
+    private var removalMessage: String {
+        clocksPendingRemoval.count == 1
+            ? "This removes the clock from the menu bar and dropdown. This can’t be undone."
+            : "These clocks will be removed from the menu bar and dropdown. This can’t be undone."
+    }
+
+    private func removePendingClocks() {
+        let ids = Set(clocksPendingRemoval.map(\.id))
+        preferences.removeClocks(ids: ids)
+        clocksPendingRemoval = []
+    }
 }
 
 /// One row: identity, saved visibility state, reorder, and Save-gated editing.
@@ -107,11 +152,19 @@ private struct ClockRow: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
             Button("Edit…", action: onEdit)
+            Button(role: .destructive, action: onRemove) {
+                Label("Remove \(clock.displayLabel)", systemImage: "trash")
+                    .labelStyle(.iconOnly)
+            }
+            .buttonStyle(.borderless)
+            .controlSize(.small)
+            .help("Remove \(clock.displayLabel)…")
+            .accessibilityLabel("Remove \(clock.displayLabel)")
         }
         .padding(.vertical, Token.Space.xxs)
         .contextMenu {
             Button("Edit…", action: onEdit)
-            Button("Remove", role: .destructive, action: onRemove)
+            Button("Remove Clock…", role: .destructive, action: onRemove)
         }
     }
 }

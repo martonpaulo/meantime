@@ -11,7 +11,7 @@
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B-blue)](#install)
 [![MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-<img src="docs/screenshots/menu-bar.png" alt="Two world clocks in the macOS menu bar" width="260">
+<img src="docs/screenshots/menu-bar.png" alt="Two world clocks in the macOS menu bar" width="222">
 
 <img src="docs/screenshots/panel-current.png" alt="The Meantime panel: clocks, month calendar, and time travel" width="340">
 

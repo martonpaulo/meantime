@@ -35,7 +35,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                     timeSource: timeSource, formatter: formatter, actions: actions)
 #if DEBUG
         if CommandLine.arguments.contains("--ui-validation-settings") {
-            showSettings()
+            showSettings(pane: .clocks)
+        } else if CommandLine.arguments.contains("--ui-validation-format") {
+            showSettings(pane: .format)
+        } else if CommandLine.arguments.contains("--ui-validation-general") {
+            showSettings(pane: .general)
         } else if CommandLine.arguments.contains("--ui-validation-panel") {
             showValidationPanel()
         }
@@ -172,7 +176,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 #if DEBUG
     private func prepareValidationData() {
-        if CommandLine.arguments.contains("--ui-validation-many-clocks") {
+        if CommandLine.arguments.contains("--ui-validation-screenshot-data") {
+            preferences.clocks = [
+                WorldClock(timeZoneID: "America/New_York", customLabel: "New York"),
+                WorldClock(timeZoneID: "America/Recife", customLabel: "Recife"),
+            ]
+            preferences.menuBarLayout = .individual
+        } else if CommandLine.arguments.contains("--ui-validation-many-clocks") {
             let identifiers = Array(TimeZone.knownTimeZoneIdentifiers.prefix(50))
             preferences.clocks = identifiers.enumerated().map { index, identifier in
                 WorldClock(timeZoneID: identifier, customLabel: "Clock \(index + 1)")

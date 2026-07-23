@@ -31,6 +31,19 @@ if git ls-files 2>/dev/null | grep -qiE '\.(p12|pem)$|_priv$'; then
     note "signing material must not be committed"
 fi
 
+# Dependabot must cover both runtime packages and pinned GitHub Actions.
+if [ ! -f .github/dependabot.yml ]; then
+    note "Dependabot configuration is required"
+else
+    grep -q 'package-ecosystem: "swift"' .github/dependabot.yml \
+        || note "Dependabot must monitor Swift packages"
+    grep -q 'package-ecosystem: "github-actions"' .github/dependabot.yml \
+        || note "Dependabot must monitor GitHub Actions"
+    ecosystems=$(grep -c 'package-ecosystem:' .github/dependabot.yml || true)
+    [ "$ecosystems" -eq 2 ] \
+        || note "Dependabot must define exactly the two supported ecosystems"
+fi
+
 # The panel is a menu-style status-item surface, not an arrowed popover.
 if ! grep -q 'view.material = \.menu' Sources/Meantime/MenuBar/PanelController.swift; then
     note "the menu-bar panel must use AppKit's menu material"
@@ -83,10 +96,20 @@ fi
 if ! grep -q 'screenshots/settings-current.png' docs/index.html; then
     note "homepage must show current Settings UI"
 fi
-for image in docs/screenshots/panel-current.png docs/screenshots/settings-current.png; do
-    [ -f "$image" ] || { note "missing current website image $image"; continue; }
+for image_and_width in \
+    "docs/screenshots/menu-bar.png:400" \
+    "docs/screenshots/panel.png:680" \
+    "docs/screenshots/panel-current.png:680" \
+    "docs/screenshots/settings-clocks.png:1120" \
+    "docs/screenshots/settings-format.png:1120" \
+    "docs/screenshots/settings-general.png:1120" \
+    "docs/screenshots/settings-current.png:1120"; do
+    image="${image_and_width%:*}"
+    minimum_width="${image_and_width##*:}"
+    [ -f "$image" ] || { note "missing current screenshot $image"; continue; }
     width=$(sips -g pixelWidth "$image" 2>/dev/null | awk '/pixelWidth/ {print $2}')
-    [ "${width:-0}" -ge 640 ] || note "$image must be at least 2x/640 px wide"
+    [ "${width:-0}" -ge "$minimum_width" ] \
+        || note "$image must be Retina quality (at least $minimum_width px wide)"
 done
 
 # Never publish a known-dead updater enclosure.

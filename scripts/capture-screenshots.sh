@@ -8,17 +8,24 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 OUT=docs/screenshots
+APP_PATH="${APP_PATH:-build/Meantime.app}"
+PROCESS_NAME="${PROCESS_NAME:-Meantime}"
+STAMP=$(date -u "+%Y%m%dT%H%M%SZ")
+HISTORY="artifacts/screenshot-history/$STAMP"
 mkdir -p "$OUT"
 
-[ -d build/Meantime.app ] || { echo "build/Meantime.app missing; run scripts/package-app.sh first"; exit 1; }
+[ -d "$APP_PATH" ] || { echo "$APP_PATH missing; run scripts/package-app.sh first"; exit 1; }
+[ ! -e "$HISTORY" ] || { echo "$HISTORY already exists; retry with a new timestamp"; exit 1; }
+mkdir -p "$HISTORY"
+find "$OUT" -maxdepth 1 -name '*.png' -exec cp {} "$HISTORY/" \;
 
-open build/Meantime.app
+open "$APP_PATH"
 sleep 2
 
 # Region of a UI element, as "x,y,w,h" in points (screencapture -R format).
 panel_rect() {
-    osascript <<'EOF'
-tell application "System Events" to tell process "Meantime"
+    osascript <<EOF
+tell application "System Events" to tell process "$PROCESS_NAME"
     click menu bar item 1 of menu bar 2
     delay 0.6
     set p to position of window 1
@@ -31,8 +38,8 @@ EOF
 
 menubar_rect() {
     # AX item order is not left-to-right; take the min/max across all items.
-    osascript <<'EOF'
-tell application "System Events" to tell process "Meantime"
+    osascript <<EOF
+tell application "System Events" to tell process "$PROCESS_NAME"
     set leftEdge to 100000
     set rightEdge to 0
     repeat with menuItem in menu bar items of menu bar 2
@@ -49,7 +56,7 @@ EOF
 
 settings_rect() {
     osascript <<EOF
-tell application "System Events" to tell process "Meantime"
+tell application "System Events" to tell process "$PROCESS_NAME"
     set frontmost to true
     delay 0.2
     click menu item "Settings…" of menu 1 of menu bar item 2 of menu bar 1
@@ -76,7 +83,11 @@ for pane in Clocks Format General; do
     echo "capturing $pane pane…"
     screencapture -x -R "$(settings_rect "$pane")" "$OUT/settings-$(echo "$pane" | tr '[:upper:]' '[:lower:]').png"
 done
-osascript -e 'tell application "System Events" to tell process "Meantime" to keystroke "w" using command down'
+osascript -e "tell application \"System Events\" to tell process \"$PROCESS_NAME\" to keystroke \"w\" using command down"
+
+cp "$OUT/panel.png" "$OUT/panel-current.png"
+cp "$OUT/settings-clocks.png" "$OUT/settings-current.png"
 
 echo "wrote $OUT:"
 ls -la "$OUT"/*.png
+echo "preserved previous screenshots in $HISTORY"

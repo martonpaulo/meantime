@@ -37,8 +37,8 @@ Open it, drag Meantime onto Applications, launch. Done — it updates itself.
 | 📅 **Quick calendar** | Click the menu bar → see the month. "The 15th is a… Tuesday." |
 | 🔮 **Time travel** | Pick a day, type a time — every clock previews that moment |
 | ⏰ **Scheduled clocks** | Show the NY clock only 8–12 and 13–17 *NY time*; it hides itself outside those hours |
-| ✏️ **Your format, your pattern** | Write any Unicode pattern — or assemble one visually in the [interactive format builder](https://martonpaulo.github.io/meantime/format.html) |
-| 🏷️ **Labels & emoji** | "Mom", "Tokyo Office" — any name, any emoji, or the country's flag |
+| ✏️ **Your format, your pattern** | Start with a common preset, write any Unicode pattern, or assemble one visually in the [interactive format builder](https://martonpaulo.github.io/meantime/format.html) |
+| 🏷️ **Labels & leading items** | "Mom", "Tokyo Office" — any name, with a country flag, custom emoji, custom text, or nothing before it |
 | 🚀 **Open at login** | Set it once, forget it |
 
 ## 🔋 Fast and honest about energy

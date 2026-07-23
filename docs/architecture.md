@@ -19,9 +19,12 @@ script). Sparkle is embedded only in the packaged app.
 
 ## Data flow
 
-- **Preferences** is the single, observable source of truth. It persists every
-  change write-through and seeds sensible defaults on first launch.
-- The **menu-bar controller** observes preferences. When the set of pinned
+- **Preferences** is the single, observable durable source of truth. It
+  persists committed changes write-through and seeds sensible defaults on
+  first launch. A single app-surface settings preview temporarily overlays
+  draft values for rendering; Save commits them and Cancel discards them.
+- The **menu-bar controller** observes committed preferences and the transient
+  settings preview. When the set of pinned
   clocks changes it rebuilds status items; for lighter changes (label, emoji,
   size, format) it just refreshes titles, so dragging a slider never flickers
   the menu bar.

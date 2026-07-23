@@ -2,12 +2,12 @@ import Foundation
 
 /// How a pinned clock draws in the menu bar.
 ///
-/// Every clock in the panel always shows flag + label + time; this choice only
-/// affects a clock that has its own dedicated menu-bar item.
+/// Every clock in the panel always shows its optional adornment, label, and
+/// time; this choice only affects a dedicated menu-bar item.
 public enum ClockRenderMode: String, Codable, CaseIterable, Sendable, Identifiable {
     /// Just the formatted time, e.g. `09:47`.
     case timeOnly
-    /// Region flag (or the clock's custom emoji) then the time, e.g. `🇺🇸 09:47`.
+    /// The clock's resolved adornment then the time, e.g. `🇺🇸 09:47`.
     case flagAndTime
     /// A small analog clock face showing the zone's time — no text.
     case analogClock

@@ -13,16 +13,17 @@ specific `AGENTS.md` inside a subtree overrides this one for that subtree.
 Meantime shows world clocks in the macOS menu bar. It is a native, accessory
 (menu-bar-only) app.
 
-- Add a clock for any time zone; give it a custom label and emoji.
+- Add a clock for any time zone; give it a custom label and choose a country
+  flag, custom emoji, custom text, or no leading item.
 - Show any clock directly in the menu bar (its own item, or all clocks combined
   into one), keep it panel-only, or schedule the hours — in the clock's own
   zone — during which it appears.
 - The dropdown panel is a glance surface: complete times with GMT/day captions,
   a quick month calendar, and typed time travel (pick a day, type a time) that
   previews the moment across every clock and resets on close.
-- The time format is a Unicode (UTS-35) pattern with a live preview and legend;
-  the website ships an interactive format builder that assembles patterns
-  visually. The Mac's system format is the default and the one-click reset.
+- The time format starts with common presets and supports any custom Unicode
+  (UTS-35) pattern with a live preview; the website ships an interactive
+  grouped builder. The Mac's system format is the default.
 
 **Simple by design.** No accounts, no sync, no widgets, no analytics, no
 telemetry. The only network activity permitted is Sparkle update checks in the

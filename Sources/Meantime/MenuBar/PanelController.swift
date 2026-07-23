@@ -100,9 +100,9 @@ final class PanelController: NSObject, NSWindowDelegate {
 struct PanelBackground: NSViewRepresentable {
     func makeNSView(context: Context) -> NSVisualEffectView {
         let view = NSVisualEffectView()
-        // Popover material matches Control-Center-style anchored surfaces (menu
-        // material reads darker than the menu bar it hangs from).
-        view.material = .popover
+        // This borderless, arrowless status-item surface has menu semantics.
+        // Apple's dedicated menu material matches native menu-bar dropdowns.
+        view.material = .menu
         view.blendingMode = .behindWindow
         view.state = .active
         return view

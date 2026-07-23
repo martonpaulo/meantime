@@ -9,12 +9,15 @@ public struct MonthGrid: Equatable, Sendable {
         public let dayNumber: Int
         /// False for the leading/trailing days of adjacent months.
         public let isInMonth: Bool
+        /// Locale-aware weekend state prepared by `Calendar`.
+        public let isWeekend: Bool
 
         public var id: Date { date }
     }
 
     public let monthStart: Date
-    /// Always whole weeks; 4–6 rows of exactly 7 days.
+    /// Always six whole weeks of exactly seven days. Stable geometry keeps the
+    /// menu-bar panel from resizing when the visible month changes.
     public let weeks: [[Day]]
 
     /// The grid containing `date`'s month.
@@ -25,7 +28,6 @@ public struct MonthGrid: Equatable, Sendable {
 
         let monthStart = calendar.date(
             from: calendar.dateComponents([.year, .month], from: date)) ?? date
-        let monthRange = calendar.range(of: .day, in: .month, for: monthStart) ?? 1..<31
 
         // Back up to the first day of the week containing the 1st.
         let weekdayOfFirst = calendar.component(.weekday, from: monthStart)
@@ -34,8 +36,7 @@ public struct MonthGrid: Equatable, Sendable {
             return MonthGrid(monthStart: monthStart, weeks: [])
         }
 
-        let dayCount = lead + monthRange.count
-        let weekCount = Int((Double(dayCount) / 7).rounded(.up))
+        let weekCount = 6
 
         var weeks: [[Day]] = []
         for week in 0..<weekCount {
@@ -46,7 +47,8 @@ public struct MonthGrid: Equatable, Sendable {
                 days.append(Day(
                     date: dayDate,
                     dayNumber: calendar.component(.day, from: dayDate),
-                    isInMonth: calendar.isDate(dayDate, equalTo: monthStart, toGranularity: .month)))
+                    isInMonth: calendar.isDate(dayDate, equalTo: monthStart, toGranularity: .month),
+                    isWeekend: calendar.isDateInWeekend(dayDate)))
             }
             weeks.append(days)
         }

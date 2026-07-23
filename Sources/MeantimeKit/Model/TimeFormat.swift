@@ -17,6 +17,3 @@ public enum TimeFormat: Codable, Hashable, Sendable {
 
     public var isSystem: Bool { self == .system }
 }
-
-// There is deliberately no preset list: patterns are written directly (the
-// website's interactive builder assembles them visually).

@@ -6,6 +6,7 @@
   --ink: #101426;
   --muted: #5a6178;
   --accent: #2f63e7;
+  --error: #b42318;
   --accent-ink: #ffffff;
   --border: rgba(16, 20, 38, 0.10);
   --shadow: 0 18px 48px rgba(16, 20, 38, 0.12);
@@ -18,6 +19,7 @@
     --ink: #eef1fb;
     --muted: #9aa3c0;
     --accent: #5a8bff;
+    --error: #ff6961;
     --accent-ink: #0b0e1a;
     --border: rgba(238, 241, 251, 0.12);
     --shadow: 0 18px 48px rgba(0, 0, 0, 0.5);
@@ -108,7 +110,69 @@ h2 { font-size: clamp(1.5rem, 3.4vw, 2rem); line-height: 1.18; margin: 0.2rem 0 
 
 .download { padding-bottom: 0.5rem; }
 .download img { border-radius: 22px; box-shadow: var(--shadow); margin-bottom: 0.6rem; }
-.download .compatibility { margin-top: 1.2rem; }
+.section.download > .compatibility { margin-top: 1.8rem; }
+
+/* Format builder */
+.builder-page { padding-top: 2rem; }
+.builder-intro { max-width: 36rem; margin: 0 auto; }
+.builder { max-width: 720px; margin: 0 auto; text-align: left; }
+.preview-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 1.6rem; text-align: center; margin: 2rem 0 1.4rem;
+}
+.preview-time {
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(2rem, 6vw, 3rem); font-weight: 700; letter-spacing: -0.01em;
+}
+.preview-caption { color: var(--muted); font-size: 0.85rem; margin: 0.3rem 0 0; }
+.preset-row { margin-bottom: 1rem; }
+.preset-row label, .literal-row label { display: block; font-weight: 650; margin-bottom: 0.35rem; }
+.preset-row select, .pattern-row input, .literal-row input {
+  width: 100%; font: inherit; padding: 0.65rem 0.8rem; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--ink);
+}
+.pattern-row { display: grid; grid-template-columns: 1fr auto auto; gap: 0.6rem; margin-bottom: 1.6rem; }
+.pattern-row input { font: 600 1.05rem/1.4 ui-monospace, "SF Mono", Menlo, monospace; }
+.preset-row select:focus, .pattern-row input:focus, .literal-row input:focus {
+  outline: 2px solid var(--accent); outline-offset: 1px;
+}
+.builder-button {
+  font: inherit; font-weight: 600; padding: 0.65rem 1rem; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--ink); cursor: pointer;
+}
+.builder-button.primary { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.builder-button:hover:not(:disabled) { filter: brightness(1.08); border-color: var(--accent); }
+.builder-button:disabled { cursor: not-allowed; opacity: 0.45; }
+.builder-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.8rem; }
+.builder fieldset {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); padding: 0.9rem 1rem 1rem; margin: 0;
+}
+.builder legend {
+  font-weight: 700; font-size: 0.78rem; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted); padding: 0 0.35rem;
+}
+.token-buttons { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.token-buttons button {
+  min-width: 3.25rem; font: inherit; cursor: pointer; padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border); border-radius: 9px; background: transparent; color: var(--ink);
+}
+.token-buttons button:hover:not(:disabled) { border-color: var(--accent); }
+.token-buttons button:disabled { cursor: not-allowed; opacity: 0.4; }
+.token-buttons code { display: block; font-weight: 700; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+.token-buttons small { display: block; color: var(--muted); }
+.literal-fieldset { margin-top: 0.8rem !important; }
+.literal-row { display: grid; grid-template-columns: 1fr auto; gap: 0.6rem; align-items: end; }
+.builder .hint { color: var(--muted); font-size: 0.9rem; }
+.builder-status { min-height: 1.5em; color: var(--muted); font-size: 0.9rem; margin: 0.8rem 0 0; }
+.builder-status.error { color: var(--error); }
+.builder-help { margin-top: 1.4rem; }
+.back { display: inline-block; margin-top: 2rem; }
+@media (max-width: 560px) {
+  .pattern-row { grid-template-columns: 1fr 1fr; }
+  .pattern-row input { grid-column: 1 / -1; }
+}
 
 .site-footer {
   border-top: 1px solid var(--border); text-align: center;

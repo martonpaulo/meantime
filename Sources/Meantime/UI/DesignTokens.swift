@@ -30,6 +30,7 @@ enum Token {
         static let hitTarget: CGFloat = 22
         /// Width of every settings pane (windowhop-style fixed panes).
         static let paneWidth: CGFloat = 560
+        static let editorWidth: CGFloat = 440
         /// Gap between the menu bar and the anchored panel.
         static let panelGap: CGFloat = 5
         /// Screen-edge margin the panel never crosses.
@@ -39,6 +40,7 @@ enum Token {
         static let calendarSelection: CGFloat = 24
         /// Fixed icon column in panel action rows, so labels align.
         static let actionIconColumn: CGFloat = 16
+        static let adornmentColumn: CGFloat = 22
     }
 
     /// Typography. Time uses monospaced digits so it never jitters as it ticks.
@@ -50,6 +52,9 @@ enum Token {
         static let label = SwiftUI.Font.system(size: 13, weight: .regular)
         static let secondary = SwiftUI.Font.system(size: 11, weight: .regular)
         static let sectionTitle = SwiftUI.Font.system(size: 11, weight: .semibold)
+        static let action = SwiftUI.Font.system(size: 13, weight: .regular)
+        static let calendarDay = SwiftUI.Font.system(size: 12, weight: .regular)
+        static let calendarNavigation = SwiftUI.Font.system(size: 11, weight: .semibold)
     }
 
     /// Semantic colors, all derived from system materials so light/dark and
@@ -60,6 +65,8 @@ enum Token {
         static let accent = SwiftUI.Color.accentColor
         static let rowHighlight = SwiftUI.Color.primary.opacity(0.06)
         static let separator = SwiftUI.Color(nsColor: .separatorColor)
+        static let weekendText = SwiftUI.Color(nsColor: .systemRed)
+        static let errorText = SwiftUI.Color(nsColor: .systemRed)
     }
 
     /// Animation used for lightweight state changes (never for the ticking time).

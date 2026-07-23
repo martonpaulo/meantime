@@ -10,6 +10,7 @@ import SwiftUI
 @MainActor
 final class MenuBarController: NSObject {
     private let preferences: Preferences
+    private let settingsPreview: SettingsPreview
     private let timeSource: TimeSource
     private let formatter: ClockFormatter
     private let panelModel = PanelModel()
@@ -19,9 +20,10 @@ final class MenuBarController: NSObject {
     private var entries: [(item: NSStatusItem, clockID: UUID?)] = []
     private var shownSignature = ""
 
-    init(preferences: Preferences, timeSource: TimeSource,
+    init(preferences: Preferences, settingsPreview: SettingsPreview, timeSource: TimeSource,
          formatter: ClockFormatter, actions: PanelActions) {
         self.preferences = preferences
+        self.settingsPreview = settingsPreview
         self.timeSource = timeSource
         self.formatter = formatter
 
@@ -58,21 +60,21 @@ final class MenuBarController: NSObject {
         var visible: [ClockUpdatePlanner.Visible] = []
 
         for clock in shownClocks(at: now) {
-            let mode = preferences.menuBarLayout == .combined ? textualMode(for: clock) : clock.renderMode
+            let mode = settingsPreview.menuBarLayout == .combined ? textualMode(for: clock) : clock.renderMode
             visible.append(.init(
-                granularity: TimeGranularity.finest(renderMode: mode, format: preferences.timeFormat),
+                granularity: TimeGranularity.finest(renderMode: mode, format: settingsPreview.timeFormat),
                 timeZone: clock.timeZone))
         }
         if panel.isShown {
             // Panel rows always show complete time, even for hour-only bars.
             let panelGranularity = TimeGranularity.finest(
                 renderMode: .timeOnly,
-                format: PanelRowFormatter.effectiveFormat(preferences.timeFormat))
-            for clock in preferences.clocks {
+                format: PanelRowFormatter.effectiveFormat(settingsPreview.timeFormat))
+            for clock in settingsPreview.clocks {
                 visible.append(.init(granularity: panelGranularity, timeZone: clock.timeZone))
             }
         }
-        let transitions = preferences.clocks.compactMap { clock -> Date? in
+        let transitions = settingsPreview.clocks.compactMap { clock -> Date? in
             guard clock.isPinned else { return nil }
             return ClockSchedule.nextTransition(after: now, windows: clock.activeWindows,
                                                 timeZone: clock.timeZone)
@@ -83,18 +85,18 @@ final class MenuBarController: NSObject {
     // MARK: Shown clocks
 
     private func shownClocks(at date: Date) -> [WorldClock] {
-        preferences.clocks.filter { $0.isActiveInMenuBar(at: date) }
+        settingsPreview.clocks.filter { $0.isActiveInMenuBar(at: date) }
     }
 
     /// The combined item is a single text run; an analog-face clock contributes
-    /// its textual form there (flag + time) since a glyph cannot ride along.
+    /// its textual form there (adornment + time) since a glyph cannot ride along.
     private func textualMode(for clock: WorldClock) -> ClockRenderMode {
         clock.renderMode == .analogClock ? .flagAndTime : clock.renderMode
     }
 
     private func signature(shown: [WorldClock]) -> String {
         let ids = shown.map(\.id.uuidString).joined(separator: ",")
-        return "\(preferences.menuBarLayout.rawValue)|\(ids)"
+        return "\(settingsPreview.menuBarLayout.rawValue)|\(ids)"
     }
 
     // MARK: Status items
@@ -115,7 +117,7 @@ final class MenuBarController: NSObject {
         for entry in entries { NSStatusBar.system.removeStatusItem(entry.item) }
         entries.removeAll()
 
-        switch (shown.isEmpty, preferences.menuBarLayout) {
+        switch (shown.isEmpty, settingsPreview.menuBarLayout) {
         case (true, _):
             entries.append((makeStatusItem(), nil)) // always reachable
         case (false, .combined):
@@ -138,7 +140,7 @@ final class MenuBarController: NSObject {
             guard let button = entry.item.button else { continue }
             if let id = entry.clockID, let clock = shown.first(where: { $0.id == id }) {
                 apply(clock, to: button, now: now)
-            } else if !shown.isEmpty, preferences.menuBarLayout == .combined {
+            } else if !shown.isEmpty, settingsPreview.menuBarLayout == .combined {
                 applyCombined(shown, to: button, now: now)
             } else {
                 applyFallback(to: button)
@@ -147,7 +149,7 @@ final class MenuBarController: NSObject {
     }
 
     private func apply(_ clock: WorldClock, to button: NSStatusBarButton, now: Date) {
-        let time = formatter.string(for: now, clock: clock, format: preferences.timeFormat)
+        let time = formatter.string(for: now, clock: clock, format: settingsPreview.timeFormat)
         switch clock.renderMode {
         case .analogClock:
             button.image = AnalogClockRenderer.image(for: now, timeZone: clock.timeZone,
@@ -158,28 +160,30 @@ final class MenuBarController: NSObject {
             button.image = nil
             button.imagePosition = .noImage
             button.attributedTitle = StatusItemTitle.attributed(
-                emoji: nil, time: time, textSize: preferences.textSize, spacing: preferences.elementSpacing)
+                adornment: nil, time: time, textSize: settingsPreview.textSize,
+                spacing: settingsPreview.elementSpacing)
         case .flagAndTime:
             button.image = nil
             button.imagePosition = .noImage
             button.attributedTitle = StatusItemTitle.attributed(
-                emoji: clock.displayEmoji, time: time,
-                textSize: preferences.textSize, spacing: preferences.elementSpacing)
+                adornment: clock.displayAdornment, time: time,
+                textSize: settingsPreview.textSize, spacing: settingsPreview.elementSpacing)
         }
         button.toolTip = "\(clock.displayLabel) — \(time)"
         button.setAccessibilityLabel("\(clock.displayLabel), \(time)")
     }
 
     private func applyCombined(_ shown: [WorldClock], to button: NSStatusBarButton, now: Date) {
-        let entries = shown.map { clock -> (emoji: String?, time: String) in
-            let time = formatter.string(for: now, clock: clock, format: preferences.timeFormat)
-            return (textualMode(for: clock) == .timeOnly ? nil : clock.displayEmoji, time)
+        let entries = shown.map { clock -> (adornment: String?, time: String) in
+            let time = formatter.string(for: now, clock: clock, format: settingsPreview.timeFormat)
+            return (textualMode(for: clock) == .timeOnly ? nil : clock.displayAdornment, time)
         }
         button.image = nil
         button.imagePosition = .noImage
         button.attributedTitle = StatusItemTitle.combined(
-            entries: entries, textSize: preferences.textSize, spacing: preferences.elementSpacing)
-        let summary = shown.map { "\($0.displayLabel) \(formatter.string(for: now, clock: $0, format: preferences.timeFormat))" }
+            entries: entries, separator: settingsPreview.combinedSeparator,
+            textSize: settingsPreview.textSize, spacing: settingsPreview.elementSpacing)
+        let summary = shown.map { "\($0.displayLabel) \(formatter.string(for: now, clock: $0, format: settingsPreview.timeFormat))" }
             .joined(separator: ", ")
         button.toolTip = summary
         button.setAccessibilityLabel(summary)
@@ -209,6 +213,13 @@ final class MenuBarController: NSObject {
             _ = preferences.menuBarLayout
             _ = preferences.textSize
             _ = preferences.elementSpacing
+            _ = preferences.combinedSeparator
+            _ = settingsPreview.clocks
+            _ = settingsPreview.timeFormat
+            _ = settingsPreview.menuBarLayout
+            _ = settingsPreview.combinedSeparator
+            _ = settingsPreview.textSize
+            _ = settingsPreview.elementSpacing
         } onChange: { [weak self] in
             Task { @MainActor in
                 guard let self else { return }

@@ -74,6 +74,18 @@ private func utc(_ year: Int, _ month: Int, _ day: Int,
         #expect(clock.renderMode == .timeOnly)
         #expect(clock.isPinned == false)
         #expect(clock.activeWindows.isEmpty)
+        #expect(clock.adornmentStyle == .flag)
+        #expect(clock.customText == nil)
+    }
+
+    @Test func legacyCustomEmojiMigratesToEmojiAdornment() throws {
+        let legacy = """
+        {"id":"6F9619FF-8B86-D011-B42D-00C04FC964FF","timeZoneID":"Asia/Tokyo",
+         "customEmoji":"🏯","renderMode":"flagAndTime","isPinned":true}
+        """.data(using: .utf8)!
+        let clock = try JSONDecoder().decode(WorldClock.self, from: legacy)
+        #expect(clock.adornmentStyle == .emoji)
+        #expect(clock.displayAdornment == "🏯")
     }
 
     @Test func scheduledVisibilityGovernsMenuBarPresence() {

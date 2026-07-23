@@ -71,4 +71,46 @@ private func utc(_ year: Int, _ month: Int, _ day: Int,
         // Second call for the same key must produce the same result (cache hit).
         #expect(formatter.string(for: moment, timeZone: utcZone, format: .custom("HH:mm"), locale: posix) == "09:47")
     }
+
+    @Test func requestedUTS35FieldsAndLiteralTextAreAccepted() {
+        let patterns = [
+            "yy", "yyyy", "M", "MM", "MMM", "MMMM", "d", "dd", "EEE", "EEEE",
+            "a", "h", "hh", "H", "HH", "m", "mm", "s", "ss", "z", "zzzz", "XXX", "VV",
+            "yyyy/MM/dd", "dd-MM-yy", "EEE, d MMM · HH:mm:ss z",
+            "'Meeting at' h:mm a", "'Sam''s time:' HH:mm",
+        ]
+        let utcZone = TimeZone(identifier: "UTC")!
+
+        for pattern in patterns {
+            #expect(TimeFormatPattern.isValid(pattern), "Expected valid pattern: \(pattern)")
+            #expect(!formatter.string(for: moment, timeZone: utcZone,
+                                      format: .custom(pattern), locale: posix).isEmpty)
+        }
+    }
+
+    @Test func patternValidationRejectsEmptyAndUnbalancedLiterals() {
+        #expect(!TimeFormatPattern.isValid(""))
+        #expect(!TimeFormatPattern.isValid("   "))
+        #expect(!TimeFormatPattern.isValid("HH 'unfinished"))
+        #expect(TimeFormatPattern.isValid("HH 'o''clock'"))
+    }
+}
+
+@Suite struct TimeFormatPresetTests {
+    @Test func commonFormatsMapToStablePresets() {
+        #expect(TimeFormatPreset.matching(.system) == .systemDefault)
+        #expect(TimeFormatPreset.matching(.custom("HH:mm")) == .twentyFourHour)
+        #expect(TimeFormatPreset.matching(.custom("h:mm a")) == .twelveHour)
+        #expect(TimeFormatPreset.matching(.custom("EEE d MMM · HH:mm")) == .dateAndTime)
+        #expect(TimeFormatPreset.matching(.custom("VV")) == .custom)
+    }
+
+    @Test func everyNonCustomPresetHasAValidFormat() {
+        for preset in TimeFormatPreset.allCases where preset != .custom {
+            #expect(preset.format != nil)
+            if let pattern = preset.format?.customPattern {
+                #expect(TimeFormatPattern.isValid(pattern))
+            }
+        }
+    }
 }

@@ -5,7 +5,7 @@ import MeantimeKit
 /// this, they do not compute it.
 struct PanelRow: Identifiable {
     let id: UUID
-    let emoji: String
+    let adornment: String?
     let label: String
     let time: String
     /// Always present: the zone's GMT offset ("GMT−3"), DST-aware.
@@ -33,7 +33,7 @@ enum PanelRowFormatter {
         return clocks.map { clock in
             PanelRow(
                 id: clock.id,
-                emoji: clock.displayEmoji,
+                adornment: clock.displayAdornment,
                 label: clock.displayLabel,
                 time: formatter.string(for: date, clock: clock, format: format, locale: locale),
                 offsetCaption: ZoneOffset.caption(for: clock.timeZone, at: date),

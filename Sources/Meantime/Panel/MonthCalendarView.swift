@@ -21,14 +21,25 @@ struct MonthCalendarView: View {
     var body: some View {
         VStack(spacing: Token.Space.xs) {
             header
-            weekdayRow
-            ForEach(Array(grid.weeks.enumerated()), id: \.offset) { _, week in
-                HStack(spacing: 0) {
-                    ForEach(week) { day in
-                        DayCell(day: day,
-                                isSelected: isSelected(day),
-                                isToday: calendar.isDate(day.date, inSameDayAs: timeSource.now)) {
-                            select(day)
+            Grid(horizontalSpacing: 0, verticalSpacing: 0) {
+                GridRow {
+                    ForEach(Array(MonthGrid.weekdaySymbols(calendar: calendar).enumerated()),
+                            id: \.offset) { index, symbol in
+                        Text(symbol)
+                            .font(Token.Font.secondary.weight(.medium))
+                            .foregroundStyle(isWeekendColumn(index)
+                                ? Token.Color.weekendText : Token.Color.secondaryText)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                ForEach(Array(grid.weeks.enumerated()), id: \.offset) { _, week in
+                    GridRow {
+                        ForEach(week) { day in
+                            DayCell(day: day,
+                                    isSelected: isSelected(day),
+                                    isToday: calendar.isDate(day.date, inSameDayAs: timeSource.now)) {
+                                select(day)
+                            }
                         }
                     }
                 }
@@ -38,31 +49,29 @@ struct MonthCalendarView: View {
     }
 
     private var header: some View {
-        HStack(spacing: Token.Space.sm) {
+        HStack(spacing: Token.Space.xs) {
             Text(monthTitle)
                 .font(Token.Font.label.weight(.semibold))
                 .foregroundStyle(Token.Color.primaryText)
                 .accessibilityAddTraits(.isHeader)
             Spacer()
-            CalendarNavButton(symbol: "chevron.left", label: "Previous month") { step(-1) }
-            CalendarNavButton(symbol: "circle.fill", label: "Current month") {
+            CalendarNavButton(symbol: "chevron.left.2", label: "Previous year") { step(years: -1) }
+            CalendarNavButton(symbol: "chevron.left", label: "Previous month") { step(months: -1) }
+            Button("Today") {
                 panelModel.displayedMonth = nil
             }
-            CalendarNavButton(symbol: "chevron.right", label: "Next month") { step(1) }
+            .buttonStyle(.plain)
+            .font(Token.Font.calendarNavigation)
+            .foregroundStyle(Token.Color.secondaryText)
+            .help("Return to the current month")
+            CalendarNavButton(symbol: "chevron.right", label: "Next month") { step(months: 1) }
+            CalendarNavButton(symbol: "chevron.right.2", label: "Next year") { step(years: 1) }
         }
         .padding(.bottom, Token.Space.xxs)
     }
 
-    private var weekdayRow: some View {
-        HStack(spacing: 0) {
-            ForEach(Array(MonthGrid.weekdaySymbols(calendar: calendar).enumerated()),
-                    id: \.offset) { _, symbol in
-                Text(symbol)
-                    .font(Token.Font.secondary.weight(.medium))
-                    .foregroundStyle(Token.Color.secondaryText)
-                    .frame(maxWidth: .infinity)
-            }
-        }
+    private func isWeekendColumn(_ index: Int) -> Bool {
+        grid.weeks.first?[index].isWeekend == true
     }
 
     private func isSelected(_ day: MonthGrid.Day) -> Bool {
@@ -87,8 +96,12 @@ struct MonthCalendarView: View {
         }
     }
 
-    private func step(_ months: Int) {
+    private func step(months: Int) {
         panelModel.displayedMonth = calendar.date(byAdding: .month, value: months, to: visibleMonth)
+    }
+
+    private func step(years: Int) {
+        panelModel.displayedMonth = calendar.date(byAdding: .year, value: years, to: visibleMonth)
     }
 }
 
@@ -101,13 +114,14 @@ private struct CalendarNavButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: symbol == "circle.fill" ? 7 : 11, weight: .semibold))
+                .font(Token.Font.calendarNavigation)
                 .foregroundStyle(Token.Color.secondaryText)
                 .frame(width: Token.Size.hitTarget, height: Token.Size.hitTarget)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
+        .help(label)
     }
 }
 
@@ -124,13 +138,14 @@ private struct DayCell: View {
     private var textColor: Color {
         if isSelected { return .white }
         if isToday { return Token.Color.accent }
+        if day.isWeekend, day.isInMonth { return Token.Color.weekendText }
         return day.isInMonth ? Token.Color.primaryText : Token.Color.secondaryText.opacity(0.5)
     }
 
     var body: some View {
         Button(action: select) {
             Text("\(day.dayNumber)")
-                .font(Token.Font.secondary.weight(isToday || isSelected ? .bold : .regular))
+                .font(Token.Font.calendarDay.weight(isToday || isSelected ? .bold : .regular))
                 .monospacedDigit()
                 .foregroundStyle(textColor)
                 .frame(maxWidth: .infinity, minHeight: Token.Size.calendarCell)
@@ -150,6 +165,7 @@ private struct DayCell: View {
         .buttonStyle(.plain)
         .onHover { isHovering = $0 }
         .accessibilityLabel("Day \(day.dayNumber)")
+        .accessibilityValue(day.isWeekend ? "Weekend" : "Weekday")
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 }

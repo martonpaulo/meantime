@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let timeSource = TimeSource()
     private let formatter = ClockFormatter()
     private let updateManager = UpdateManager()
+    private lazy var settingsPreview = SettingsPreview(preferences: preferences)
     private var menuBar: MenuBarController?
     private var settingsWindow: SettingsWindowController?
 
@@ -23,8 +24,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             openSettings: { [weak self] in self?.showSettings() },
             quit: { NSApp.terminate(nil) }
         )
-        menuBar = MenuBarController(preferences: preferences, timeSource: timeSource,
-                                    formatter: formatter, actions: actions)
+        menuBar = MenuBarController(preferences: preferences, settingsPreview: settingsPreview,
+                                    timeSource: timeSource, formatter: formatter, actions: actions)
     }
 
     // MARK: Windows
@@ -32,7 +33,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func showSettings() {
         if settingsWindow == nil {
             settingsWindow = SettingsWindowController(
-                preferences: preferences, formatter: formatter, updateManager: updateManager)
+                preferences: preferences, settingsPreview: settingsPreview,
+                formatter: formatter, updateManager: updateManager)
         }
         settingsWindow?.show()
     }

@@ -31,9 +31,15 @@ public final class Preferences {
         didSet { store.set(textSize, forKey: Key.textSize) }
     }
 
-    /// Gap, in points, between an item's emoji and its time (and around items).
+    /// Gap, in points, between an item's adornment and its time (and around items).
     public var elementSpacing: Double {
         didSet { store.set(elementSpacing, forKey: Key.elementSpacing) }
+    }
+
+    /// Text between clocks when all clocks share one status item. Empty is an
+    /// intentional value; spacing still keeps adjacent clocks legible.
+    public var combinedSeparator: String {
+        didSet { store.set(combinedSeparator, forKey: Key.combinedSeparator) }
     }
 
     public init(store: PreferenceStore = UserDefaults.standard) {
@@ -48,6 +54,8 @@ public final class Preferences {
             ?? PreferenceDefaults.textSize
         self.elementSpacing = Self.readDouble(Key.elementSpacing, from: store)
             ?? PreferenceDefaults.elementSpacing
+        self.combinedSeparator = store.object(forKey: Key.combinedSeparator) as? String
+            ?? PreferenceDefaults.combinedSeparator
     }
 
     // MARK: Clock editing
@@ -102,6 +110,7 @@ public final class Preferences {
         menuBarLayout = PreferenceDefaults.menuBarLayout
         textSize = PreferenceDefaults.textSize
         elementSpacing = PreferenceDefaults.elementSpacing
+        combinedSeparator = PreferenceDefaults.combinedSeparator
     }
 
     // MARK: Persistence helpers
@@ -127,5 +136,6 @@ public final class Preferences {
         static let menuBarLayout = "menuBarLayout.v1"
         static let textSize = "textSize"
         static let elementSpacing = "elementSpacing"
+        static let combinedSeparator = "combinedSeparator"
     }
 }

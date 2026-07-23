@@ -36,7 +36,7 @@ struct PanelView: View {
             PanelDivider()
             footer
         }
-        .padding(.vertical, Token.Space.sm)
+        .padding(.vertical, Token.Space.xs)
         .frame(width: Token.Size.panelWidth)
         .background(PanelBackground())
         .clipShape(RoundedRectangle(cornerRadius: Token.Radius.panel, style: .continuous))
@@ -96,7 +96,7 @@ private struct FooterButton: View {
         Button(action: action) {
             Label(title, systemImage: symbol)
                 .labelStyle(PanelActionLabelStyle())
-                .font(Token.Font.secondary)
+                .font(Token.Font.action)
                 .foregroundStyle(isHovering ? Token.Color.primaryText : Token.Color.secondaryText)
                 .contentShape(Rectangle())
         }
@@ -108,7 +108,7 @@ private struct FooterButton: View {
 /// Hairline divider with the panel's standard vertical rhythm.
 private struct PanelDivider: View {
     var body: some View {
-        Divider().padding(.vertical, Token.Space.sm)
+        Divider().padding(.vertical, Token.Space.xxs)
     }
 }
 
@@ -124,9 +124,10 @@ private struct ClockRowView: View {
     }
 
     var body: some View {
-        HStack(spacing: spacing + Token.Space.sm) {
-            Text(row.emoji)
-                .font(.system(size: textSize + 2))
+        HStack(spacing: spacing + Token.Space.xs) {
+            Text(row.adornment ?? "")
+                .font(Token.Font.label)
+                .frame(width: Token.Size.adornmentColumn, alignment: .center)
             VStack(alignment: .leading, spacing: 0) {
                 Text(row.label)
                     .font(Token.Font.label)
@@ -137,7 +138,7 @@ private struct ClockRowView: View {
             }
             Spacer(minLength: Token.Space.md)
             Text(row.time)
-                .font(Token.Font.time(textSize + 1))
+                .font(Token.Font.time(textSize))
                 .foregroundStyle(Token.Color.primaryText)
         }
         .padding(.horizontal, Token.Space.sm)
@@ -190,7 +191,7 @@ private struct TimeTravelSection: View {
         HStack(spacing: Token.Space.sm) {
             Label("Time travel", systemImage: "clock.arrow.2.circlepath")
                 .labelStyle(PanelActionLabelStyle())
-                .font(Token.Font.secondary)
+                .font(Token.Font.action)
                 .foregroundStyle(Token.Color.secondaryText)
             Spacer()
             if panelModel.isTraveling {
@@ -198,14 +199,14 @@ private struct TimeTravelSection: View {
                     withAnimation(Token.Motion.quick) { panelModel.reset() }
                 }
                 .buttonStyle(.link)
-                .font(Token.Font.secondary)
+                .font(Token.Font.action)
                 .help("Back to the current time")
             }
-            DatePicker("Preview time", selection: timeBinding, displayedComponents: [.hourAndMinute])
+            DatePicker("Time", selection: timeBinding, displayedComponents: [.hourAndMinute])
                 .datePickerStyle(.field)
-                .labelsHidden()
+                .controlSize(.small)
                 .fixedSize()
-                .accessibilityLabel("Preview time")
+                .accessibilityLabel("Time travel preview time")
         }
         .padding(.horizontal, Token.Space.lg)
     }

@@ -26,6 +26,39 @@ if git ls-files 2>/dev/null | grep -qiE '\.(p12|pem)$|_priv$'; then
     note "signing material must not be committed"
 fi
 
+# The panel is a menu-style status-item surface, not an arrowed popover.
+if ! grep -q 'view.material = \.menu' Sources/Meantime/MenuBar/PanelController.swift; then
+    note "the menu-bar panel must use AppKit's menu material"
+fi
+
+# Website navigation stays identical across the landing page and builder.
+for page in docs/index.html docs/format.html; do
+    for label in "Features" "Format Builder" "Download" "GitHub"; do
+        if ! grep -q ">$label</a>" "$page"; then
+            note "$page navigation is missing $label"
+        fi
+    done
+done
+
+# The guided builder exposes every product-supported field and separator. The
+# raw input remains available for the rest of UTS-35.
+for token in yy yyyy M MM MMM MMMM d dd EEE EEEE a h hh H HH m mm s ss z zzzz XXX VV; do
+    if ! grep -q "data-token=\"$token\"" docs/format.html; then
+        note "format builder is missing $token"
+    fi
+done
+if ! grep -q 'tr35-dates.html#Date_Format_Patterns' docs/format.html; then
+    note "format builder must link to the official Unicode pattern documentation"
+fi
+if grep -qi 'free tool' docs/format.html; then
+    note "format builder must not advertise itself as a free tool"
+fi
+
+# Never publish a known-dead updater enclosure.
+if grep -q '<sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>' appcast.xml; then
+    note "appcast must not include the permanently unavailable 1.0.0 asset"
+fi
+
 if [ "$fail" -eq 0 ]; then
     echo "validate: ok"
 else

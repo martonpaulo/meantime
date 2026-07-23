@@ -16,9 +16,10 @@ import Testing
     }
 
     @Test func julyTwentyTwentySixLaysOutCorrectly() {
-        // July 1, 2026 is a Wednesday: 3 leading June days, 5 rows total.
+        // July 1, 2026 is a Wednesday: 3 leading June days. The grid reserves
+        // six rows so switching months never changes panel height.
         let grid = MonthGrid.make(containing: day(2026, 7, 23), calendar: calendar)
-        #expect(grid.weeks.count == 5)
+        #expect(grid.weeks.count == 6)
         #expect(grid.weeks.allSatisfy { $0.count == 7 })
 
         let firstRow = grid.weeks[0]
@@ -27,10 +28,12 @@ import Testing
         #expect(firstRow[3].dayNumber == 1)  // July 1 under Wednesday
         #expect(firstRow[3].isInMonth)
 
-        let lastRow = grid.weeks[4]
-        #expect(lastRow[5].dayNumber == 31)  // July 31 on Friday
-        #expect(lastRow[6].dayNumber == 1)   // August 1 trailing
-        #expect(!lastRow[6].isInMonth)
+        let fifthRow = grid.weeks[4]
+        #expect(fifthRow[5].dayNumber == 31)  // July 31 on Friday
+        #expect(fifthRow[6].dayNumber == 1)   // August 1 trailing
+        #expect(!fifthRow[6].isInMonth)
+        #expect(grid.weeks[5][0].dayNumber == 2)
+        #expect(!grid.weeks[5][0].isInMonth)
     }
 
     @Test func mondayFirstShiftsTheLead() {
@@ -50,5 +53,13 @@ import Testing
         #expect(sundayFirst.count == 7)
         #expect(mondayFirst.first == sundayFirst[1])
         #expect(mondayFirst.last == sundayFirst.first)
+    }
+
+    @Test func weekendMetadataFollowsTheCalendar() {
+        let grid = MonthGrid.make(containing: day(2026, 7, 1), calendar: calendar)
+        #expect(grid.weeks.allSatisfy { week in
+            week[0].isWeekend && week[6].isWeekend
+                && week.dropFirst().dropLast().allSatisfy { !$0.isWeekend }
+        })
     }
 }

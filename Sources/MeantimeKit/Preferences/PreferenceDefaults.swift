@@ -7,6 +7,13 @@ public enum PreferenceDefaults {
     public static let menuBarLayout: MenuBarLayout = .individual
     public static let textSize: Double = 13
     public static let elementSpacing: Double = 4
+    public static let combinedSeparator = "/"
+
+    /// Starting point when a user first enables a schedule or adds a window.
+    /// The persisted default remains no windows (always visible).
+    public static var suggestedActiveWindow: ActiveWindow {
+        ActiveWindow(startMinute: 9 * 60, endMinute: 17 * 60)
+    }
 
     /// Bounds surfaced by the settings sliders.
     public static let textSizeRange: ClosedRange<Double> = 10...18

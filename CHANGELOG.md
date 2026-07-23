@@ -4,6 +4,23 @@ All notable changes to Meantime are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Per-clock country flag, custom emoji, custom text, or no leading item.
+- Save-gated live previews, per-clock Restore Defaults, format presets, and a configurable combined-item separator.
+- Calendar year navigation, labeled Today action, stable six-week layout, and locale-aware weekend styling.
+
+### Changed
+
+- The menu-bar panel now uses native menu material and a consistent compact type and spacing hierarchy.
+- The website now has consistent navigation, corrected download spacing, and a grouped UTS-35 builder with literal text and official advanced documentation.
+
+### Fixed
+
+- Removed the permanently unavailable 1.0.0 enclosure from the Sparkle appcast.
+
 ## [1.1.0] - 2026-07-23
 
 ### Added

@@ -55,7 +55,8 @@ ticks.
   grouped-form panes. Every pane is a `Form` with `.grouped` style; explanatory
   copy lives in section footers, callout + secondary.
 - **Editing a list item** happens in a sheet with a header identifying the item,
-  a grouped form, and a trailing Done button (default action).
+  a grouped form, and explicit Cancel/Save actions. Drafts preview live but
+  never persist before Save; leaving a dirty editor offers Save, Discard, and Cancel.
 - **Choices render as their result**: format options show live samples of the
   exact fragment they contribute; sliders show their current value; previews
   update as you type.

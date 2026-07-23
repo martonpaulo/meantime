@@ -5,61 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Time Format Builder — Meantime</title>
-  <meta name="description" content="Build a Unicode time pattern for Meantime visually: pick the date part, hour style, minutes and seconds, preview it live, and copy the pattern.">
+  <meta name="description" content="Build a Unicode date and time pattern for Meantime from presets, grouped fields, separators, and literal text.">
   <link rel="canonical" href="https://martonpaulo.github.io/meantime/format.html">
   <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="stylesheet" href="styles/main.css">
-  <style>
-    .builder { max-width: 640px; margin: 0 auto; text-align: left; }
-    .preview-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); box-shadow: var(--shadow);
-      padding: 1.6rem; text-align: center; margin: 2rem 0 1.4rem;
-    }
-    .preview-time {
-      font-variant-numeric: tabular-nums;
-      font-size: clamp(2rem, 6vw, 3rem); font-weight: 700; letter-spacing: -0.01em;
-    }
-    .preview-caption { color: var(--muted); font-size: 0.85rem; margin-top: 0.3rem; }
-    .pattern-row { display: flex; gap: 0.6rem; margin-bottom: 1.6rem; }
-    .pattern-row input {
-      flex: 1; font: 600 1.05rem/1.4 ui-monospace, "SF Mono", Menlo, monospace;
-      padding: 0.65rem 0.9rem; border-radius: 10px;
-      border: 1px solid var(--border); background: var(--surface); color: var(--ink);
-    }
-    .pattern-row input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-    .copy-button {
-      font: inherit; font-weight: 600; padding: 0.65rem 1.2rem; border-radius: 10px;
-      border: none; background: var(--accent); color: var(--accent-ink); cursor: pointer;
-    }
-    .copy-button:hover { filter: brightness(1.08); }
-    fieldset {
-      border: 1px solid var(--border); border-radius: var(--radius);
-      background: var(--surface); padding: 1rem 1.2rem; margin: 0 0 1rem;
-    }
-    legend { font-weight: 700; font-size: 0.85rem; text-transform: uppercase;
-      letter-spacing: 0.08em; color: var(--muted); padding: 0 0.4rem; }
-    .choices { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-    .choices label {
-      border: 1px solid var(--border); border-radius: 999px; padding: 0.4rem 0.95rem;
-      cursor: pointer; font-size: 0.92rem; user-select: none;
-    }
-    .choices input { position: absolute; opacity: 0; pointer-events: none; }
-    .choices label:has(input:checked) {
-      background: var(--accent); color: var(--accent-ink); border-color: var(--accent);
-    }
-    .choices label:hover { border-color: var(--accent); }
-    .tokens { display: grid; grid-template-columns: repeat(auto-fill, minmax(102px, 1fr)); gap: 0.5rem; }
-    .tokens button {
-      font: inherit; text-align: left; cursor: pointer; padding: 0.5rem 0.7rem;
-      border: 1px solid var(--border); border-radius: 10px; background: transparent; color: var(--ink);
-    }
-    .tokens button:hover { border-color: var(--accent); }
-    .tokens code { display: block; font-weight: 700; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
-    .tokens small { color: var(--muted); }
-    .hint { color: var(--muted); font-size: 0.9rem; }
-    .back { display: inline-block; margin-top: 2rem; }
-  </style>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -70,18 +19,18 @@
     </a>
     <nav aria-label="Page sections">
       <a href="index.html#features">Features</a>
+      <a href="format.html" aria-current="page">Format Builder</a>
       <a href="index.html#download">Download</a>
       <a href="https://github.com/martonpaulo/meantime">GitHub</a>
     </nav>
   </header>
 
   <main id="main">
-    <section class="section" aria-labelledby="title" style="padding-top: 2rem;">
-      <p class="eyebrow">Free tool</p>
-      <h1 id="title" style="font-size: clamp(1.8rem, 4.5vw, 2.6rem);">Time Format Builder</h1>
-      <p class="hint" style="max-width: 36rem; margin: 0 auto;">
-        Assemble the exact time format you want, watch it live, then copy the
-        pattern into <strong>Meantime → Settings → Format</strong>.
+    <section class="section builder-page" aria-labelledby="title">
+      <h1 id="title">Time Format Builder</h1>
+      <p class="hint builder-intro">
+        Start with a common format, refine it from the grouped controls, then
+        copy the pattern into <strong>Meantime → Settings → Format → Custom</strong>.
       </p>
 
       <div class="builder">
@@ -90,51 +39,150 @@
           <p class="preview-caption">Live preview of your pattern, right now</p>
         </div>
 
-        <div class="pattern-row">
-          <input id="pattern" type="text" spellcheck="false" autocomplete="off"
-                 aria-label="Time pattern" value="HH:mm">
-          <button class="copy-button" id="copy" type="button">Copy</button>
+        <div class="preset-row">
+          <label for="preset">Start with</label>
+          <select id="preset">
+            <option value="HH:mm" selected>24-hour — 09:47</option>
+            <option value="HH:mm:ss">24-hour with seconds — 09:47:30</option>
+            <option value="h:mm a">12-hour — 9:47 AM</option>
+            <option value="h:mm:ss a">12-hour with seconds — 9:47:30 AM</option>
+            <option value="EEE d MMM · HH:mm">Date and time</option>
+            <option value="EEEE, MMMM d, yyyy · h:mm a">Full date and time</option>
+            <option value="custom">Custom</option>
+          </select>
         </div>
 
-        <fieldset>
-          <legend>Date</legend>
-          <div class="choices" id="date-choices" role="radiogroup" aria-label="Date part">
-            <label><input type="radio" name="date" value="" checked>None</label>
-            <label><input type="radio" name="date" value="EEE"><span data-live="EEE"></span></label>
-            <label><input type="radio" name="date" value="EEEE"><span data-live="EEEE"></span></label>
-            <label><input type="radio" name="date" value="d MMM"><span data-live="d MMM"></span></label>
-            <label><input type="radio" name="date" value="EEE d"><span data-live="EEE d"></span></label>
+        <div class="pattern-row">
+          <input id="pattern" type="text" spellcheck="false" autocomplete="off"
+                 aria-label="Unicode date and time pattern" value="HH:mm">
+          <button class="builder-button" id="clear" type="button">Clear</button>
+          <button class="builder-button primary" id="copy" type="button">Copy</button>
+        </div>
+
+        <div class="builder-groups" aria-label="Pattern fields and separators">
+          <fieldset>
+            <legend>Year</legend>
+            <div class="token-buttons">
+              <button type="button" data-token="yy"><code>yy</code><small data-sample="yy"></small></button>
+              <button type="button" data-token="yyyy"><code>yyyy</code><small data-sample="yyyy"></small></button>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Month</legend>
+            <div class="token-buttons">
+              <button type="button" data-token="M"><code>M</code><small data-sample="M"></small></button>
+              <button type="button" data-token="MM"><code>MM</code><small data-sample="MM"></small></button>
+              <button type="button" data-token="MMM"><code>MMM</code><small data-sample="MMM"></small></button>
+              <button type="button" data-token="MMMM"><code>MMMM</code><small data-sample="MMMM"></small></button>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Day</legend>
+            <div class="token-buttons">
+              <button type="button" data-token="d"><code>d</code><small data-sample="d"></small></button>
+              <button type="button" data-token="dd"><code>dd</code><small data-sample="dd"></small></button>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Weekday</legend>
+            <div class="token-buttons">
+              <button type="button" data-token="EEE"><code>EEE</code><small data-sample="EEE"></small></button>
+              <button type="button" data-token="EEEE"><code>EEEE</code><small data-sample="EEEE"></small></button>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Hour</legend>
+            <div class="token-buttons">
+              <button type="button" data-token="h"><code>h</code><small data-sample="h"></small></button>
+              <button type="button" data-token="hh"><code>hh</code><small data-sample="hh"></small></button>
+              <button type="button" data-token="H"><code>H</code><small data-sample="H"></small></button>
+              <button type="button" data-token="HH"><code>HH</code><small data-sample="HH"></small></button>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Day Period</legend>
+            <div class="token-buttons">
+              <button type="button" id="day-period" data-token="a"><code>a</code><small data-sample="a"></small></button>
+            </div>
+            <p class="hint">Available only with lowercase <code>h</code> or <code>hh</code>.</p>
+          </fieldset>
+
+          <fieldset>
+            <legend>Minute</legend>
+            <div class="token-buttons">
+              <button type="button" data-token="m"><code>m</code><small data-sample="m"></small></button>
+              <button type="button" data-token="mm"><code>mm</code><small data-sample="mm"></small></button>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Second</legend>
+            <div class="token-buttons">
+              <button type="button" data-token="s"><code>s</code><small data-sample="s"></small></button>
+              <button type="button" data-token="ss"><code>ss</code><small data-sample="ss"></small></button>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Time Zone</legend>
+            <div class="token-buttons">
+              <button type="button" data-token="z"><code>z</code><small data-sample="z"></small></button>
+              <button type="button" data-token="zzzz"><code>zzzz</code><small data-sample="zzzz"></small></button>
+              <button type="button" data-token="XXX"><code>XXX</code><small data-sample="XXX"></small></button>
+              <button type="button" data-token="VV"><code>VV</code><small data-sample="VV"></small></button>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Date Separators</legend>
+            <div class="token-buttons">
+              <button type="button" data-token="/" data-separator><code>/</code><small>slash</small></button>
+              <button type="button" data-token="-" data-separator><code>-</code><small>hyphen</small></button>
+              <button type="button" data-token="." data-separator><code>.</code><small>period</small></button>
+              <button type="button" data-token=" " data-separator><code>space</code></button>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Time Separator</legend>
+            <div class="token-buttons">
+              <button type="button" data-token=":" data-separator><code>:</code><small>colon</small></button>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Section Separators</legend>
+            <div class="token-buttons">
+              <button type="button" data-token="," data-separator><code>,</code><small>comma</small></button>
+              <button type="button" data-token="·" data-separator><code>·</code><small>middle dot</small></button>
+              <button type="button" data-token=" " data-separator><code>space</code></button>
+            </div>
+          </fieldset>
+        </div>
+
+        <fieldset class="literal-fieldset">
+          <legend>Literal Text</legend>
+          <div class="literal-row">
+            <div>
+              <label for="literal">Text to display exactly</label>
+              <input id="literal" type="text" placeholder="Meeting at" autocomplete="off">
+            </div>
+            <button class="builder-button" id="add-literal" type="button">Add Literal</button>
           </div>
+          <p class="hint">The builder adds the UTS-35 quotes and safely escapes apostrophes.</p>
         </fieldset>
 
-        <fieldset>
-          <legend>Hour</legend>
-          <div class="choices" role="radiogroup" aria-label="Hour style">
-            <label><input type="radio" name="hour" value="HH" checked>24-hour · <span data-live="HH"></span></label>
-            <label><input type="radio" name="hour" value="H">24-hour, no zero · <span data-live="H"></span></label>
-            <label><input type="radio" name="hour" value="hh">12-hour, zero-padded · <span data-live="hh"></span></label>
-            <label><input type="radio" name="hour" value="h">12-hour · <span data-live="h"></span></label>
-            <label><input type="radio" name="hour" value="">None</label>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>Detail</legend>
-          <div class="choices">
-            <label><input type="checkbox" id="minutes" checked>Minutes</label>
-            <label><input type="checkbox" id="seconds">Seconds</label>
-            <label><input type="checkbox" id="ampm">AM/PM · <span data-live="a"></span></label>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>All tokens — click to append</legend>
-          <div class="tokens" id="tokens"></div>
-          <p class="hint" style="margin-bottom: 0;">
-            Wrap literal text in single quotes: <code>HH'h'mm</code> →
-            <span data-live="HH'h'mm"></span>
-          </p>
-        </fieldset>
+        <p class="builder-status" id="builder-status" role="status"></p>
+        <p class="hint builder-help">
+          Need fields beyond this guided set? Read the
+          <a href="https://unicode.org/reports/tr35/tr35-dates.html#Date_Format_Patterns">official Unicode UTS-35 date format pattern documentation</a>.
+          The Custom field in Meantime accepts the full pattern syntax.
+        </p>
       </div>
 
       <a class="back button secondary" href="index.html">← Back to Meantime</a>
@@ -142,197 +190,222 @@
   </main>
 
   <footer class="site-footer">
-    <p>Part of <a href="index.html">Meantime</a> · MIT licensed · © 2026 Marton Paulo</p>
+    <p>MIT licensed. © 2026 Marton Paulo ·
+      <a href="format.html">Format Builder</a> ·
+      <a href="https://github.com/martonpaulo/meantime">Source</a> ·
+      <a href="https://github.com/martonpaulo/meantime/issues">Issues</a> ·
+      <a href="https://github.com/martonpaulo/meantime/releases">Releases</a>
+    </p>
   </footer>
 
   <script>
     "use strict";
-    // UTS-35 renderer covering the fields a menu-bar clock can meaningfully
-    // use: every hour cycle (H/h/K/k), minutes, seconds, fractional seconds,
-    // period, weekday, day, day-of-year, month, year, era, and zone offsets.
-    const pad = (n, w) => String(n).padStart(w, "0");
-    const local = (d, opts) => d.toLocaleString(undefined, opts);
-    const h12 = d => ((d.getHours() + 11) % 12) + 1; // 12,1..11 — never 0
-    const dayOfYear = d => Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 864e5);
-    const offset = (d, extended) => {
-      const total = -d.getTimezoneOffset();
-      const sign = total < 0 ? "-" : "+";
-      const hh = pad(Math.floor(Math.abs(total) / 60), 2);
-      const mm = pad(Math.abs(total) % 60, 2);
-      return extended ? `${sign}${hh}:${mm}` : `${sign}${hh}${mm}`;
-    };
-    const zoneName = (d, style) => {
-      const parts = new Intl.DateTimeFormat(undefined, { timeZoneName: style }).formatToParts(d);
-      return parts.find(p => p.type === "timeZoneName")?.value ?? "";
-    };
-    const FIELDS = {
-      // Year and era
-      yyyy: d => pad(d.getFullYear(), 4),
-      yyy:  d => pad(d.getFullYear(), 3),
-      yy:   d => pad(d.getFullYear() % 100, 2),
-      y:    d => String(d.getFullYear()),
-      G:    d => local(d, { era: "short" }).split(" ").pop(),
-      // Month (MMMMM = narrow)
-      MMMMM: d => local(d, { month: "narrow" }),
-      MMMM: d => local(d, { month: "long" }),
-      MMM:  d => local(d, { month: "short" }),
-      MM:   d => pad(d.getMonth() + 1, 2),
-      M:    d => String(d.getMonth() + 1),
-      // Weekday (E/EE = abbreviated, EEEEE = narrow)
-      EEEEE: d => local(d, { weekday: "narrow" }),
-      EEEE: d => local(d, { weekday: "long" }),
-      EEE:  d => local(d, { weekday: "short" }),
-      EE:   d => local(d, { weekday: "short" }),
-      E:    d => local(d, { weekday: "short" }),
-      // Day
-      dd:   d => pad(d.getDate(), 2),
-      d:    d => String(d.getDate()),
-      D:    d => String(dayOfYear(d)),
-      // Hour, every cycle: H 0–23 · h 1–12 · K 0–11 · k 1–24
-      HH:   d => pad(d.getHours(), 2),
-      H:    d => String(d.getHours()),
-      hh:   d => pad(h12(d), 2),
-      h:    d => String(h12(d)),
-      KK:   d => pad(d.getHours() % 12, 2),
-      K:    d => String(d.getHours() % 12),
-      kk:   d => pad(d.getHours() === 0 ? 24 : d.getHours(), 2),
-      k:    d => String(d.getHours() === 0 ? 24 : d.getHours()),
-      // Minute, second, fractional second
-      mm:   d => pad(d.getMinutes(), 2),
-      m:    d => String(d.getMinutes()),
-      ss:   d => pad(d.getSeconds(), 2),
-      s:    d => String(d.getSeconds()),
-      SSS:  d => pad(d.getMilliseconds(), 3),
-      SS:   d => pad(Math.floor(d.getMilliseconds() / 10), 2),
-      S:    d => String(Math.floor(d.getMilliseconds() / 100)),
-      // Period
-      a:    d => (d.getHours() < 12 ? "AM" : "PM"),
-      // Zone: names and offsets
-      zzzz: d => zoneName(d, "long"),
-      zzz:  d => zoneName(d, "short"),
-      zz:   d => zoneName(d, "short"),
-      z:    d => zoneName(d, "short"),
-      vvvv: d => zoneName(d, "longGeneric"),
-      v:    d => zoneName(d, "shortGeneric"),
-      ZZZZZ: d => offset(d, true),
-      ZZZZ: d => "GMT" + offset(d, true),
-      ZZZ:  d => offset(d, false),
-      ZZ:   d => offset(d, false),
-      Z:    d => offset(d, false),
-      XXX:  d => offset(d, true),
-      XX:   d => offset(d, false),
-      X:    d => offset(d, false),
-    };
-    const TOKEN_KEYS = Object.keys(FIELDS).sort((a, b) => b.length - a.length);
 
-    function render(pattern, date) {
-      let out = "", i = 0;
-      while (i < pattern.length) {
-        const ch = pattern[i];
-        if (ch === "'") {
-          // Quoted literal; '' is an escaped single quote (inside or outside).
-          if (pattern[i + 1] === "'") { out += "'"; i += 2; continue; }
-          let j = i + 1, literal = "";
-          while (j < pattern.length) {
-            if (pattern[j] === "'" && pattern[j + 1] === "'") { literal += "'"; j += 2; continue; }
-            if (pattern[j] === "'") break;
-            literal += pattern[j]; j += 1;
+    const pad = (value, width) => String(value).padStart(width, "0");
+    const local = (date, options) => date.toLocaleString(undefined, options);
+    const twelveHour = date => ((date.getHours() + 11) % 12) + 1;
+    const offset = date => {
+      const total = -date.getTimezoneOffset();
+      if (total === 0) return "Z";
+      const sign = total < 0 ? "-" : "+";
+      return `${sign}${pad(Math.floor(Math.abs(total) / 60), 2)}:${pad(Math.abs(total) % 60, 2)}`;
+    };
+    const zoneName = (date, style) => {
+      const parts = new Intl.DateTimeFormat(undefined, { timeZoneName: style }).formatToParts(date);
+      return parts.find(part => part.type === "timeZoneName")?.value ?? "";
+    };
+
+    const FIELDS = {
+      yyyy: date => pad(date.getFullYear(), 4),
+      yy: date => pad(date.getFullYear() % 100, 2),
+      MMMM: date => local(date, { month: "long" }),
+      MMM: date => local(date, { month: "short" }),
+      MM: date => pad(date.getMonth() + 1, 2),
+      M: date => String(date.getMonth() + 1),
+      EEEE: date => local(date, { weekday: "long" }),
+      EEE: date => local(date, { weekday: "short" }),
+      dd: date => pad(date.getDate(), 2),
+      d: date => String(date.getDate()),
+      HH: date => pad(date.getHours(), 2),
+      H: date => String(date.getHours()),
+      hh: date => pad(twelveHour(date), 2),
+      h: date => String(twelveHour(date)),
+      mm: date => pad(date.getMinutes(), 2),
+      m: date => String(date.getMinutes()),
+      ss: date => pad(date.getSeconds(), 2),
+      s: date => String(date.getSeconds()),
+      a: date => date.getHours() < 12 ? "AM" : "PM",
+      zzzz: date => zoneName(date, "long"),
+      z: date => zoneName(date, "short"),
+      XXX: date => offset(date),
+      VV: () => Intl.DateTimeFormat().resolvedOptions().timeZone,
+    };
+    const FIELD_KEYS = Object.keys(FIELDS).sort((left, right) => right.length - left.length);
+
+    function parsePattern(pattern, date) {
+      let output = "";
+      let index = 0;
+      while (index < pattern.length) {
+        const character = pattern[index];
+        if (character === "'") {
+          if (pattern[index + 1] === "'") {
+            output += "'";
+            index += 2;
+            continue;
           }
-          out += literal; i = j + 1; continue;
+          index += 1;
+          while (index < pattern.length) {
+            if (pattern[index] === "'" && pattern[index + 1] === "'") {
+              output += "'";
+              index += 2;
+            } else if (pattern[index] === "'") {
+              index += 1;
+              break;
+            } else {
+              output += pattern[index];
+              index += 1;
+            }
+          }
+          continue;
         }
-        const token = TOKEN_KEYS.find(t => pattern.startsWith(t, i));
-        if (token) { out += FIELDS[token](date); i += token.length; continue; }
-        if (/[a-zA-Z]/.test(ch)) {
-          // Reserved but unsupported letter run: swallow it as one unit so a
-          // half-typed token never leaks stray letters into the preview.
-          let j = i;
-          while (j < pattern.length && pattern[j] === ch) j += 1;
-          out += "·"; i = j; continue;
+
+        const token = FIELD_KEYS.find(field => pattern.startsWith(field, index));
+        if (token) {
+          output += FIELDS[token](date);
+          index += token.length;
+        } else if (/[A-Za-z]/.test(character)) {
+          let end = index + 1;
+          while (end < pattern.length && pattern[end] === character) end += 1;
+          output += "·";
+          index = end;
+        } else {
+          output += character;
+          index += 1;
         }
-        out += ch; i += 1;
       }
-      return out;
+      return output;
+    }
+
+    function unquotedFields(pattern) {
+      const fields = new Set();
+      let insideLiteral = false;
+      for (let index = 0; index < pattern.length; index += 1) {
+        if (pattern[index] !== "'") {
+          if (!insideLiteral && /[A-Za-z]/.test(pattern[index])) fields.add(pattern[index]);
+          continue;
+        }
+        if (pattern[index + 1] === "'") {
+          index += 1;
+        } else {
+          insideLiteral = !insideLiteral;
+        }
+      }
+      return { fields, balanced: !insideLiteral };
     }
 
     const patternInput = document.getElementById("pattern");
+    const preset = document.getElementById("preset");
     const preview = document.getElementById("preview");
+    const copyButton = document.getElementById("copy");
+    const status = document.getElementById("builder-status");
+    const dayPeriodButton = document.getElementById("day-period");
+    let refreshTimer;
 
-    const twelveHour = value => value === "h" || value === "hh";
-
-    function compose() {
-      const date = document.querySelector('input[name="date"]:checked').value;
-      const hour = document.querySelector('input[name="hour"]:checked').value;
-      const minutes = document.getElementById("minutes").checked;
-      const seconds = document.getElementById("seconds").checked;
-      const ampm = document.getElementById("ampm").checked;
-      let time = "";
-      if (hour) {
-        time = hour;
-        if (minutes || seconds) time += ":mm"; // seconds imply minutes
-        if (seconds) time += ":ss";
-        if (ampm) time += " a";
+    function validation() {
+      const parsed = unquotedFields(patternInput.value);
+      const hasDayPeriod = parsed.fields.has("a");
+      const hasLowerHour = parsed.fields.has("h");
+      if (!patternInput.value.trim()) return { valid: false, message: "Enter or build a pattern." };
+      if (!parsed.balanced) return { valid: false, message: "Close the quoted literal before copying." };
+      if (hasDayPeriod && !hasLowerHour) {
+        return { valid: false, message: "AM/PM (a) is available only with lowercase h or hh." };
       }
-      // Every combination stays valid: date-only, time-only, both, or neither
-      // (an empty pattern just previews as an em dash).
-      return [date, time].filter(Boolean).join(" ");
-    }
-
-    function syncDetailAvailability() {
-      const hour = document.querySelector('input[name="hour"]:checked').value;
-      const hasHour = hour !== "";
-      const ampmBox = document.getElementById("ampm");
-      for (const id of ["minutes", "seconds", "ampm"]) {
-        document.getElementById(id).parentElement
-          .style.opacity = hasHour ? "" : "0.45";
-        document.getElementById(id).disabled = !hasHour;
-      }
-      // 12-hour turns AM/PM on (it is ambiguous without it) but stays optional.
-      if (hasHour && twelveHour(hour) && !ampmBox.dataset.touched) ampmBox.checked = true;
-      if (hasHour && !twelveHour(hour) && !ampmBox.dataset.touched) ampmBox.checked = false;
+      return { valid: true, message: "" };
     }
 
     function refresh() {
       const now = new Date();
-      preview.textContent = render(patternInput.value, now) || "—";
-      document.querySelectorAll("[data-live]").forEach(el => {
-        el.textContent = render(el.dataset.live, now);
+      preview.textContent = parsePattern(patternInput.value, now) || "—";
+      document.querySelectorAll("[data-sample]").forEach(element => {
+        element.textContent = parsePattern(element.dataset.sample, now);
       });
+
+      const parsed = unquotedFields(patternInput.value);
+      dayPeriodButton.disabled = !parsed.fields.has("h");
+      const result = validation();
+      status.textContent = result.message;
+      status.classList.toggle("error", !result.valid);
+      copyButton.disabled = !result.valid;
     }
 
-    document.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach(el => {
-      el.addEventListener("change", () => {
-        if (el.id === "ampm") el.dataset.touched = "1";
-        syncDetailAvailability();
-        patternInput.value = compose();
+    function scheduleRefresh() {
+      window.clearTimeout(refreshTimer);
+      const fields = unquotedFields(patternInput.value).fields;
+      const cadence = fields.has("s") ? 1000 : 60000;
+      const delay = cadence - (Date.now() % cadence) + 20;
+      refreshTimer = window.setTimeout(() => {
         refresh();
+        scheduleRefresh();
+      }, delay);
+    }
+
+    function patternChanged() {
+      refresh();
+      scheduleRefresh();
+    }
+
+    preset.addEventListener("change", () => {
+      if (preset.value !== "custom") patternInput.value = preset.value;
+      patternChanged();
+    });
+
+    patternInput.addEventListener("input", () => {
+      preset.value = "custom";
+      patternChanged();
+    });
+
+    document.querySelectorAll("[data-token]").forEach(button => {
+      button.addEventListener("click", () => {
+        patternInput.value += button.dataset.token;
+        preset.value = "custom";
+        patternChanged();
+        patternInput.focus();
       });
     });
-    patternInput.addEventListener("input", refresh);
-    syncDetailAvailability();
 
-    const tokensHost = document.getElementById("tokens");
-    for (const token of ["HH", "H", "hh", "h", "KK", "K", "kk", "k", "a", "mm", "ss", "SSS",
-                         "EEE", "EEEE", "EEEEE", "d", "dd", "D", "M", "MM", "MMM", "MMMM",
-                         "yy", "yyyy", "G", "z", "zzzz", "Z", "ZZZZZ", "v"]) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.innerHTML = `<code>${token}</code><small data-live="${token}"></small>`;
-      button.addEventListener("click", () => {
-        patternInput.value = patternInput.value ? `${patternInput.value} ${token}` : token;
-        refresh();
-      });
-      tokensHost.appendChild(button);
+    document.getElementById("clear").addEventListener("click", () => {
+      patternInput.value = "";
+      preset.value = "custom";
+      patternChanged();
+      patternInput.focus();
+    });
+
+    const literalInput = document.getElementById("literal");
+    function addLiteral() {
+      if (!literalInput.value) return;
+      const quoted = `'${literalInput.value.replaceAll("'", "''")}'`;
+      patternInput.value += quoted;
+      literalInput.value = "";
+      preset.value = "custom";
+      patternChanged();
+      patternInput.focus();
     }
+    document.getElementById("add-literal").addEventListener("click", addLiteral);
+    literalInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        addLiteral();
+      }
+    });
 
-    const copyButton = document.getElementById("copy");
     copyButton.addEventListener("click", async () => {
+      if (!validation().valid) return;
       await navigator.clipboard.writeText(patternInput.value);
       copyButton.textContent = "Copied!";
-      setTimeout(() => { copyButton.textContent = "Copy"; }, 1400);
+      window.setTimeout(() => { copyButton.textContent = "Copy"; }, 1400);
     });
 
-    refresh();
-    setInterval(refresh, 1000);
+    patternChanged();
   </script>
 </body>
 </html>

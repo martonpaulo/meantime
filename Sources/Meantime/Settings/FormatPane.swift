@@ -1,111 +1,167 @@
 import SwiftUI
 import MeantimeKit
 
-/// How time reads everywhere: a live preview, the Unicode pattern itself, and a
-/// link to the interactive format builder on the website for assembling one.
-/// System default is one click away.
+/// Preset-first time formatting and menu-bar appearance. Changes preview in
+/// the real status item and persist together only after Save.
 struct FormatPane: View {
     @Environment(Preferences.self) private var preferences
+    @Environment(SettingsPreview.self) private var settingsPreview
     let formatter: ClockFormatter
 
-    @State private var rawPattern = ""
+    @State private var discardConfirmationShown = false
     @FocusState private var patternFieldFocused: Bool
 
+    private var draft: SettingsPreview.AppearanceDraft {
+        settingsPreview.appearanceDraft
+            ?? SettingsPreview.AppearanceDraft(preferences: preferences)
+    }
+
+    private var previewText: String {
+        let value = FormatSample.example(settingsPreview.timeFormat, formatter: formatter)
+        return value.isEmpty ? "—" : value
+    }
+
     var body: some View {
-        @Bindable var prefs = preferences
         Form {
             Section {
                 LabeledContent("Preview") {
-                    Text(FormatSample.example(prefs.timeFormat, formatter: formatter))
+                    Text(previewText)
                         .font(Token.Font.time(16))
                         .foregroundStyle(Token.Color.accent)
                 }
-                if prefs.timeFormat.isSystem {
-                    Text("Following your Mac's time format. Type a pattern below to customize.")
+                if draft.formatPreset == .systemDefault {
+                    Text("Following your Mac's date and time format.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
             }
 
             Section {
-                TextField("Pattern", text: $rawPattern,
-                          prompt: Text(verbatim: "EEE d MMM · HH:mm"))
-                    .font(.body.monospaced())
-                    .focused($patternFieldFocused)
-                    .onChange(of: rawPattern) {
-                        guard patternFieldFocused else { return }
-                        applyRawPattern()
+                Picker("Format", selection: presetBinding) {
+                    ForEach(TimeFormatPreset.allCases) { preset in
+                        Text(preset.title).tag(preset)
                     }
-                PatternLegend(formatter: formatter)
+                }
+
+                if draft.formatPreset == .custom {
+                    TextField("Pattern", text: patternBinding,
+                              prompt: Text(verbatim: "EEE d MMM · HH:mm"))
+                        .font(.body.monospaced())
+                        .focused($patternFieldFocused)
+
+                    if !draft.isValid {
+                        Text("Enter a nonempty pattern and close every quoted literal.")
+                            .font(.callout)
+                            .foregroundStyle(Token.Color.errorText)
+                    }
+                }
+
                 Link(destination: URL(string: "https://martonpaulo.github.io/meantime/format.html")!) {
                     Label("Open the interactive format builder", systemImage: "curlybraces.square")
                 }
+                Link(destination: URL(string: "https://unicode.org/reports/tr35/tr35-dates.html#Date_Format_Patterns")!) {
+                    Label("Advanced Unicode pattern documentation", systemImage: "book")
+                }
             } header: {
-                Text("Time Pattern")
+                Text("Date and Time Format")
             } footer: {
-                Text("Standard Unicode date patterns. Wrap literal text in single quotes: HH'h'mm → \(FormatSample.example(.custom("HH'h'mm"), formatter: formatter)). The builder assembles a pattern visually — copy it and paste it here.")
+                Text("Choose a common preset or use Custom for any Unicode UTS-35 pattern. Quote literal words with single quotes; write two single quotes for an apostrophe.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
 
-            Section {
-                LabeledContent("Return to your Mac's own format") {
-                    Button("Use System Default") {
-                        preferences.timeFormat = .system
-                        rawPattern = ""
-                    }
-                    .disabled(prefs.timeFormat.isSystem)
-                }
-            }
-
             Section("Menu Bar Appearance") {
+                Picker("Layout", selection: layoutBinding) {
+                    Text("One item per clock").tag(MenuBarLayout.individual)
+                    Text("All clocks in one item").tag(MenuBarLayout.combined)
+                }
+                .pickerStyle(.radioGroup)
+
+                if draft.menuBarLayout == .combined {
+                    TextField("Separator", text: separatorBinding,
+                              prompt: Text(PreferenceDefaults.combinedSeparator))
+                    Text("Leave empty for spacing only.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+
                 LabeledSlider(title: String(localized: "Text size"),
-                              value: $prefs.textSize,
+                              value: textSizeBinding,
                               range: PreferenceDefaults.textSizeRange, unit: "pt")
                 LabeledSlider(title: String(localized: "Spacing"),
-                              value: $prefs.elementSpacing,
+                              value: elementSpacingBinding,
                               range: PreferenceDefaults.elementSpacingRange, unit: "pt")
-                LabeledContent("Menu bar preview") {
-                    Text("\(RegionFlag.emoji(for: TimeZone.current.identifier)) \(FormatSample.example(prefs.timeFormat, formatter: formatter))")
-                        .font(Token.Font.time(prefs.textSize))
+            }
+
+            Section {
+                HStack(spacing: Token.Space.sm) {
+                    Button("Cancel") {
+                        if settingsPreview.hasAppearanceChanges {
+                            discardConfirmationShown = true
+                        }
+                    }
+                    .disabled(!settingsPreview.hasAppearanceChanges)
+                    Spacer()
+                    if settingsPreview.hasAppearanceChanges {
+                        Text("Unsaved changes")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
+                    Button("Save") { settingsPreview.saveAppearance() }
+                        .keyboardShortcut(.defaultAction)
+                        .disabled(!settingsPreview.hasAppearanceChanges
+                                  || !settingsPreview.canSaveAppearance)
                 }
             }
         }
         .formStyle(.grouped)
         .frame(width: Token.Size.paneWidth)
         .fixedSize()
-        .onAppear { rawPattern = preferences.timeFormat.customPattern ?? "" }
-    }
-
-    private func applyRawPattern() {
-        let trimmed = rawPattern.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else { return }
-        preferences.timeFormat = .custom(trimmed)
-    }
-}
-
-/// The pattern vocabulary, each token rendered live so its meaning is obvious.
-private struct PatternLegend: View {
-    let formatter: ClockFormatter
-
-    private static let tokens = ["H", "HH", "h", "a", "mm", "ss", "EEE", "EEEE", "d", "MMM", "yyyy"]
-
-    private let columns = [GridItem(.adaptive(minimum: 74), spacing: Token.Space.sm)]
-
-    var body: some View {
-        LazyVGrid(columns: columns, alignment: .leading, spacing: Token.Space.xs) {
-            ForEach(Self.tokens, id: \.self) { token in
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(token)
-                        .font(.caption.monospaced().weight(.semibold))
-                    Text(FormatSample.example(.custom(token), formatter: formatter))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.vertical, Token.Space.xxs)
+        .onAppear { settingsPreview.beginAppearanceEditing() }
+        .confirmationDialog("Discard changes to Format?",
+                            isPresented: $discardConfirmationShown) {
+            Button("Discard Changes", role: .destructive) {
+                settingsPreview.discardAppearance()
             }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The menu bar will return to the last saved settings.")
         }
-        .accessibilityLabel("Pattern token reference")
+    }
+
+    private var presetBinding: Binding<TimeFormatPreset> {
+        binding(\.formatPreset)
+    }
+
+    private var patternBinding: Binding<String> {
+        binding(\.customPattern)
+    }
+
+    private var layoutBinding: Binding<MenuBarLayout> {
+        binding(\.menuBarLayout)
+    }
+
+    private var separatorBinding: Binding<String> {
+        binding(\.combinedSeparator)
+    }
+
+    private var textSizeBinding: Binding<Double> {
+        binding(\.textSize)
+    }
+
+    private var elementSpacingBinding: Binding<Double> {
+        binding(\.elementSpacing)
+    }
+
+    private func binding<Value>(_ keyPath: WritableKeyPath<SettingsPreview.AppearanceDraft, Value>)
+        -> Binding<Value> {
+        Binding(
+            get: { draft[keyPath: keyPath] },
+            set: { value in
+                settingsPreview.beginAppearanceEditing()
+                settingsPreview.appearanceDraft?[keyPath: keyPath] = value
+            }
+        )
     }
 }
 

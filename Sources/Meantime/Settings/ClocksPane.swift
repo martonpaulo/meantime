@@ -1,39 +1,24 @@
 import SwiftUI
 import MeantimeKit
 
-/// Manage the clock list: layout choice, reorder, per-row menu-bar toggle, and
-/// a sheet editor for everything else. Views mutate `Preferences` directly,
-/// which persists and updates the menu bar live.
+/// Manage the clock list. Field edits happen in a Save-gated sheet; list-level
+/// commands such as add, remove, and reorder remain direct actions.
 struct ClocksPane: View {
     @Environment(Preferences.self) private var preferences
-    let formatter: ClockFormatter
-
+    @Environment(SettingsPreview.self) private var settingsPreview
     @State private var editingClockID: WorldClock.ID?
     @State private var isAdding = false
 
     var body: some View {
-        @Bindable var prefs = preferences
         Form {
             Section {
-                Picker("Menu bar shows", selection: $prefs.menuBarLayout) {
-                    Text("One item per clock").tag(MenuBarLayout.individual)
-                    Text("All clocks in one item").tag(MenuBarLayout.combined)
-                }
-                .pickerStyle(.radioGroup)
-            } footer: {
-                Text("Clocks can also live in the dropdown only — turn off “In menu bar” for a clock below.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section {
-                ForEach(prefs.clocks) { clock in
+                ForEach(preferences.clocks) { clock in
                     ClockRow(clock: clock,
                              onEdit: { editingClockID = clock.id },
                              onRemove: { preferences.removeClock(id: clock.id) })
                 }
-                .onMove { prefs.moveClocks(from: $0, to: $1) }
-                .onDelete { prefs.removeClocks(at: $0) }
+                .onMove { preferences.moveClocks(from: $0, to: $1) }
+                .onDelete { preferences.removeClocks(at: $0) }
 
                 Button {
                     isAdding = true
@@ -61,10 +46,18 @@ struct ClocksPane: View {
                 isAdding = false
             }
         }
-        .sheet(item: editingBinding) { clock in
-            ClockEditorSheet(clock: clockBinding(for: clock.id), formatter: formatter) {
-                editingClockID = nil
-            }
+        .sheet(item: editingBinding, onDismiss: settingsPreview.discardClock) { clock in
+            ClockEditorSheet(
+                clock: clock,
+                onPreview: settingsPreview.preview,
+                onSave: { updated in
+                    settingsPreview.saveClock(updated)
+                    editingClockID = nil
+                },
+                onCancel: {
+                    settingsPreview.discardClock()
+                    editingClockID = nil
+                })
         }
     }
 
@@ -81,36 +74,13 @@ struct ClocksPane: View {
         )
     }
 
-    /// A read/write binding into the stored clock, so edits persist through
-    /// `Preferences` without the sheet owning any copy.
-    private func clockBinding(for id: WorldClock.ID) -> Binding<WorldClock> {
-        Binding(
-            get: {
-                preferences.clocks.first { $0.id == id }
-                    ?? WorldClock(timeZoneID: TimeZone.current.identifier)
-            },
-            set: { preferences.update($0) }
-        )
-    }
 }
 
-/// One row: identity on the left, live schedule state, menu-bar toggle, edit.
+/// One row: identity, saved visibility state, reorder, and Save-gated editing.
 private struct ClockRow: View {
-    @Environment(Preferences.self) private var preferences
     let clock: WorldClock
     let onEdit: () -> Void
     let onRemove: () -> Void
-
-    private var pinnedBinding: Binding<Bool> {
-        Binding(
-            get: { clock.isPinned },
-            set: { newValue in
-                var updated = clock
-                updated.isPinned = newValue
-                preferences.update(updated)
-            }
-        )
-    }
 
     private var scheduleCaption: String? {
         guard clock.isPinned, !clock.activeWindows.isEmpty else { return nil }
@@ -121,7 +91,9 @@ private struct ClockRow: View {
 
     var body: some View {
         HStack(spacing: Token.Space.md) {
-            Text(clock.displayEmoji)
+            if let adornment = clock.displayAdornment {
+                Text(adornment)
+            }
             VStack(alignment: .leading, spacing: 0) {
                 Text(clock.displayLabel)
                 Text(scheduleCaption.map { "\(clock.timeZoneID) · \($0)" } ?? clock.timeZoneID)
@@ -130,8 +102,10 @@ private struct ClockRow: View {
             }
             Spacer()
             ReorderButtons(clockID: clock.id)
-            Toggle("In menu bar", isOn: pinnedBinding)
-                .toggleStyle(.checkbox)
+            Label(clock.isPinned ? "In Menu Bar" : "Dropdown Only",
+                  systemImage: clock.isPinned ? "menubar.rectangle" : "rectangle.bottomthird.inset.filled")
+                .font(.callout)
+                .foregroundStyle(.secondary)
             Button("Edit…", action: onEdit)
         }
         .padding(.vertical, Token.Space.xxs)

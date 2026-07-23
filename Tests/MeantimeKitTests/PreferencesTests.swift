@@ -3,18 +3,23 @@ import Testing
 @testable import MeantimeKit
 
 /// In-memory stand-in for UserDefaults so persistence is verifiable in isolation.
-private final class MemoryStore: PreferenceStore {
+final class TestPreferenceStore: PreferenceStore {
     private var values: [String: Any] = [:]
+    private(set) var setCount = 0
     func data(forKey defaultName: String) -> Data? { values[defaultName] as? Data }
     func double(forKey defaultName: String) -> Double { values[defaultName] as? Double ?? 0 }
     func object(forKey defaultName: String) -> Any? { values[defaultName] }
-    func set(_ value: Any?, forKey defaultName: String) { values[defaultName] = value }
+    func set(_ value: Any?, forKey defaultName: String) {
+        setCount += 1
+        values[defaultName] = value
+    }
     func removeObject(forKey defaultName: String) { values[defaultName] = nil }
+    func seed(_ value: Any?, forKey key: String) { values[key] = value }
 }
 
 @Suite @MainActor struct PreferencesTests {
     @Test func emptyStoreYieldsDefaults() {
-        let prefs = Preferences(store: MemoryStore())
+        let prefs = Preferences(store: TestPreferenceStore())
         #expect(prefs.timeFormat == PreferenceDefaults.timeFormat)
         #expect(prefs.textSize == PreferenceDefaults.textSize)
         #expect(prefs.elementSpacing == PreferenceDefaults.elementSpacing)
@@ -23,7 +28,7 @@ private final class MemoryStore: PreferenceStore {
     }
 
     @Test func mutationsPersistWriteThrough() {
-        let store = MemoryStore()
+        let store = TestPreferenceStore()
         let prefs = Preferences(store: store)
         prefs.addClock(WorldClock(timeZoneID: "Asia/Tokyo", customLabel: "Office"))
         prefs.timeFormat = .custom("HH:mm")
@@ -39,7 +44,7 @@ private final class MemoryStore: PreferenceStore {
     }
 
     @Test func restoreDefaultsResetsEverything() {
-        let store = MemoryStore()
+        let store = TestPreferenceStore()
         let prefs = Preferences(store: store)
         prefs.addClock(WorldClock(timeZoneID: "Asia/Tokyo"))
         prefs.timeFormat = .custom("h:mm a")
@@ -59,7 +64,7 @@ private final class MemoryStore: PreferenceStore {
     }
 
     @Test func moveClockNudgesWithinBounds() {
-        let prefs = Preferences(store: MemoryStore())
+        let prefs = Preferences(store: TestPreferenceStore())
         prefs.clocks = [WorldClock(timeZoneID: "Asia/Tokyo"),
                         WorldClock(timeZoneID: "Europe/Paris"),
                         WorldClock(timeZoneID: "America/Lima")]
@@ -73,7 +78,7 @@ private final class MemoryStore: PreferenceStore {
     }
 
     @Test func updateReplacesMatchingClock() {
-        let prefs = Preferences(store: MemoryStore())
+        let prefs = Preferences(store: TestPreferenceStore())
         var clock = WorldClock(timeZoneID: "Europe/Paris")
         prefs.addClock(clock)
         clock.customLabel = "Paris Team"
@@ -82,7 +87,7 @@ private final class MemoryStore: PreferenceStore {
     }
 
     @Test func removingClockPersistsWriteThrough() {
-        let store = MemoryStore()
+        let store = TestPreferenceStore()
         let prefs = Preferences(store: store)
         let clock = WorldClock(timeZoneID: "Asia/Tokyo")
         prefs.addClock(clock)
@@ -94,7 +99,7 @@ private final class MemoryStore: PreferenceStore {
     }
 
     @Test func removingMultipleClocksByIDPreservesUnselectedClocks() {
-        let store = MemoryStore()
+        let store = TestPreferenceStore()
         let prefs = Preferences(store: store)
         let tokyo = WorldClock(timeZoneID: "Asia/Tokyo")
         let sydney = WorldClock(timeZoneID: "Australia/Sydney")
@@ -105,5 +110,41 @@ private final class MemoryStore: PreferenceStore {
 
         #expect(prefs.clocks == [sydney])
         #expect(Preferences(store: store).clocks == [sydney])
+    }
+
+    @Test func appearanceAppliesAndPersistsWithOneStoreWrite() {
+        let store = TestPreferenceStore()
+        let prefs = Preferences(store: store)
+        let appearance = MenuBarAppearance(
+            timeFormat: .custom("HH:mm"),
+            layout: .combined,
+            combinedSeparator: "·",
+            textSize: 16,
+            elementSpacing: 7)
+
+        prefs.applyAppearance(appearance)
+
+        #expect(prefs.appearance == appearance)
+        #expect(store.setCount == 1)
+        #expect(Preferences(store: store).appearance == appearance)
+    }
+
+    @Test func legacyAppearanceKeysMigrateWithoutChangingValues() {
+        let store = TestPreferenceStore()
+        store.seed("combined", forKey: "menuBarLayout.v1")
+        store.seed(16.0, forKey: "textSize")
+        store.seed(7.0, forKey: "elementSpacing")
+        store.seed("", forKey: "combinedSeparator")
+        store.seed(try? JSONEncoder().encode(TimeFormat.custom("h:mm a")),
+                   forKey: "timeFormat.v1")
+
+        let prefs = Preferences(store: store)
+
+        #expect(prefs.appearance == MenuBarAppearance(
+            timeFormat: .custom("h:mm a"),
+            layout: .combined,
+            combinedSeparator: "",
+            textSize: 16,
+            elementSpacing: 7))
     }
 }

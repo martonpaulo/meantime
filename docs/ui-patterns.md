@@ -49,14 +49,16 @@ ticks.
   rows share one label style with a fixed icon column so everything aligns;
   actions are **direct** (icon + text footer buttons) — never a nested menu
   inside a menu-bar dropdown. ⌘W and Escape close it like any transient window.
-- **Sheets and transient windows** always answer ⌘W and Escape as dismissal,
-  and size to their content — no inner scroll bars on short forms.
-- **Settings**: a toolbar-style tab window (System Settings look) of fixed-width
-  grouped-form panes. Every pane is a `Form` with `.grouped` style; explanatory
-  copy lives in section footers, callout + secondary.
-- **Editing a list item** happens in a sheet with a header identifying the item,
-  a grouped form, and explicit Cancel/Save actions. Drafts preview live but
-  never persist before Save; leaving a dirty editor offers Save, Discard, and Cancel.
+- **Sheets and transient windows** always answer ⌘W and Escape as dismissal.
+  Unlimited content owns a bounded native scroll area; primary actions stay in
+  a fixed footer.
+- **Settings**: a toolbar-style tab window (System Settings look) with one
+  stable content size across panes. Grouped forms scroll inside that surface;
+  clock management uses a native selectable list and bottom action bar.
+- **Editing a list item** happens in a sheet with an always-visible preview,
+  grouped scrolling form, and explicit Cancel/Save actions. New items are also
+  drafts and use Add Clock. Leaving a dirty editor offers commit, discard, and
+  cancel.
 - **Choices render as their result**: format options show live samples of the
   exact fragment they contribute; sliders show their current value; previews
   update as you type.

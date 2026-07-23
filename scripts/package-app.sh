@@ -7,7 +7,8 @@
 #   - Otherwise: ad-hoc signing — free to build and run locally.
 #
 # Usage: scripts/package-app.sh [version] [build-number]
-# Output: build/Meantime.app and artifacts/Meantime-<version>.zip
+# Optional output overrides: APP_OUTPUT and ZIP_OUTPUT.
+# Defaults: build/Meantime.app and artifacts/Meantime-<version>.zip.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -21,12 +22,25 @@ IDENTITY="${DEVELOPER_ID_IDENTITY:--}"
 
 swift build -c release
 
-APP=build/Meantime.app
-rm -rf "$APP"
+APP="${APP_OUTPUT:-build/Meantime.app}"
+ZIP="${ZIP_OUTPUT:-artifacts/Meantime-$VERSION.zip}"
+
+[ ! -e "$APP" ] || {
+    echo "$APP already exists; choose a new APP_OUTPUT so the existing artifact is retained"
+    exit 1
+}
+[ ! -e "$ZIP" ] || {
+    echo "$ZIP already exists; choose a new ZIP_OUTPUT so the existing artifact is retained"
+    exit 1
+}
+
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks"
 cp .build/release/Meantime "$APP/Contents/MacOS/Meantime"
 cp Support/Info.plist "$APP/Contents/Info.plist"
 cp Support/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+if [ -d Support/en.lproj ]; then
+    ditto Support/en.lproj "$APP/Contents/Resources/en.lproj"
+fi
 # ditto preserves the framework's symlink structure; cp -R would break it.
 ditto .build/release/Sparkle.framework "$APP/Contents/Frameworks/Sparkle.framework"
 
@@ -46,9 +60,7 @@ codesign "${SIGN_FLAGS[@]}" "$APP/Contents/Frameworks/Sparkle.framework"
 codesign "${SIGN_FLAGS[@]}" "$APP"
 codesign --verify --deep --strict "$APP"
 
-mkdir -p artifacts
-ZIP="artifacts/Meantime-$VERSION.zip"
-rm -f "$ZIP"
+mkdir -p "$(dirname "$ZIP")"
 # ditto -c -k preserves symlinks and signatures, as Sparkle requires.
 ditto -c -k --keepParent "$APP" "$ZIP"
 

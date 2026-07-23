@@ -12,18 +12,19 @@ struct PanelActions {
 /// day checking, and typed time travel. Renders prepared `PanelRow`s and reads
 /// the shared time source, so it always matches the menu bar exactly.
 struct PanelView: View {
-    @Environment(Preferences.self) private var preferences
+    @Environment(SettingsPreview.self) private var settingsPreview
     @Environment(TimeSource.self) private var timeSource
     @Environment(PanelModel.self) private var panelModel
 
     let formatter: ClockFormatter
     let actions: PanelActions
+    @ScaledMetric(relativeTo: .body) private var panelWidth = Token.Size.panelWidth
 
     private var previewDate: Date { panelModel.previewDate(from: timeSource.now) }
 
     private var rows: [PanelRow] {
-        PanelRowFormatter.rows(clocks: preferences.clocks, at: previewDate,
-                               format: preferences.timeFormat, formatter: formatter)
+        PanelRowFormatter.rows(clocks: settingsPreview.clocks, at: previewDate,
+                               format: settingsPreview.timeFormat, formatter: formatter)
     }
 
     var body: some View {
@@ -37,7 +38,7 @@ struct PanelView: View {
             footer
         }
         .padding(.vertical, Token.Space.xs)
-        .frame(width: Token.Size.panelWidth)
+        .frame(width: panelWidth)
         .background(PanelBackground())
         .clipShape(RoundedRectangle(cornerRadius: Token.Radius.panel, style: .continuous))
         .overlay(
@@ -58,13 +59,27 @@ struct PanelView: View {
             .padding(.horizontal, Token.Space.lg)
             .padding(.vertical, Token.Space.sm)
         } else {
-            VStack(spacing: 0) {
-                ForEach(rows) { row in
-                    ClockRowView(row: row, textSize: preferences.textSize,
-                                 spacing: preferences.elementSpacing)
+            Group {
+                if rows.count <= 4 {
+                    clockRows
+                } else {
+                    ScrollView {
+                        clockRows
+                    }
+                    .frame(height: Token.Size.panelClockListMaxHeight)
+                    .accessibilityLabel("World clocks")
                 }
             }
             .padding(.horizontal, Token.Space.sm)
+        }
+    }
+
+    private var clockRows: some View {
+        LazyVStack(spacing: 0) {
+            ForEach(rows) { row in
+                ClockRowView(row: row, textSize: settingsPreview.textSize,
+                             spacing: settingsPreview.elementSpacing)
+            }
         }
     }
 
@@ -102,6 +117,7 @@ private struct FooterButton: View {
         }
         .buttonStyle(.plain)
         .onHover { isHovering = $0 }
+        .frame(minHeight: Token.Size.hitTarget)
     }
 }
 
@@ -117,6 +133,8 @@ private struct ClockRowView: View {
     let row: PanelRow
     let textSize: Double
     let spacing: Double
+    @ScaledMetric(relativeTo: .body) private var timeScale = 1.0
+    @ScaledMetric(relativeTo: .body) private var rowHeight = Token.Size.rowMinHeight
 
     private var caption: String {
         if let day = row.dayCaption { return "\(row.offsetCaption) · \(day)" }
@@ -132,45 +150,28 @@ private struct ClockRowView: View {
                 Text(row.label)
                     .font(Token.Font.label)
                     .foregroundStyle(Token.Color.primaryText)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
                 Text(caption)
                     .font(Token.Font.secondary)
                     .foregroundStyle(Token.Color.secondaryText)
+                    .lineLimit(1)
             }
+            .layoutPriority(1)
             Spacer(minLength: Token.Space.md)
             Text(row.time)
-                .font(Token.Font.time(textSize))
+                .font(Token.Font.time(textSize * timeScale))
                 .foregroundStyle(Token.Color.primaryText)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .layoutPriority(2)
         }
         .padding(.horizontal, Token.Space.sm)
         .padding(.vertical, Token.Space.xs)
-        .frame(minHeight: Token.Size.rowMinHeight)
+        .frame(minHeight: rowHeight)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(row.label), \(row.time), \(caption)")
-    }
-}
-
-/// Quick month calendar for checking which weekday a date falls on. Picking a
-/// day previews it across all clocks; it resets when the panel closes.
-private struct CalendarSection: View {
-    @Environment(PanelModel.self) private var panelModel
-    @Environment(TimeSource.self) private var timeSource
-
-    private var dayBinding: Binding<Date> {
-        Binding(
-            get: { panelModel.selectedDay ?? timeSource.now },
-            set: { panelModel.selectedDay = $0 }
-        )
-    }
-
-    var body: some View {
-        DatePicker("Calendar", selection: dayBinding, displayedComponents: [.date])
-            .datePickerStyle(.graphical)
-            .labelsHidden()
-            .focusEffectDisabled()
-            .frame(maxWidth: .infinity, alignment: .center)
-            .padding(.horizontal, Token.Space.md)
-            .accessibilityLabel("Month calendar")
     }
 }
 
@@ -187,26 +188,51 @@ private struct TimeTravelSection: View {
         )
     }
 
+    private var previewSummary: String {
+        panelModel.previewDate(from: timeSource.now).formatted(
+            .dateTime.weekday(.abbreviated).month(.abbreviated).day().year()
+                .hour().minute())
+    }
+
     var body: some View {
-        HStack(spacing: Token.Space.sm) {
-            Label("Time travel", systemImage: "clock.arrow.2.circlepath")
-                .labelStyle(PanelActionLabelStyle())
-                .font(Token.Font.action)
-                .foregroundStyle(Token.Color.secondaryText)
-            Spacer()
-            if panelModel.isTraveling {
-                Button("Now") {
-                    withAnimation(Token.Motion.quick) { panelModel.reset() }
+        Grid(alignment: .leading, horizontalSpacing: Token.Space.sm,
+             verticalSpacing: Token.Space.xs) {
+            GridRow {
+                Label("Time travel", systemImage: "clock.arrow.2.circlepath")
+                    .labelStyle(PanelActionLabelStyle())
+                    .font(Token.Font.action)
+                    .foregroundStyle(Token.Color.secondaryText)
+                HStack(spacing: Token.Space.sm) {
+                    Spacer()
+                    DatePicker("Time", selection: timeBinding,
+                               displayedComponents: [.hourAndMinute])
+                        .datePickerStyle(.field)
+                        .controlSize(.small)
+                        .fixedSize()
+                        .accessibilityLabel("Preview time")
                 }
-                .buttonStyle(.link)
-                .font(Token.Font.action)
-                .help("Back to the current time")
             }
-            DatePicker("Time", selection: timeBinding, displayedComponents: [.hourAndMinute])
-                .datePickerStyle(.field)
-                .controlSize(.small)
-                .fixedSize()
-                .accessibilityLabel("Time travel preview time")
+            if panelModel.isTraveling {
+                GridRow {
+                    HStack(spacing: Token.Space.sm) {
+                        Text("Previewing \(previewSummary)")
+                            .font(Token.Font.secondary)
+                            .foregroundStyle(Token.Color.primaryText)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .accessibilityLabel("Previewing \(previewSummary)")
+                        Spacer(minLength: Token.Space.xs)
+                        Button("Now") {
+                            withAnimation(Token.Motion.quick) { panelModel.reset() }
+                        }
+                        .buttonStyle(.link)
+                        .font(Token.Font.action)
+                        .help("Return to the current date and time")
+                        .accessibilityLabel("Return to now")
+                    }
+                    .gridCellColumns(2)
+                }
+            }
         }
         .padding(.horizontal, Token.Space.lg)
     }

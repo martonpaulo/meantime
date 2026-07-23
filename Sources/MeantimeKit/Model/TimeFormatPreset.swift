@@ -53,6 +53,7 @@ public enum TimeFormatPattern {
         guard !pattern.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return false
         }
+        guard UserInputPolicy.isWithinPatternLimit(pattern) else { return false }
 
         var insideLiteral = false
         var index = pattern.startIndex

@@ -1,4 +1,5 @@
 import AppKit
+import MeantimeKit
 import SwiftUI
 
 /// A borderless, menu-material panel anchored flush under a status item —
@@ -68,14 +69,19 @@ final class PanelController: NSObject, NSWindowDelegate {
         }
         let buttonFrame = buttonWindow.convertToScreen(button.convert(button.bounds, to: nil))
 
-        // Centered under the item, clamped inside the screen, flush to the bar.
-        var x = buttonFrame.midX - size.width / 2
-        let minX = screen.visibleFrame.minX + Token.Size.screenMargin
-        let maxX = screen.visibleFrame.maxX - size.width - Token.Size.screenMargin
-        x = min(max(x, minX), maxX)
-        let y = buttonFrame.minY - Token.Size.panelGap - size.height
-
-        panel.setFrame(NSRect(x: x, y: y, width: size.width, height: size.height), display: false)
+        let placement = PanelPlacement.frame(
+            panelSize: PanelSize(width: size.width, height: size.height),
+            anchor: PanelRect(x: buttonFrame.minX, y: buttonFrame.minY,
+                              width: buttonFrame.width, height: buttonFrame.height),
+            visibleScreen: PanelRect(
+                x: screen.visibleFrame.minX, y: screen.visibleFrame.minY,
+                width: screen.visibleFrame.width, height: screen.visibleFrame.height),
+            gap: Token.Size.panelGap,
+            margin: Token.Size.screenMargin)
+        panel.setFrame(
+            NSRect(x: placement.x, y: placement.y,
+                   width: placement.width, height: placement.height),
+            display: false)
         panel.makeKeyAndOrderFront(nil)
         // Open unfocused: no control should grab a focus ring on a glance
         // surface. Tabbing or clicking still hands focus out normally.

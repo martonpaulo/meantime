@@ -7,6 +7,7 @@ enum Token {
     /// Spacing scale (points).
     enum Space {
         static let xxs: CGFloat = 2
+        static let xxxs: CGFloat = 1
         static let xs: CGFloat = 4
         static let sm: CGFloat = 8
         static let md: CGFloat = 12
@@ -24,20 +25,27 @@ enum Token {
 
     /// Fixed dimensions (points).
     enum Size {
-        static let panelWidth: CGFloat = 320
-        static let rowMinHeight: CGFloat = 28
+        static let panelWidth: CGFloat = 340
+        static let panelClockListMaxHeight: CGFloat = 168
+        static let rowMinHeight: CGFloat = 32
         static let analogClock: CGFloat = 18
-        static let hitTarget: CGFloat = 22
-        /// Width of every settings pane (windowhop-style fixed panes).
+        static let hitTarget: CGFloat = 26
+        static let statusItemMaxWidth: CGFloat = 260
+        /// Stable content size shared by every Settings pane.
         static let paneWidth: CGFloat = 560
-        static let editorWidth: CGFloat = 440
+        static let paneHeight: CGFloat = 520
+        static let editorWidth: CGFloat = 480
+        static let editorHeight: CGFloat = 620
+        static let pickerWidth: CGFloat = 460
+        static let pickerHeight: CGFloat = 540
+        static let aboutIcon: CGFloat = 64
         /// Gap between the menu bar and the anchored panel.
         static let panelGap: CGFloat = 5
         /// Screen-edge margin the panel never crosses.
         static let screenMargin: CGFloat = 8
         /// Calendar day-cell height and selection-circle diameter.
-        static let calendarCell: CGFloat = 27
-        static let calendarSelection: CGFloat = 24
+        static let calendarCell: CGFloat = 29
+        static let calendarSelection: CGFloat = 26
         /// Fixed icon column in panel action rows, so labels align.
         static let actionIconColumn: CGFloat = 16
         static let adornmentColumn: CGFloat = 22
@@ -50,12 +58,12 @@ enum Token {
             .system(size: size, weight: .regular).monospacedDigit()
         }
 
-        static let label = SwiftUI.Font.system(size: 13, weight: .regular)
-        static let secondary = SwiftUI.Font.system(size: 11, weight: .regular)
-        static let sectionTitle = SwiftUI.Font.system(size: 11, weight: .semibold)
-        static let action = SwiftUI.Font.system(size: 13, weight: .regular)
-        static let calendarDay = SwiftUI.Font.system(size: 12, weight: .regular)
-        static let calendarNavigation = SwiftUI.Font.system(size: 11, weight: .semibold)
+        static let label = SwiftUI.Font.body
+        static let secondary = SwiftUI.Font.caption
+        static let sectionTitle = SwiftUI.Font.caption.weight(.semibold)
+        static let action = SwiftUI.Font.body
+        static let calendarDay = SwiftUI.Font.callout
+        static let calendarNavigation = SwiftUI.Font.caption.weight(.semibold)
     }
 
     /// Semantic colors, all derived from system materials so light/dark and
@@ -69,7 +77,9 @@ enum Token {
         static let hairlineSeparator = separator.opacity(0.5)
         static let subordinateText = secondaryText.opacity(0.5)
         static let weekendText = SwiftUI.Color(nsColor: .systemRed)
+        static let weekendBackground = SwiftUI.Color(nsColor: .systemRed).opacity(0.07)
         static let errorText = SwiftUI.Color(nsColor: .systemRed)
+        static let previewBackground = SwiftUI.Color(nsColor: .controlBackgroundColor)
     }
 
     /// Animation used for lightweight state changes (never for the ticking time).

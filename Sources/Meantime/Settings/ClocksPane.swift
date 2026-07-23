@@ -1,70 +1,60 @@
 import SwiftUI
 import MeantimeKit
 
-/// Manage the clock list. Field edits happen in a Save-gated sheet; destructive
-/// removal is explicit and confirmed, while add and reorder remain direct.
+/// A selection-first native list. Row actions live in the footer and context
+/// menu, keeping long labels and accessibility sizes from fighting controls.
 struct ClocksPane: View {
     @Environment(Preferences.self) private var preferences
     @Environment(SettingsPreview.self) private var settingsPreview
-    @State private var editingClockID: WorldClock.ID?
+
+    let formatter: ClockFormatter
+
+    @State private var selectedIDs = Set<WorldClock.ID>()
+    @State private var presentedSheet: ClockSheet?
     @State private var clocksPendingRemoval: [WorldClock] = []
-    @State private var isAdding = false
+
+    private var selectedClocks: [WorldClock] {
+        preferences.clocks.filter { selectedIDs.contains($0.id) }
+    }
+
+    private var singleSelection: WorldClock? {
+        selectedClocks.count == 1 ? selectedClocks[0] : nil
+    }
 
     var body: some View {
-        Form {
-            Section {
-                ForEach(preferences.clocks) { clock in
-                    ClockRow(clock: clock,
-                             onEdit: { editingClockID = clock.id },
-                             onRemove: { clocksPendingRemoval = [clock] })
+        VStack(spacing: 0) {
+            if preferences.clocks.isEmpty {
+                ContentUnavailableView {
+                    Label("No Clocks", systemImage: "clock.badge.questionmark")
+                } description: {
+                    Text("Add a time zone to show it in the menu bar and dropdown.")
+                } actions: {
+                    Button("Add Clock…") { presentAdd() }
+                        .keyboardShortcut(.defaultAction)
                 }
-                .onMove { preferences.moveClocks(from: $0, to: $1) }
-                .onDelete { offsets in
-                    clocksPendingRemoval = offsets.compactMap { index in
-                        preferences.clocks.indices.contains(index)
-                            ? preferences.clocks[index]
-                            : nil
-                    }
-                }
-
-                Button {
-                    isAdding = true
-                } label: {
-                    Label("Add Clock…", systemImage: "plus")
-                }
-            } header: {
-                Text("Clocks")
-            } footer: {
-                Text("Drag to reorder. The order here is the menu bar and dropdown order.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+            } else {
+                clockList
             }
+            Divider()
+            actionBar
         }
-        .formStyle(.grouped)
-        .frame(width: Token.Size.paneWidth)
-        .fixedSize()
-        .sheet(isPresented: $isAdding) {
-            TimeZonePickerView { identifier in
-                let clock = WorldClock(timeZoneID: identifier)
-                preferences.addClock(clock)
-                isAdding = false
-                editingClockID = clock.id
-            } onCancel: {
-                isAdding = false
+        .frame(width: Token.Size.paneWidth, height: Token.Size.paneHeight)
+        .sheet(item: $presentedSheet, onDismiss: settingsPreview.discardClock) { sheet in
+            switch sheet.kind {
+            case .add:
+                AddClockFlow(formatter: formatter) {
+                    presentedSheet = nil
+                }
+                .environment(preferences)
+                .environment(settingsPreview)
+            case let .edit(clock):
+                ClockEditorSheet(
+                    draft: ClockEditDraft(existing: clock),
+                    formatter: formatter,
+                    onFinish: { presentedSheet = nil })
+                    .environment(preferences)
+                    .environment(settingsPreview)
             }
-        }
-        .sheet(item: editingBinding, onDismiss: settingsPreview.discardClock) { clock in
-            ClockEditorSheet(
-                clock: clock,
-                onPreview: settingsPreview.preview,
-                onSave: { updated in
-                    settingsPreview.saveClock(updated)
-                    editingClockID = nil
-                },
-                onCancel: {
-                    settingsPreview.discardClock()
-                    editingClockID = nil
-                })
         }
         .alert(removalTitle, isPresented: removalConfirmationPresented) {
             Button(removalActionTitle, role: .destructive, action: removePendingClocks)
@@ -72,28 +62,99 @@ struct ClocksPane: View {
         } message: {
             Text(removalMessage)
         }
+        .onChange(of: preferences.clocks) { _, clocks in
+            selectedIDs.formIntersection(Set(clocks.map(\.id)))
+        }
+        .background {
+            Group {
+                Button("", action: editSelection)
+                    .keyboardShortcut(.return, modifiers: [])
+                Button("", action: requestRemoval)
+                    .keyboardShortcut(.delete, modifiers: [])
+            }
+            .opacity(0)
+            .accessibilityHidden(true)
+        }
     }
 
-    /// Sheet identity for the editor: resolves the id to the live clock value.
-    private var editingBinding: Binding<WorldClock?> {
-        Binding(
-            get: {
-                guard let id = editingClockID else { return nil }
-                return preferences.clocks.first { $0.id == id }
-            },
-            set: { newValue in
-                if newValue == nil { editingClockID = nil }
+    private var clockList: some View {
+        List(selection: $selectedIDs) {
+            ForEach(preferences.clocks) { clock in
+                ClockListRow(clock: clock)
+                    .tag(clock.id)
+                    .contentShape(Rectangle())
+                    .contextMenu {
+                        Button("Edit…") {
+                            selectedIDs = [clock.id]
+                            presentedSheet = ClockSheet(kind: .edit(clock))
+                        }
+                        Divider()
+                        Button("Move Up") {
+                            preferences.moveClock(id: clock.id, by: -1)
+                        }
+                        .disabled(preferences.clocks.first?.id == clock.id)
+                        Button("Move Down") {
+                            preferences.moveClock(id: clock.id, by: 1)
+                        }
+                        .disabled(preferences.clocks.last?.id == clock.id)
+                        Divider()
+                        Button("Remove Clock…", role: .destructive) {
+                            clocksPendingRemoval = [clock]
+                        }
+                    }
             }
-        )
+            .onMove { preferences.moveClocks(from: $0, to: $1) }
+        }
+        .listStyle(.inset)
+        .accessibilityLabel("Clocks")
+    }
+
+    private var actionBar: some View {
+        HStack(spacing: Token.Space.sm) {
+            ControlGroup {
+                Button(action: presentAdd) {
+                    Label("Add Clock", systemImage: "plus")
+                }
+                Button(action: requestRemoval) {
+                    Label("Remove Selected Clocks", systemImage: "minus")
+                }
+                .disabled(selectedIDs.isEmpty)
+            }
+            .labelStyle(.iconOnly)
+
+            ControlGroup {
+                Button {
+                    moveSelection(by: -1)
+                } label: {
+                    Label("Move Up", systemImage: "chevron.up")
+                }
+                .disabled(!canMoveSelection(by: -1))
+
+                Button {
+                    moveSelection(by: 1)
+                } label: {
+                    Label("Move Down", systemImage: "chevron.down")
+                }
+                .disabled(!canMoveSelection(by: 1))
+            }
+            .labelStyle(.iconOnly)
+
+            Text("\(preferences.clocks.count) \(preferences.clocks.count == 1 ? "clock" : "clocks")")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+
+            Spacer()
+
+            Button("Edit…", action: editSelection)
+                .disabled(singleSelection == nil)
+        }
+        .padding(Token.Space.md)
     }
 
     private var removalConfirmationPresented: Binding<Bool> {
         Binding(
             get: { !clocksPendingRemoval.isEmpty },
-            set: { isPresented in
-                if !isPresented { clocksPendingRemoval = [] }
-            }
-        )
+            set: { if !$0 { clocksPendingRemoval = [] } })
     }
 
     private var removalTitle: String {
@@ -114,90 +175,104 @@ struct ClocksPane: View {
             : "These clocks will be removed from the menu bar and dropdown. This can’t be undone."
     }
 
+    private func presentAdd() {
+        presentedSheet = ClockSheet(kind: .add)
+    }
+
+    private func editSelection() {
+        guard let singleSelection else { return }
+        presentedSheet = ClockSheet(kind: .edit(singleSelection))
+    }
+
+    private func requestRemoval() {
+        clocksPendingRemoval = selectedClocks
+    }
+
     private func removePendingClocks() {
         let ids = Set(clocksPendingRemoval.map(\.id))
         preferences.removeClocks(ids: ids)
+        selectedIDs.subtract(ids)
         clocksPendingRemoval = []
     }
+
+    private func canMoveSelection(by offset: Int) -> Bool {
+        guard let clock = singleSelection,
+              let index = preferences.clocks.firstIndex(where: { $0.id == clock.id }) else {
+            return false
+        }
+        return preferences.clocks.indices.contains(index + offset)
+    }
+
+    private func moveSelection(by offset: Int) {
+        guard let clock = singleSelection else { return }
+        preferences.moveClock(id: clock.id, by: offset)
+    }
 }
 
-/// One row: identity, saved visibility state, reorder, and Save-gated editing.
-private struct ClockRow: View {
+private struct ClockListRow: View {
     let clock: WorldClock
-    let onEdit: () -> Void
-    let onRemove: () -> Void
 
-    private var detailCaption: String {
-        guard clock.isPinned, !clock.activeWindows.isEmpty else {
-            return clock.timeZoneID
-        }
-        return "\(clock.timeZoneID) · \(String(localized: "Scheduled"))"
+    private var detail: String {
+        guard clock.isPinned else { return "\(clock.timeZoneID) · Dropdown only" }
+        guard !clock.activeWindows.isEmpty else { return clock.timeZoneID }
+        return "\(clock.timeZoneID) · Scheduled"
     }
 
     var body: some View {
-        HStack(spacing: Token.Space.md) {
-            if let adornment = clock.displayAdornment {
-                Text(adornment)
-            }
-            VStack(alignment: .leading, spacing: 0) {
-                Text(clock.displayLabel)
-                Text(detailCaption)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            ReorderButtons(clockID: clock.id)
-            Label(clock.isPinned ? "Menu Bar" : "Dropdown Only",
-                  systemImage: clock.isPinned ? "menubar.rectangle" : "rectangle.bottomthird.inset.filled")
-                .font(.callout)
+        LabeledContent {
+            Image(systemName: clock.isPinned ? "menubar.rectangle" : "rectangle.bottomthird.inset.filled")
                 .foregroundStyle(.secondary)
-            Button("Edit…", action: onEdit)
-            Button(role: .destructive, action: onRemove) {
-                Label("Remove \(clock.displayLabel)", systemImage: "trash")
-                    .labelStyle(.iconOnly)
+                .help(clock.isPinned ? "Shown in menu bar" : "Dropdown only")
+        } label: {
+            HStack(spacing: Token.Space.md) {
+                Text(clock.displayAdornment ?? "")
+                    .frame(width: Token.Size.adornmentColumn)
+                VStack(alignment: .leading, spacing: Token.Space.xxxs) {
+                    Text(clock.displayLabel)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    Text(detail)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
             }
-            .buttonStyle(.borderless)
-            .controlSize(.small)
-            .help("Remove \(clock.displayLabel)…")
-            .accessibilityLabel("Remove \(clock.displayLabel)")
         }
-        .padding(.vertical, Token.Space.xxs)
-        .contextMenu {
-            Button("Edit…", action: onEdit)
-            Button("Remove Clock…", role: .destructive, action: onRemove)
-        }
+        .padding(.vertical, Token.Space.xs)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "\(clock.displayLabel), \(detail), \(clock.isPinned ? "shown in menu bar" : "dropdown only")")
     }
 }
 
-/// Explicit move-up/move-down controls (drag still works; these are the
-/// discoverable, accessible path).
-private struct ReorderButtons: View {
-    @Environment(Preferences.self) private var preferences
-    let clockID: WorldClock.ID
-
-    private var index: Int? {
-        preferences.clocks.firstIndex { $0.id == clockID }
+private struct ClockSheet: Identifiable {
+    enum Kind {
+        case add
+        case edit(WorldClock)
     }
 
-    var body: some View {
-        HStack(spacing: Token.Space.xxs) {
-            Button {
-                preferences.moveClock(id: clockID, by: -1)
-            } label: {
-                Image(systemName: "chevron.up")
-            }
-            .disabled(index == 0)
-            .accessibilityLabel("Move up")
+    let id = UUID()
+    let kind: Kind
+}
 
-            Button {
-                preferences.moveClock(id: clockID, by: 1)
-            } label: {
-                Image(systemName: "chevron.down")
+/// The add workflow owns both stages, so selecting a zone never mutates
+/// preferences and no sheet-to-sheet race is possible.
+private struct AddClockFlow: View {
+    let formatter: ClockFormatter
+    let onFinish: () -> Void
+
+    @State private var draft: ClockEditDraft?
+
+    var body: some View {
+        if let draft {
+            ClockEditorSheet(draft: draft, formatter: formatter, onFinish: onFinish)
+        } else {
+            TimeZonePickerView { identifier in
+                draft = ClockEditDraft(newTimeZoneID: identifier)
+            } onCancel: {
+                onFinish()
             }
-            .disabled(index == preferences.clocks.count - 1)
-            .accessibilityLabel("Move down")
         }
-        .buttonStyle(.borderless)
-        .controlSize(.small)
     }
 }

@@ -10,7 +10,6 @@ struct TimeZonePickerView: View {
 
     @State private var query = ""
     @State private var entries: [TimeZoneCatalog.Entry] = []
-    @FocusState private var searchFocused: Bool
 
     private var filtered: [TimeZoneCatalog.Entry] {
         entries.filter { TimeZoneCatalog.matches($0, query: query) }
@@ -28,7 +27,6 @@ struct TimeZonePickerView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
-            searchField
             Divider()
             if filtered.isEmpty {
                 emptyState
@@ -36,10 +34,10 @@ struct TimeZonePickerView: View {
                 zoneList
             }
         }
-        .frame(width: 440, height: 500)
+        .frame(width: Token.Size.pickerWidth, height: Token.Size.pickerHeight)
+        .searchable(text: $query, prompt: "City, time zone, or abbreviation")
         .onAppear {
             entries = TimeZoneCatalog.entries()
-            searchFocused = true
         }
         .background {
             // ⌘W dismisses like any transient window (Escape is on Cancel).
@@ -60,30 +58,11 @@ struct TimeZonePickerView: View {
         .padding(Token.Space.lg)
     }
 
-    private var searchField: some View {
-        HStack(spacing: Token.Space.xs) {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(Token.Color.secondaryText)
-            TextField("Search for a city or time zone", text: $query)
-                .textFieldStyle(.plain)
-                .focused($searchFocused)
-        }
-        .padding(.vertical, Token.Space.sm)
-        .padding(.horizontal, Token.Space.md)
-        .background(Token.Color.rowHighlight, in: RoundedRectangle(cornerRadius: Token.Radius.sm))
-        .padding(.horizontal, Token.Space.lg)
-        .padding(.bottom, Token.Space.md)
-    }
-
     private var emptyState: some View {
-        VStack(spacing: Token.Space.xs) {
-            Spacer()
-            Image(systemName: "globe")
-                .font(.title2)
-                .foregroundStyle(Token.Color.secondaryText)
-            Text("No matching places")
-                .foregroundStyle(Token.Color.secondaryText)
-            Spacer()
+        ContentUnavailableView {
+            Label("No Matching Time Zones", systemImage: "globe")
+        } description: {
+            Text("Try a city, IANA identifier, GMT offset, or abbreviation.")
         }
         .frame(maxWidth: .infinity)
     }
@@ -99,7 +78,6 @@ struct TimeZonePickerView: View {
             }
         }
         .listStyle(.inset)
-        .scrollContentBackground(.hidden)
     }
 }
 

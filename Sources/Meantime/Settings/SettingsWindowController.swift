@@ -2,12 +2,20 @@ import AppKit
 import MeantimeKit
 import SwiftUI
 
+enum SettingsPane: Int {
+    case clocks
+    case format
+    case general
+    case about
+}
+
 /// The Settings window: a native toolbar-style NSTabViewController (the classic
 /// System Settings pane look) hosting SwiftUI panes. ⌘W closes it through the
 /// app's Window menu; the selected pane persists across launches.
 @MainActor
 final class SettingsWindowController: NSObject, NSWindowDelegate {
     private var window: NSWindow?
+    private var tabs: SettingsTabViewController?
     private let preferences: Preferences
     private let settingsPreview: SettingsPreview
     private let formatter: ClockFormatter
@@ -22,7 +30,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         super.init()
     }
 
-    func show() {
+    func show(pane: SettingsPane? = nil) {
         if window == nil {
             let tabs = SettingsTabViewController(preferences: preferences,
                                                  settingsPreview: settingsPreview,
@@ -30,11 +38,14 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
                                                  updateManager: updateManager)
             let newWindow = NSWindow(contentViewController: tabs)
             newWindow.styleMask = [.titled, .closable, .miniaturizable]
+            newWindow.title = "Meantime Settings"
             newWindow.isReleasedWhenClosed = false
             newWindow.delegate = self
             newWindow.center()
+            self.tabs = tabs
             window = newWindow
         }
+        if let pane { tabs?.select(pane) }
         NSApp.activate()
         window?.makeKeyAndOrderFront(nil)
     }
@@ -65,7 +76,7 @@ private final class SettingsTabViewController: NSTabViewController {
         tabStyle = .toolbar
         transitionOptions = []
         addPane(title: "Clocks", symbol: "globe",
-                view: ClocksPane()
+                view: ClocksPane(formatter: formatter)
                     .environment(preferences).environment(settingsPreview))
         addPane(title: "Format", symbol: "textformat",
                 view: FormatPane(formatter: formatter)
@@ -81,6 +92,10 @@ private final class SettingsTabViewController: NSTabViewController {
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
+
+    func select(_ pane: SettingsPane) {
+        selectedTabViewItemIndex = pane.rawValue
+    }
 
     private func addPane(title: String, symbol: String, view: some View) {
         let hosting = NSHostingController(rootView: AnyView(view))

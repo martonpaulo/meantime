@@ -1,0 +1,19 @@
+/* Base English localization. SwiftUI LocalizedStringKey values fall back to
+   their key, while AppKit surfaces use String(localized:). */
+"About Meantime" = "About Meantime";
+"Add Clock" = "Add Clock";
+"Add Clock…" = "Add Clock…";
+"Cancel" = "Cancel";
+"Clocks" = "Clocks";
+"Date Format Guide" = "Date Format Guide";
+"Edit…" = "Edit…";
+"Format" = "Format";
+"General" = "General";
+"Help" = "Help";
+"Meantime Help" = "Meantime Help";
+"Quit" = "Quit";
+"Remove Clock" = "Remove Clock";
+"Report an Issue…" = "Report an Issue…";
+"Save" = "Save";
+"Settings…" = "Settings…";
+"Universal & Fixed Offsets" = "Universal & Fixed Offsets";

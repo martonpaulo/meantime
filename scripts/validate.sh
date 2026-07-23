@@ -16,6 +16,11 @@ fi
 BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" Support/Info.plist)
 [ "$BUNDLE_ID" = "com.perso.meantime" ] || note "bundle id must be com.perso.meantime (got $BUNDLE_ID)"
 
+[ -f Support/en.lproj/Localizable.strings ] \
+    || note "packaged app must include a base localization catalog"
+grep -q 'Support/en.lproj' scripts/package-app.sh \
+    || note "package script must copy localization resources"
+
 # The domain kit stays pure: no UI or Sparkle imports.
 if grep -rqE "import (SwiftUI|AppKit|Sparkle)" Sources/MeantimeKit; then
     note "MeantimeKit must not import SwiftUI, AppKit, or Sparkle"
@@ -66,6 +71,23 @@ fi
 if grep -Eq 'screenshots/settings-(clocks|format)\\.png' README.md docs/*.html; then
     note "public pages must not reference the obsolete Settings screenshots"
 fi
+if ! grep -q 'hasUpperHour' docs/format.html; then
+    if ! grep -q 'hasUpperHour' docs/scripts/format-pattern.js; then
+        note "format builder must reject uppercase hours when a day period is present"
+    fi
+fi
+node scripts/test-format-builder.js || note "format builder behavior tests failed"
+if ! grep -q ':focus-visible' docs/styles/main.css; then
+    note "website must expose a deliberate keyboard focus treatment"
+fi
+if ! grep -q 'screenshots/settings-current.png' docs/index.html; then
+    note "homepage must show current Settings UI"
+fi
+for image in docs/screenshots/panel-current.png docs/screenshots/settings-current.png; do
+    [ -f "$image" ] || { note "missing current website image $image"; continue; }
+    width=$(sips -g pixelWidth "$image" 2>/dev/null | awk '/pixelWidth/ {print $2}')
+    [ "${width:-0}" -ge 640 ] || note "$image must be at least 2x/640 px wide"
+done
 
 # Never publish a known-dead updater enclosure.
 if grep -q '<sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>' appcast.xml; then

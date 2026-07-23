@@ -17,45 +17,46 @@ public final class Preferences {
         didSet { save(clocks, forKey: Key.clocks) }
     }
 
+    public var appearance: MenuBarAppearance {
+        didSet { save(appearance, forKey: Key.appearance) }
+    }
+
     public var timeFormat: TimeFormat {
-        didSet { save(timeFormat, forKey: Key.timeFormat) }
+        get { appearance.timeFormat }
+        set { appearance.timeFormat = newValue }
     }
 
     /// One status item per pinned clock, or a single combined item.
     public var menuBarLayout: MenuBarLayout {
-        didSet { store.set(menuBarLayout.rawValue, forKey: Key.menuBarLayout) }
+        get { appearance.layout }
+        set { appearance.layout = newValue }
     }
 
     /// Font size, in points, for menu-bar and panel time text.
     public var textSize: Double {
-        didSet { store.set(textSize, forKey: Key.textSize) }
+        get { appearance.textSize }
+        set { appearance.textSize = newValue }
     }
 
     /// Gap, in points, between an item's adornment and its time (and around items).
     public var elementSpacing: Double {
-        didSet { store.set(elementSpacing, forKey: Key.elementSpacing) }
+        get { appearance.elementSpacing }
+        set { appearance.elementSpacing = newValue }
     }
 
     /// Text between clocks when all clocks share one status item. Empty is an
     /// intentional value; spacing still keeps adjacent clocks legible.
     public var combinedSeparator: String {
-        didSet { store.set(combinedSeparator, forKey: Key.combinedSeparator) }
+        get { appearance.combinedSeparator }
+        set { appearance.combinedSeparator = newValue }
     }
 
     public init(store: PreferenceStore = UserDefaults.standard) {
         self.store = store
         self.clocks = Self.decode([WorldClock].self, forKey: Key.clocks, from: store)
             ?? PreferenceDefaults.clocks
-        self.timeFormat = Self.decode(TimeFormat.self, forKey: Key.timeFormat, from: store)
-            ?? PreferenceDefaults.timeFormat
-        self.menuBarLayout = (store.object(forKey: Key.menuBarLayout) as? String)
-            .flatMap { MenuBarLayout(rawValue: $0) } ?? PreferenceDefaults.menuBarLayout
-        self.textSize = Self.readDouble(Key.textSize, from: store)
-            ?? PreferenceDefaults.textSize
-        self.elementSpacing = Self.readDouble(Key.elementSpacing, from: store)
-            ?? PreferenceDefaults.elementSpacing
-        self.combinedSeparator = store.object(forKey: Key.combinedSeparator) as? String
-            ?? PreferenceDefaults.combinedSeparator
+        self.appearance = Self.decode(MenuBarAppearance.self, forKey: Key.appearance, from: store)
+            ?? Self.legacyAppearance(from: store)
     }
 
     // MARK: Clock editing
@@ -96,6 +97,11 @@ public final class Preferences {
         clocks[index] = clock
     }
 
+    public func applyAppearance(_ newAppearance: MenuBarAppearance) {
+        guard appearance != newAppearance else { return }
+        appearance = newAppearance
+    }
+
     /// Nudges a clock one position up (-1) or down (+1); no-op at the edges.
     public func moveClock(id: WorldClock.ID, by offset: Int) {
         guard let index = clocks.firstIndex(where: { $0.id == id }) else { return }
@@ -110,11 +116,7 @@ public final class Preferences {
     /// login item, permissions, or any non-preference state.
     public func restoreDefaults() {
         clocks = PreferenceDefaults.clocks
-        timeFormat = PreferenceDefaults.timeFormat
-        menuBarLayout = PreferenceDefaults.menuBarLayout
-        textSize = PreferenceDefaults.textSize
-        elementSpacing = PreferenceDefaults.elementSpacing
-        combinedSeparator = PreferenceDefaults.combinedSeparator
+        appearance = PreferenceDefaults.appearance
     }
 
     // MARK: Persistence helpers
@@ -134,8 +136,24 @@ public final class Preferences {
         store.object(forKey: key) == nil ? nil : store.double(forKey: key)
     }
 
+    private static func legacyAppearance(from store: PreferenceStore) -> MenuBarAppearance {
+        MenuBarAppearance(
+            timeFormat: decode(TimeFormat.self, forKey: Key.timeFormat, from: store)
+                ?? PreferenceDefaults.timeFormat,
+            layout: (store.object(forKey: Key.menuBarLayout) as? String)
+                .flatMap(MenuBarLayout.init(rawValue:))
+                ?? PreferenceDefaults.menuBarLayout,
+            combinedSeparator: store.object(forKey: Key.combinedSeparator) as? String
+                ?? PreferenceDefaults.combinedSeparator,
+            textSize: readDouble(Key.textSize, from: store)
+                ?? PreferenceDefaults.textSize,
+            elementSpacing: readDouble(Key.elementSpacing, from: store)
+                ?? PreferenceDefaults.elementSpacing)
+    }
+
     private enum Key {
         static let clocks = "clocks.v1"
+        static let appearance = "menuBarAppearance.v2"
         static let timeFormat = "timeFormat.v1"
         static let menuBarLayout = "menuBarLayout.v1"
         static let textSize = "textSize"

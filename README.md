@@ -13,7 +13,7 @@
 
 <img src="docs/screenshots/menu-bar.png" alt="Two world clocks in the macOS menu bar" width="260">
 
-<img src="docs/screenshots/panel-current.png" alt="The Meantime panel: clocks, month calendar, and time travel" width="320">
+<img src="docs/screenshots/panel-current.png" alt="The Meantime panel: clocks, month calendar, and time travel" width="340">
 
 </div>
 
@@ -39,6 +39,7 @@ Open it, drag Meantime onto Applications, launch. Done — it updates itself.
 | ⏰ **Scheduled clocks** | Show the NY clock only 8–12 and 13–17 *NY time*; it hides itself outside those hours |
 | ✏️ **Your format, your pattern** | Start with a common preset, write any Unicode pattern, or assemble one visually in the [interactive format builder](https://martonpaulo.github.io/meantime/format.html) |
 | 🏷️ **Labels & leading items** | "Mom", "Tokyo Office" — any name, with a country flag, custom emoji, custom text, or nothing before it |
+| 🌐 **Every system time zone** | Place zones, UTC/GMT, and stable fixed-offset IANA identifiers |
 | 🚀 **Open at login** | Set it once, forget it |
 
 ## 🔋 Fast and honest about energy
@@ -57,8 +58,9 @@ Meantime ever makes is checking this repository for updates ([Sparkle](https://s
 ## 🖼️ Settings
 
 Native toolbar panes keep clock management, format presets, appearance,
-startup, updates, and app information separate. Clock and format edits preview
-live, remain unsaved until you choose Save, and ask before discarding changes.
+startup, updates, and app information separate. New clocks remain drafts until
+Add Clock; later edits preview live and remain unsaved until Save. Leaving a
+dirty editor always offers commit, discard, and cancel.
 
 ## 🛠 Build from source
 

@@ -198,6 +198,7 @@
     </p>
   </footer>
 
+  <script src="scripts/format-pattern.js"></script>
   <script>
     "use strict";
 
@@ -286,22 +287,7 @@
       return output;
     }
 
-    function unquotedFields(pattern) {
-      const fields = new Set();
-      let insideLiteral = false;
-      for (let index = 0; index < pattern.length; index += 1) {
-        if (pattern[index] !== "'") {
-          if (!insideLiteral && /[A-Za-z]/.test(pattern[index])) fields.add(pattern[index]);
-          continue;
-        }
-        if (pattern[index + 1] === "'") {
-          index += 1;
-        } else {
-          insideLiteral = !insideLiteral;
-        }
-      }
-      return { fields, balanced: !insideLiteral };
-    }
+    const { unquotedFields, validation: validatePattern } = MeantimeFormatPattern;
 
     const patternInput = document.getElementById("pattern");
     const preset = document.getElementById("preset");
@@ -312,15 +298,7 @@
     let refreshTimer;
 
     function validation() {
-      const parsed = unquotedFields(patternInput.value);
-      const hasDayPeriod = parsed.fields.has("a");
-      const hasLowerHour = parsed.fields.has("h");
-      if (!patternInput.value.trim()) return { valid: false, message: "Enter or build a pattern." };
-      if (!parsed.balanced) return { valid: false, message: "Close the quoted literal before copying." };
-      if (hasDayPeriod && !hasLowerHour) {
-        return { valid: false, message: "AM/PM (a) is available only with lowercase h or hh." };
-      }
-      return { valid: true, message: "" };
+      return validatePattern(patternInput.value);
     }
 
     function refresh() {
@@ -331,7 +309,7 @@
       });
 
       const parsed = unquotedFields(patternInput.value);
-      dayPeriodButton.disabled = !parsed.fields.has("h");
+      dayPeriodButton.disabled = !parsed.fields.has("h") || parsed.fields.has("H");
       const result = validation();
       status.textContent = result.message;
       status.classList.toggle("error", !result.valid);

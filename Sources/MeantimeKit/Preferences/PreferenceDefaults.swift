@@ -9,6 +9,15 @@ public enum PreferenceDefaults {
     public static let elementSpacing: Double = 4
     public static let combinedSeparator = "/"
 
+    public static var appearance: MenuBarAppearance {
+        MenuBarAppearance(
+            timeFormat: timeFormat,
+            layout: menuBarLayout,
+            combinedSeparator: combinedSeparator,
+            textSize: textSize,
+            elementSpacing: elementSpacing)
+    }
+
     /// Starting point when a user first enables a schedule or adds a window.
     /// The persisted default remains no windows (always visible).
     public static var suggestedActiveWindow: ActiveWindow {

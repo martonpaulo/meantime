@@ -71,8 +71,7 @@ struct GeneralPane: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: Token.Size.paneWidth)
-        .fixedSize()
+        .frame(width: Token.Size.paneWidth, height: Token.Size.paneHeight)
         .onAppear { automaticChecks = updateManager.automaticallyChecksForUpdates }
     }
 }

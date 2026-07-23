@@ -7,15 +7,15 @@ its default and touches nothing else (not the login item, not identity).
 
 | Behavior | Default | Configurable? | Notes |
 | --- | --- | --- | --- |
-| Clocks | one clock for the Mac's own zone | yes | add / remove / reorder (drag or up/down buttons) |
-| Clock label | humanized city from the zone | yes | empty falls back to the default |
-| Clock leading item | region flag from the zone | yes | country flag · custom emoji · custom text · none; values remain separate when switching |
+| Clocks | one clock for the Mac's own zone | yes | every system IANA identifier, including UTC/GMT/fixed offsets; add / remove / reorder |
+| Clock label | humanized city from the zone | yes | empty falls back to the default; maximum 40 grapheme clusters |
+| Clock leading item | region flag from the zone | yes | country flag · one custom emoji grapheme · custom text up to 8 graphemes · none; values remain separate when switching |
 | Menu-bar style (per clock) | leading item + time | yes | time only · leading item + time · analog face |
 | Pinned to menu bar | on | yes | off ⇒ shown in the panel only |
 | Menu-bar layout | one item per clock | yes | or all clocks combined into a single item; analog falls back to leading item + time when combined |
-| Combined-item separator | `/` | yes | shown between clocks in combined layout; empty means spacing only |
-| Scheduled hours (per clock) | none (always shown) | yes | daily windows in the clock's own zone; outside them the clock leaves the menu bar but stays in the panel |
-| Time format | system | yes | preset-first; Custom accepts any structurally valid Unicode (UTS-35) pattern and quoted literal text |
+| Combined-item separator | `/` | yes | up to 3 graphemes; empty means spacing only |
+| Scheduled hours (per clock) | none (always shown) | yes | own-zone daily windows; end before start means overnight; equal, duplicate, and overlapping rows are invalid |
+| Time format | system | yes | preset-first; Custom accepts structurally valid Unicode (UTS-35), quoted literal text, and up to 256 graphemes |
 | Menu-bar text size | 13 pt | yes | 10–18 pt |
 | Element spacing | 4 pt | yes | 0–12 pt |
 | Open at login | off | yes | owned by the system login-item service, not stored in preferences |

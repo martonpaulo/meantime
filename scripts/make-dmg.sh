@@ -3,48 +3,59 @@
 # artwork, fixed icon positions, a volume icon, and (locally) a matching icon on
 # the .dmg file itself. Built with appdmg (pinned), which writes the Finder
 # layout programmatically — works headless, no Finder scripting.
-# Usage: scripts/make-dmg.sh [version]   (expects build/Meantime.app to exist)
+# Usage: scripts/make-dmg.sh [version]
+# Optional output overrides: APP_OUTPUT, DMG_OUTPUT, and DMG_WORK_DIR.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 DEFAULT_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Support/Info.plist)
 VERSION="${1:-$DEFAULT_VERSION}"
 APPDMG_VERSION=0.6.6
-DMG="artifacts/Meantime-$VERSION.dmg"
+APP="${APP_OUTPUT:-build/Meantime.app}"
+DMG="${DMG_OUTPUT:-artifacts/Meantime-$VERSION.dmg}"
+DMG_WORK_DIR="${DMG_WORK_DIR:-artifacts/dmg-$VERSION}"
 
-[ -d build/Meantime.app ] || { echo "build/Meantime.app missing; run scripts/package-app.sh first"; exit 1; }
+[ -d "$APP" ] || { echo "$APP missing; run scripts/package-app.sh first"; exit 1; }
+[ ! -e "$DMG" ] || {
+    echo "$DMG already exists; choose a new DMG_OUTPUT so the existing artifact is retained"
+    exit 1
+}
+[ ! -e "$DMG_WORK_DIR" ] || {
+    echo "$DMG_WORK_DIR already exists; choose a new DMG_WORK_DIR so existing evidence is retained"
+    exit 1
+}
 
-mkdir -p artifacts
-rm -f "$DMG"
+mkdir -p "$(dirname "$DMG")" "$DMG_WORK_DIR"
+REPOSITORY_ROOT="$(pwd)"
+APP_PATH="$(cd "$(dirname "$APP")" && pwd)/$(basename "$APP")"
+SPEC="$DMG_WORK_DIR/dmg-spec.json"
 
 # Icon centers must stay in sync with the background artwork
 # (scripts/render-dmg-background.swift): window 660x420, icons at y 250.
-cat > artifacts/dmg-spec.json <<JSON
+cat > "$SPEC" <<JSON
 {
   "title": "Meantime $VERSION",
-  "icon": "../Support/AppInstallerIcon.icns",
-  "background": "../Support/MeantimeInstallerBackground.tiff",
+  "icon": "$REPOSITORY_ROOT/Support/AppInstallerIcon.icns",
+  "background": "$REPOSITORY_ROOT/Support/MeantimeInstallerBackground.tiff",
   "icon-size": 120,
   "window": { "size": { "width": 660, "height": 420 } },
   "contents": [
-    { "x": 185, "y": 250, "type": "file", "path": "../build/Meantime.app" },
+    { "x": 185, "y": 250, "type": "file", "path": "$APP_PATH" },
     { "x": 475, "y": 250, "type": "link", "path": "/Applications" }
   ]
 }
 JSON
-npx --yes "appdmg@$APPDMG_VERSION" artifacts/dmg-spec.json "$DMG"
-rm -f artifacts/dmg-spec.json
+npx --yes "appdmg@$APPDMG_VERSION" "$SPEC" "$DMG"
 
 # Give the .dmg file itself the Meantime icon (resource fork; survives local
 # copies — download services strip xattrs, so the VOLUME icon is the one users
 # see after mounting).
 if xcrun --find Rez >/dev/null 2>&1 && command -v SetFile >/dev/null 2>&1; then
-    cp Support/AppInstallerIcon.icns artifacts/dmg-file-icon.icns
-    sips -i artifacts/dmg-file-icon.icns >/dev/null
-    DeRez -only icns artifacts/dmg-file-icon.icns > artifacts/dmg-icon.rsrc
-    Rez -append artifacts/dmg-icon.rsrc -o "$DMG"
+    cp Support/AppInstallerIcon.icns "$DMG_WORK_DIR/dmg-file-icon.icns"
+    sips -i "$DMG_WORK_DIR/dmg-file-icon.icns" >/dev/null
+    DeRez -only icns "$DMG_WORK_DIR/dmg-file-icon.icns" > "$DMG_WORK_DIR/dmg-icon.rsrc"
+    Rez -append "$DMG_WORK_DIR/dmg-icon.rsrc" -o "$DMG"
     SetFile -a C "$DMG"
-    rm -f artifacts/dmg-file-icon.icns artifacts/dmg-icon.rsrc
 fi
 
 if [ -n "${DEVELOPER_ID_IDENTITY:-}" ]; then

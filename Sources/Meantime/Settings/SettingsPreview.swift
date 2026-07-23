@@ -30,7 +30,19 @@ final class SettingsPreview {
         }
 
         var isValid: Bool {
-            formatPreset != .custom || TimeFormatPattern.isValid(customPattern)
+            UserInputPolicy.isValidSeparator(combinedSeparator)
+                && (formatPreset != .custom
+                    || (TimeFormatPattern.isValid(customPattern)
+                        && UserInputPolicy.isWithinPatternLimit(customPattern)))
+        }
+
+        var appearance: MenuBarAppearance {
+            MenuBarAppearance(
+                timeFormat: timeFormat,
+                layout: menuBarLayout,
+                combinedSeparator: combinedSeparator,
+                textSize: textSize,
+                elementSpacing: elementSpacing)
         }
     }
 
@@ -45,6 +57,9 @@ final class SettingsPreview {
 
     var clocks: [WorldClock] {
         guard let clockDraft else { return preferences.clocks }
+        guard preferences.clocks.contains(where: { $0.id == clockDraft.id }) else {
+            return preferences.clocks + [clockDraft]
+        }
         return preferences.clocks.map { $0.id == clockDraft.id ? clockDraft : $0 }
     }
 
@@ -69,11 +84,7 @@ final class SettingsPreview {
 
     func saveAppearance() {
         guard let draft = appearanceDraft, draft.isValid else { return }
-        preferences.timeFormat = draft.timeFormat
-        preferences.menuBarLayout = draft.menuBarLayout
-        preferences.combinedSeparator = draft.combinedSeparator
-        preferences.textSize = draft.textSize
-        preferences.elementSpacing = draft.elementSpacing
+        preferences.applyAppearance(draft.appearance)
         appearanceDraft = nil
     }
 
@@ -83,11 +94,6 @@ final class SettingsPreview {
 
     func preview(clock: WorldClock) {
         clockDraft = clock
-    }
-
-    func saveClock(_ clock: WorldClock) {
-        preferences.update(clock)
-        clockDraft = nil
     }
 
     func discardClock() {

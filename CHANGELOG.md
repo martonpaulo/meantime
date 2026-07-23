@@ -4,7 +4,7 @@ All notable changes to Meantime are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2026-07-23
 
 ### Added
 
@@ -12,10 +12,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Per-clock country flag, custom emoji, custom text, or no leading item.
 - Save-gated live previews, per-clock Restore Defaults, format presets, and a configurable combined-item separator.
 - Calendar year navigation, labeled Today action, stable six-week layout, and locale-aware weekend styling.
+- UTC, GMT, fixed-offset IANA zones, localized zone-name search, standard Help menus, and a packaged English localization base.
+- Native selectable clock management with add, remove, reorder, context-menu, and keyboard actions.
 
 ### Changed
 
 - The menu-bar panel now uses native menu material and a consistent compact type and spacing hierarchy.
+- The panel now bounds long clock lists, exposes the full active time-travel date, and gives weekends both color and background semantics.
+- Clock creation is one transactional Add flow; editing uses a scrollable form, fixed actions, inline validation, and an always-visible preview.
+- Appearance settings now persist as one typed value and one observable write.
 - The website now has consistent navigation, corrected download spacing, and a grouped UTS-35 builder with literal text and official advanced documentation.
 
 ### Fixed
@@ -26,6 +31,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Public pages no longer claim a release is notarized while Apple's submission is still pending.
 - README and website no longer present screenshots of settings removed by the current interface.
 - Removed the permanently unavailable 1.0.0 enclosure from the Sparkle appcast.
+- Equal, duplicate, and overlapping scheduled windows are rejected; invalid legacy rows no longer create false scheduler wakes.
+- User-authored menu-bar text now has grapheme-safe limits, and status items/panel rows truncate visually without losing their full accessibility text.
+- The guided website builder now rejects every mixed uppercase-hour/day-period combination while ignoring quoted literals.
 
 ## [1.1.0] - 2026-07-23
 
@@ -80,5 +88,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   displayed precision requires, with instant re-sync on wake/clock/zone changes.
 - Sparkle-based automatic updates for the direct-download build.
 
+[1.2.0]: https://github.com/martonpaulo/meantime/releases/tag/v1.2.0
 [1.1.0]: https://github.com/martonpaulo/meantime/releases/tag/v1.1.0
 [1.0.0]: https://github.com/martonpaulo/meantime/releases/tag/v1.0.0

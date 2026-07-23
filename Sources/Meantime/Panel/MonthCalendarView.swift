@@ -30,6 +30,9 @@ struct MonthCalendarView: View {
                             .foregroundStyle(isWeekendColumn(index)
                                 ? Token.Color.weekendText : Token.Color.secondaryText)
                             .frame(maxWidth: .infinity)
+                            .accessibilityLabel(calendar.weekdaySymbols[
+                                (calendar.firstWeekday - 1 + index) % 7])
+                            .accessibilityValue(isWeekendColumn(index) ? "Weekend" : "Weekday")
                     }
                 }
                 ForEach(Array(grid.weeks.enumerated()), id: \.offset) { _, week in
@@ -112,13 +115,14 @@ private struct CalendarNavButton: View {
     let symbol: String
     let label: String
     let action: () -> Void
+    @ScaledMetric(relativeTo: .caption) private var hitTarget = Token.Size.hitTarget
 
     var body: some View {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(Token.Font.calendarNavigation)
                 .foregroundStyle(Token.Color.secondaryText)
-                .frame(width: Token.Size.hitTarget, height: Token.Size.hitTarget)
+                .frame(width: hitTarget, height: hitTarget)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -136,6 +140,22 @@ private struct DayCell: View {
     let select: () -> Void
 
     @State private var isHovering = false
+    @ScaledMetric(relativeTo: .callout) private var cellHeight = Token.Size.calendarCell
+    @ScaledMetric(relativeTo: .callout) private var selectionSize = Token.Size.calendarSelection
+
+    private var accessibilityLabel: String {
+        day.date.formatted(
+            .dateTime.weekday(.wide).month(.wide).day().year())
+    }
+
+    private var accessibilityState: String {
+        var states: [String] = []
+        states.append(day.isWeekend ? "Weekend" : "Weekday")
+        if isToday { states.append("Today") }
+        if isSelected { states.append("Selected") }
+        if !day.isInMonth { states.append("Outside the displayed month") }
+        return states.joined(separator: ", ")
+    }
 
     private var textColor: Color {
         if isSelected { return .white }
@@ -150,24 +170,26 @@ private struct DayCell: View {
                 .font(Token.Font.calendarDay.weight(isToday || isSelected ? .bold : .regular))
                 .monospacedDigit()
                 .foregroundStyle(textColor)
-                .frame(maxWidth: .infinity, minHeight: Token.Size.calendarCell)
+                .frame(maxWidth: .infinity, minHeight: cellHeight)
                 .background {
                     if isSelected {
                         Circle().fill(Token.Color.accent)
-                            .frame(width: Token.Size.calendarSelection,
-                                   height: Token.Size.calendarSelection)
+                            .frame(width: selectionSize, height: selectionSize)
                     } else if isHovering {
                         Circle().fill(Token.Color.rowHighlight)
-                            .frame(width: Token.Size.calendarSelection,
-                                   height: Token.Size.calendarSelection)
+                            .frame(width: selectionSize, height: selectionSize)
+                    } else if day.isWeekend {
+                        RoundedRectangle(cornerRadius: Token.Radius.sm)
+                            .fill(Token.Color.weekendBackground)
+                            .padding(.horizontal, Token.Space.xxxs)
                     }
                 }
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .onHover { isHovering = $0 }
-        .accessibilityLabel("Day \(day.dayNumber)")
-        .accessibilityValue(day.isWeekend ? "Weekend" : "Weekday")
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityValue(accessibilityState)
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 }

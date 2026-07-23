@@ -5,9 +5,10 @@ import Testing
 @Suite struct TimeZoneCatalogTests {
     let entries = TimeZoneCatalog.entries()
 
-    @Test func dropsNonPlaceZones() {
-        #expect(!entries.contains { $0.id.hasPrefix("Etc/") })
-        #expect(!entries.contains { $0.id == "UTC" || $0.id == "GMT" })
+    @Test func includesPlaceUniversalAndFixedOffsetZones() {
+        #expect(entries.contains { $0.id.hasPrefix("Etc/") })
+        #expect(entries.contains { $0.id == "UTC" })
+        #expect(entries.contains { $0.id == "GMT" })
         #expect(entries.contains { $0.id == "America/Sao_Paulo" })
     }
 
@@ -25,5 +26,12 @@ import Testing
         #expect(TimeZoneCatalog.matches(saoPaulo, query: "america/sao"))
         #expect(!TimeZoneCatalog.matches(saoPaulo, query: "tokyo"))
         #expect(TimeZoneCatalog.matches(saoPaulo, query: "  ")) // blank shows all
+    }
+
+    @Test func universalZonesUseTheirOwnStableGroup() {
+        let universal = entries.filter { $0.id == "UTC" || $0.id.hasPrefix("Etc/") }
+        #expect(!universal.isEmpty)
+        #expect(universal.allSatisfy { $0.region == TimeZoneCatalog.universalRegion })
+        #expect(TimeZoneCatalog.regionOrder.last == TimeZoneCatalog.universalRegion)
     }
 }

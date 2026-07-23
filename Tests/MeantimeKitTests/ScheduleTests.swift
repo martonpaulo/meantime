@@ -60,6 +60,66 @@ private func utc(_ year: Int, _ month: Int, _ day: Int,
     @Test func noScheduleMeansNoTransition() {
         #expect(ClockSchedule.nextTransition(after: Date(), windows: [], timeZone: newYork) == nil)
     }
+
+    @Test func equalBoundsAreIgnoredAsInvalidInsteadOfMeaningHiddenOrAllDay() {
+        let equal = [ActiveWindow(startMinute: 9 * 60, endMinute: 9 * 60)]
+        #expect(ClockSchedule.isActive(at: utc(2026, 7, 23, 14, 0),
+                                      windows: equal, timeZone: newYork))
+        #expect(ClockSchedule.nextTransition(after: utc(2026, 7, 23, 14, 0),
+                                             windows: equal, timeZone: newYork) == nil)
+    }
+
+    @Test func civilScheduleRemainsCorrectAcrossSpringDSTJump() {
+        let window = [ActiveWindow(startMinute: 90, endMinute: 210)]
+        #expect(ClockSchedule.isActive(
+            at: utc(2026, 3, 8, 6, 45), windows: window, timeZone: newYork))
+        #expect(ClockSchedule.isActive(
+            at: utc(2026, 3, 8, 7, 15), windows: window, timeZone: newYork))
+        #expect(!ClockSchedule.isActive(
+            at: utc(2026, 3, 8, 7, 30), windows: window, timeZone: newYork))
+    }
+}
+
+@Suite struct ScheduleValidationTests {
+    @Test func acceptsSeparateAndOvernightWindows() {
+        let windows = [
+            ActiveWindow(startMinute: 8 * 60, endMinute: 12 * 60),
+            ActiveWindow(startMinute: 22 * 60, endMinute: 6 * 60),
+        ]
+        #expect(ScheduleValidation.issues(in: windows).isEmpty)
+    }
+
+    @Test func rejectsEqualDuplicateAndOverlappingWindows() {
+        let equal = ActiveWindow(startMinute: 9 * 60, endMinute: 9 * 60)
+        #expect(ScheduleValidation.issues(in: [equal]) == [.equalBounds(windowID: equal.id)])
+
+        let first = ActiveWindow(startMinute: 8 * 60, endMinute: 12 * 60)
+        let duplicate = ActiveWindow(startMinute: 8 * 60, endMinute: 12 * 60)
+        #expect(ScheduleValidation.issues(in: [first, duplicate])
+            == [.duplicate(firstID: first.id, secondID: duplicate.id)])
+
+        let overlap = ActiveWindow(startMinute: 11 * 60, endMinute: 14 * 60)
+        #expect(ScheduleValidation.issues(in: [first, overlap])
+            == [.overlap(firstID: first.id, secondID: overlap.id)])
+    }
+
+    @Test func touchingWindowsDoNotOverlap() {
+        let morning = ActiveWindow(startMinute: 8 * 60, endMinute: 12 * 60)
+        let afternoon = ActiveWindow(startMinute: 12 * 60, endMinute: 17 * 60)
+        #expect(ScheduleValidation.issues(in: [morning, afternoon]).isEmpty)
+    }
+
+    @Test func nextSuggestionAvoidsExistingWindows() throws {
+        let existing = [
+            ActiveWindow(startMinute: 8 * 60, endMinute: 12 * 60),
+            ActiveWindow(startMinute: 13 * 60, endMinute: 17 * 60),
+        ]
+
+        let suggestion = try #require(ScheduleSuggestion.nextWindow(existing: existing))
+
+        #expect(ScheduleValidation.issues(in: existing + [suggestion]).isEmpty)
+        #expect(suggestion.startMinute != suggestion.endMinute)
+    }
 }
 
 @Suite struct WorldClockMigrationTests {

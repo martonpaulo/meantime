@@ -16,9 +16,9 @@ struct AboutPane: View {
                 HStack(spacing: Token.Space.lg) {
                     Image(nsImage: NSApp.applicationIconImage ?? NSImage())
                         .resizable()
-                        .frame(width: 64, height: 64)
+                        .frame(width: Token.Size.aboutIcon, height: Token.Size.aboutIcon)
                         .accessibilityLabel("Meantime application icon")
-                    VStack(alignment: .leading, spacing: 3) {
+                    VStack(alignment: .leading, spacing: Token.Space.xxs) {
                         Text("Meantime")
                             .font(.title2.weight(.semibold))
                         Text("World clocks in your menu bar.")
@@ -26,7 +26,7 @@ struct AboutPane: View {
                         Text("Developed by Marton Paulo")
                             .font(.callout)
                             .foregroundStyle(.secondary)
-                            .padding(.top, 3)
+                            .padding(.top, Token.Space.xxs)
                     }
                 }
                 .padding(.vertical, Token.Space.xs)
@@ -58,7 +58,6 @@ struct AboutPane: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: Token.Size.paneWidth)
-        .fixedSize()
+        .frame(width: Token.Size.paneWidth, height: Token.Size.paneHeight)
     }
 }

@@ -22,7 +22,9 @@ script). Sparkle is embedded only in the packaged app.
 - **Preferences** is the single, observable durable source of truth. It
   persists committed changes write-through and seeds sensible defaults on
   first launch. A single app-surface settings preview temporarily overlays
-  draft values for rendering; Save commits them and Cancel discards them.
+  draft values for rendering in the status item and panel. Clock drafts commit
+  once; format/layout/spacing form one typed appearance value and one persisted
+  write. Cancel discards the overlay without touching durable state.
 - The **menu-bar controller** observes committed preferences and the transient
   settings preview. When the set of pinned
   clocks changes it rebuilds status items; for lighter changes (label, emoji,

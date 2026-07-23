@@ -29,6 +29,7 @@ final class MenuBarController: NSObject {
 
         let root = PanelView(formatter: formatter, actions: actions)
             .environment(preferences)
+            .environment(settingsPreview)
             .environment(timeSource)
             .environment(panelModel)
         panel = PanelController(content: AnyView(root))
@@ -145,7 +146,19 @@ final class MenuBarController: NSObject {
             } else {
                 applyFallback(to: button)
             }
+            constrain(entry.item, button: button)
         }
+    }
+
+    private func constrain(_ item: NSStatusItem, button: NSStatusBarButton) {
+        guard button.imagePosition != .imageOnly else {
+            item.length = NSStatusItem.squareLength
+            return
+        }
+        button.cell?.lineBreakMode = .byTruncatingTail
+        let desiredWidth = button.attributedTitle.size().width + Token.Space.lg
+        item.length = min(max(desiredWidth, Token.Size.hitTarget),
+                          Token.Size.statusItemMaxWidth)
     }
 
     private func apply(_ clock: WorldClock, to button: NSStatusBarButton, now: Date) {

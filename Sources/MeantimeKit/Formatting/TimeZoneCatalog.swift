@@ -11,34 +11,60 @@ public enum TimeZoneCatalog {
         /// Top-level region: `America`, `Europe`, …
         public let region: String
         public let offsetSeconds: Int
+        public let searchTerms: [String]
 
-        public init(id: String, city: String, region: String, offsetSeconds: Int) {
+        public init(id: String, city: String, region: String, offsetSeconds: Int,
+                    searchTerms: [String] = []) {
             self.id = id
             self.city = city
             self.region = region
             self.offsetSeconds = offsetSeconds
+            self.searchTerms = searchTerms
         }
     }
+
+    public static let universalRegion = "Universal & Fixed Offsets"
+
+    private static let fixedOffsetIdentifiers = Set(
+        ["Etc/GMT"]
+            + (1...12).map { "Etc/GMT+\($0)" }
+            + (1...14).map { "Etc/GMT-\($0)" }
+    )
 
     /// Region display order: the familiar continents, then the oceanic rest.
     public static let regionOrder = [
         "America", "Europe", "Asia", "Africa", "Australia",
         "Pacific", "Atlantic", "Indian", "Antarctica", "Arctic",
+        universalRegion,
     ]
 
-    /// City-bearing zones (drops `Etc/*` and bare aliases like `UTC` or `GMT`,
-    /// which are not places anyone schedules around), sorted by city.
+    /// Every system time-zone identifier, with place zones grouped by continent
+    /// and aliases/fixed offsets in one explicit universal group.
     public static func entries(at date: Date = Date()) -> [Entry] {
-        TimeZone.knownTimeZoneIdentifiers.compactMap { identifier -> Entry? in
+        let identifiers = Set(TimeZone.knownTimeZoneIdentifiers)
+            .union(["UTC", "GMT"])
+            .union(fixedOffsetIdentifiers)
+        return identifiers.compactMap { identifier -> Entry? in
             let parts = identifier.split(separator: "/")
-            guard parts.count >= 2, let region = parts.first, region != "Etc",
-                  let zone = TimeZone(identifier: identifier) else { return nil }
+            guard let zone = TimeZone(identifier: identifier) else { return nil }
+            let candidateRegion = parts.first.map(String.init)
+            let region = candidateRegion.flatMap {
+                regionOrder.dropLast().contains($0) ? $0 : nil
+            } ?? universalRegion
+            let localizedName = zone.localizedName(for: .generic, locale: .current)
+            let abbreviation = zone.abbreviation(for: date)
             return Entry(id: identifier,
                          city: CityLabel.name(for: identifier),
-                         region: String(region),
-                         offsetSeconds: zone.secondsFromGMT(for: date))
+                         region: region,
+                         offsetSeconds: zone.secondsFromGMT(for: date),
+                         searchTerms: [localizedName, abbreviation].compactMap { $0 })
         }
-        .sorted { $0.city.localizedCaseInsensitiveCompare($1.city) == .orderedAscending }
+        .sorted {
+            let leftRegion = regionOrder.firstIndex(of: $0.region) ?? .max
+            let rightRegion = regionOrder.firstIndex(of: $1.region) ?? .max
+            if leftRegion != rightRegion { return leftRegion < rightRegion }
+            return $0.city.localizedCaseInsensitiveCompare($1.city) == .orderedAscending
+        }
     }
 
     /// Case- and diacritic-insensitive match on city or identifier.
@@ -47,5 +73,8 @@ public enum TimeZoneCatalog {
         guard !trimmed.isEmpty else { return true }
         return entry.city.range(of: trimmed, options: [.caseInsensitive, .diacriticInsensitive]) != nil
             || entry.id.range(of: trimmed, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+            || entry.searchTerms.contains {
+                $0.range(of: trimmed, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+            }
     }
 }

@@ -1,8 +1,8 @@
 import Foundation
 
 /// Pure scheduler math. Given the clocks currently visible, it computes the next
-/// instant the menu bar must refresh — the earliest boundary across all of them
-/// — so the app wakes exactly when a shown value changes and never more often.
+/// instant the menu bar must refresh: the earliest boundary across all of them
+///: so the app wakes exactly when a shown value changes and never more often.
 public enum ClockUpdatePlanner {
     /// One visible menu-bar contribution: how fine it ticks and in which zone
     /// (the zone only matters at hour/day granularity, where offsets shift the
@@ -19,8 +19,8 @@ public enum ClockUpdatePlanner {
 
     /// The next instant to refresh, or nil when nothing visible shows changing
     /// time and no transition is pending (in which case no timer runs at all).
-    /// `transitions` are extra wake instants — e.g. a scheduled clock appearing
-    /// or disappearing — that must fire even if nothing else is visible.
+    /// `transitions` are extra wake instants: e.g. a scheduled clock appearing
+    /// or disappearing: that must fire even if nothing else is visible.
     public static func nextUpdate(
         after now: Date,
         visible: [Visible],

@@ -26,7 +26,7 @@ struct GeneralPane: View {
                         launchAtLogin = LoginItem.isEnabled
                     }
                 if launchAtLoginFailed {
-                    Text("Login could not be configured. Run Meantime from the Applications folder and try again.")
+                    Text("Meantime couldn't be added to Login Items. Move it to Applications, then try again.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
@@ -43,18 +43,18 @@ struct GeneralPane: View {
                         .disabled(!updateManager.isAvailable)
                 }
                 if !updateManager.isAvailable {
-                    Text("Updates work in the installed app (Meantime.app), not in development builds.")
+                    Text("Updates are available in an installed release of Meantime, not in development builds.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
             } footer: {
-                Text("Update checks against GitHub are Meantime's only network activity. No accounts, no telemetry.")
+                Text("Update checks use GitHub and are Meantime's only network activity. No accounts or telemetry.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
 
             Section {
-                LabeledContent("Return every setting to its default") {
+                LabeledContent("Reset clocks, format, and appearance") {
                     Button("Restore Defaults…", role: .destructive) {
                         restoreConfirmationShown = true
                     }
@@ -71,6 +71,7 @@ struct GeneralPane: View {
             }
         }
         .formStyle(.grouped)
+        .scrollIndicators(.hidden)
         .frame(width: Token.Size.paneWidth, height: Token.Size.paneHeight)
         .onAppear { automaticChecks = updateManager.automaticallyChecksForUpdates }
     }

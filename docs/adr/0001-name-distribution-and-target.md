@@ -1,4 +1,4 @@
-# ADR 0001 — Name, distribution, and deployment target
+# ADR 0001: Name, distribution, and deployment target
 
 Status: accepted · 2026-07-22
 

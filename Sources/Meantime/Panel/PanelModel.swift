@@ -3,7 +3,7 @@ import MeantimeKit
 import Observation
 
 /// Transient panel state. The time-travel preview is a typed time and/or a day
-/// picked on the calendar — deliberately not persisted; it resets every time
+/// picked on the calendar: deliberately not persisted; it resets every time
 /// the panel opens, so the panel always opens on "now".
 @MainActor
 @Observable
@@ -13,7 +13,7 @@ final class PanelModel {
     /// The typed clock time being previewed (local zone); nil = current time.
     var selectedTime: Date?
     /// The month the calendar is browsing; nil = the current month. Browsing
-    /// alone never changes the preview — only picking a day does.
+    /// alone never changes the preview: only picking a day does.
     var displayedMonth: Date?
 
     var isTraveling: Bool { selectedDay != nil || selectedTime != nil }

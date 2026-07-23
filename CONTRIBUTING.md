@@ -13,7 +13,7 @@ make run     # run the debug app
 
 ## Ground rules
 
-- Read [AGENTS.md](AGENTS.md) first — it is the working agreement (architecture,
+- Read [AGENTS.md](AGENTS.md) first: it is the working agreement (architecture,
   design-token and energy contracts, and the pattern-break protocol).
 - Keep business logic in the pure domain kit, with unit tests. Views render
   prepared state; they don't compute it.

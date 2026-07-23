@@ -2,7 +2,7 @@ import AppKit
 import MeantimeKit
 import SwiftUI
 
-/// A borderless, menu-material panel anchored flush under a status item —
+/// A borderless, popover-material panel anchored flush under a status item.
 /// the Control-Center presentation, not an arrowed popover. Closes on outside
 /// click (key loss), Escape, or a second click on the status item.
 final class PanelWindow: NSPanel {
@@ -102,13 +102,13 @@ final class PanelController: NSObject, NSWindowDelegate {
 }
 
 /// The system menu material behind the panel content, so the surface matches
-/// native menu-bar dropdowns in both appearances.
+/// native menu-bar panels in both appearances.
 struct PanelBackground: NSViewRepresentable {
     func makeNSView(context: Context) -> NSVisualEffectView {
         let view = NSVisualEffectView()
-        // This borderless, arrowless status-item surface has menu semantics.
-        // Apple's dedicated menu material matches native menu-bar dropdowns.
-        view.material = .menu
+        // AppKit's semantic popover material supplies native vibrancy and
+        // contrast without a custom background color.
+        view.material = .popover
         view.blendingMode = .behindWindow
         view.state = .active
         return view

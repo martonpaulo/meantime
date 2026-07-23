@@ -11,10 +11,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let formatter = ClockFormatter()
     private let updateManager = UpdateManager()
     private lazy var settingsPreview = SettingsPreview(preferences: preferences)
+    private lazy var clockEditingSession = ClockEditingSession(
+        preferences: preferences, settingsPreview: settingsPreview)
     private var menuBar: MenuBarController?
     private var settingsWindow: SettingsWindowController?
 #if DEBUG
     private var validationPanelWindow: NSWindow?
+    private var screenshotOutputURL: URL? {
+        guard let flag = CommandLine.arguments.firstIndex(of: "--capture-screenshots"),
+              CommandLine.arguments.indices.contains(flag + 1) else { return nil }
+        return URL(fileURLWithPath: CommandLine.arguments[flag + 1], isDirectory: true)
+    }
 #endif
 
     func applicationWillFinishLaunching(_ notification: Notification) {
@@ -25,6 +32,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
 #if DEBUG
+        if let outputURL = screenshotOutputURL {
+            do {
+                try ScreenshotCapture.captureAll(to: outputURL)
+            } catch {
+                fputs("screenshot capture failed: \(error)\n", stderr)
+            }
+            NSApp.terminate(nil)
+            return
+        }
         prepareValidationData()
 #endif
         let actions = PanelActions(
@@ -52,6 +68,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if settingsWindow == nil {
             settingsWindow = SettingsWindowController(
                 preferences: preferences, settingsPreview: settingsPreview,
+                clockEditingSession: clockEditingSession,
                 formatter: formatter, updateManager: updateManager)
         }
         settingsWindow?.show(pane: pane)

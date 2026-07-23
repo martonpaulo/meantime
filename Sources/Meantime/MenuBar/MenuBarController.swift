@@ -5,7 +5,7 @@ import SwiftUI
 
 /// Owns the menu-bar surface: status items for the currently *shown* clocks
 /// (pinned, and inside their scheduled hours), in either individual or combined
-/// layout; the anchored dropdown panel; and the boundary-aligned ticker that
+/// layout; the anchored panel; and the boundary-aligned ticker that
 /// refreshes everything without ever spinning idly.
 @MainActor
 final class MenuBarController: NSObject {
@@ -182,7 +182,7 @@ final class MenuBarController: NSObject {
                 adornment: clock.displayAdornment, time: time,
                 textSize: settingsPreview.textSize, spacing: settingsPreview.elementSpacing)
         }
-        button.toolTip = "\(clock.displayLabel) — \(time)"
+        button.toolTip = "\(clock.displayLabel): \(time)"
         button.setAccessibilityLabel("\(clock.displayLabel), \(time)")
     }
 

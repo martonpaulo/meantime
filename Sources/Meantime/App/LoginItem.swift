@@ -1,6 +1,6 @@
 import ServiceManagement
 
-/// Thin wrapper over `SMAppService.mainApp` — the modern, sandbox-safe way to
+/// Thin wrapper over `SMAppService.mainApp`: the modern, sandbox-safe way to
 /// launch the app at login. Only works from a real installed bundle, so it is a
 /// no-op-ish surface during `swift run`.
 @MainActor

@@ -2,7 +2,7 @@ import AppKit
 import MeantimeKit
 
 /// Boundary-aligned update scheduler. Fires exactly when the coarsest visible
-/// clock's shown value next changes — never on a fixed interval — so a bar that
+/// clock's shown value next changes: never on a fixed interval: so a bar that
 /// shows only hours wakes about once an hour. Re-syncs immediately on clock,
 /// time-zone, and wake events.
 ///

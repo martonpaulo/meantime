@@ -8,7 +8,7 @@ struct PanelActions {
     var quit: () -> Void
 }
 
-/// The menu-bar dropdown: every clock at a glance, a quick month calendar for
+/// The menu-bar panel: every clock at a glance, a quick month calendar for
 /// day checking, and typed time travel. Renders prepared `PanelRow`s and reads
 /// the shared time source, so it always matches the menu bar exactly.
 struct PanelView: View {
@@ -37,7 +37,7 @@ struct PanelView: View {
             PanelDivider()
             footer
         }
-        .padding(.vertical, Token.Space.xs)
+        .padding(.vertical, Token.Space.sm)
         .frame(width: panelWidth)
         .background(PanelBackground())
         .clipShape(RoundedRectangle(cornerRadius: Token.Radius.panel, style: .continuous))
@@ -66,11 +66,12 @@ struct PanelView: View {
                     ScrollView {
                         clockRows
                     }
+                    .scrollIndicators(.hidden)
                     .frame(height: Token.Size.panelClockListMaxHeight)
                     .accessibilityLabel("World clocks")
                 }
             }
-            .padding(.horizontal, Token.Space.sm)
+            .padding(.horizontal, Token.Space.md)
         }
     }
 
@@ -83,7 +84,7 @@ struct PanelView: View {
         }
     }
 
-    /// Direct actions — no nested menus inside a menu-bar dropdown.
+    /// Direct actions: no nested menus inside the menu-bar panel.
     private var footer: some View {
         HStack(spacing: Token.Space.lg) {
             FooterButton(title: String(localized: "Settings…"), symbol: "gearshape") {
@@ -94,8 +95,8 @@ struct PanelView: View {
                 actions.quit()
             }
         }
-        .padding(.horizontal, Token.Space.lg)
-        .padding(.top, Token.Space.xs)
+        .padding(.horizontal, Token.Space.xl)
+        .padding(.vertical, Token.Space.sm)
     }
 }
 
@@ -142,9 +143,9 @@ private struct ClockRowView: View {
     }
 
     var body: some View {
-        HStack(spacing: spacing + Token.Space.xs) {
+        HStack(spacing: spacing + Token.Space.sm) {
             Text(row.adornment ?? "")
-                .font(Token.Font.label)
+                .font(.title3)
                 .frame(width: Token.Size.adornmentColumn, alignment: .center)
             VStack(alignment: .leading, spacing: 0) {
                 Text(row.label)
@@ -160,14 +161,14 @@ private struct ClockRowView: View {
             .layoutPriority(1)
             Spacer(minLength: Token.Space.md)
             Text(row.time)
-                .font(Token.Font.time(textSize * timeScale))
+                .font(Token.Font.time(textSize * timeScale + Token.Size.panelTimeBoost))
                 .foregroundStyle(Token.Color.primaryText)
                 .lineLimit(1)
                 .truncationMode(.tail)
                 .layoutPriority(2)
         }
         .padding(.horizontal, Token.Space.sm)
-        .padding(.vertical, Token.Space.xs)
+        .padding(.vertical, Token.Space.sm)
         .frame(minHeight: rowHeight)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
@@ -175,7 +176,7 @@ private struct ClockRowView: View {
     }
 }
 
-/// Typed time travel — no slider. Type (or step) a time to preview it across
+/// Typed time travel: no slider. Type (or step) a time to preview it across
 /// every clock; "Now" returns instantly.
 private struct TimeTravelSection: View {
     @Environment(PanelModel.self) private var panelModel
@@ -198,7 +199,7 @@ private struct TimeTravelSection: View {
         Grid(alignment: .leading, horizontalSpacing: Token.Space.sm,
              verticalSpacing: Token.Space.xs) {
             GridRow {
-                Label("Time travel", systemImage: "clock.arrow.2.circlepath")
+                Label("Time Travel", systemImage: "clock.arrow.2.circlepath")
                     .labelStyle(PanelActionLabelStyle())
                     .font(Token.Font.action)
                     .foregroundStyle(Token.Color.secondaryText)
@@ -234,6 +235,7 @@ private struct TimeTravelSection: View {
                 }
             }
         }
-        .padding(.horizontal, Token.Space.lg)
+        .padding(.horizontal, Token.Space.xl)
+        .padding(.vertical, Token.Space.xs)
     }
 }

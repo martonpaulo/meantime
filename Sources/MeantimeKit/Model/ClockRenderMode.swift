@@ -9,7 +9,7 @@ public enum ClockRenderMode: String, Codable, CaseIterable, Sendable, Identifiab
     case timeOnly
     /// The clock's resolved adornment then the time, e.g. `🇺🇸 09:47`.
     case flagAndTime
-    /// A small analog clock face showing the zone's time — no text.
+    /// A small analog clock face showing the zone's time: no text.
     case analogClock
 
     public var id: String { rawValue }

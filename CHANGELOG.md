@@ -17,11 +17,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
-- The menu-bar panel now uses native menu material and a consistent compact type and spacing hierarchy.
-- The panel now bounds long clock lists, exposes the full active time-travel date, and gives weekends both color and background semantics.
-- Clock creation is one transactional Add flow; editing uses a scrollable form, fixed actions, inline validation, and an always-visible preview.
+- The menu-bar panel now uses native popover material, a roomier 420-point layout, larger type, and a consistent spacing hierarchy.
+- The panel now bounds long clock lists, exposes the full active time-travel date, and distinguishes weekends with restrained blue text.
+- Clock creation and editing now stay inside the Clocks pane with a transactional draft, fixed actions, inline validation, and unsaved-change confirmation.
 - Appearance settings now persist as one typed value and one observable write.
-- The website now has consistent navigation, corrected download spacing, and a grouped UTS-35 builder with literal text and official advanced documentation.
+- Format settings now rely on the real menu bar for immediate feedback and no longer show a redundant preview row.
+- Scrollable settings keep native scrolling and keyboard behavior without a persistent visual scroll indicator.
+- The website now has consistent navigation, corrected spacing, and a grouped UTS-35 builder with a fixed illustrative date, literal text, and official advanced documentation.
+- Documentation screenshots now render offscreen at 2x without taking focus, opening windows, or requiring Screen Recording access.
+- User-facing copy is shorter and consistent across the app and website, with no em dash character.
 
 ### Fixed
 
@@ -39,14 +43,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- **Quick month calendar** in the panel — check which weekday any date falls
+- **Quick month calendar** in the panel: check which weekday any date falls
   on, browse months, and pick a day to preview it across every clock.
-- **Typed time travel** — type a time (and pick a day) instead of dragging a
+- **Typed time travel**: type a time (and pick a day) instead of dragging a
   slider; one click returns to now.
-- **Scheduled clocks** — show a clock in the menu bar only during chosen hours
+- **Scheduled clocks**: show a clock in the menu bar only during chosen hours
   *in its own time zone* (e.g. New York 8–12 and 13–17 NY time); it hides
   itself outside those windows and stays in the panel.
-- **Combined menu-bar layout** — every clock in a single status item
+- **Combined menu-bar layout**: every clock in a single status item
   (`🇺🇸 7PM 🇧🇷 8PM`), or one item per clock as before.
 - **GMT offset and day captions** on panel rows ("GMT−3 · Yesterday").
 - Explicit up/down reordering buttons for clocks (drag still works).
@@ -70,7 +74,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 
 - Explicit hour patterns (`HH`, `H`) are no longer rewritten to 12-hour by the
-  system's AM/PM preference — a 24-hour pattern now always renders 24-hour.
+  system's AM/PM preference: a 24-hour pattern now always renders 24-hour.
 - The panel no longer opens detached below the menu bar or at zero size.
 
 ## [1.0.0] - 2026-07-22

@@ -59,13 +59,13 @@ app: ## Build the Release .app (ad-hoc unless DEVELOPER_ID_IDENTITY is set)
 dmg: app installer-assets ## Build the installer DMG
 	@bash scripts/make-dmg.sh
 
-notarize: ## Notarize + staple a signed DMG — args: DMG, env NOTARY_PROFILE
+notarize: ## Notarize + staple a signed DMG: args: DMG, env NOTARY_PROFILE
 	@bash scripts/notarize.sh $(DMG)
 
-sign-update: ## Print the appcast signature for a release zip — args: ZIP
+sign-update: ## Print the appcast signature for a release zip: args: ZIP
 	@bash scripts/sign-update.sh $(ZIP)
 
-appcast: ## Update appcast.xml — args: VERSION BUILD ZIP "SIG"
+appcast: ## Update appcast.xml: args: VERSION BUILD ZIP "SIG"
 	@bash scripts/make-appcast.sh $(VERSION) $(BUILD) $(ZIP) "$(SIG)"
 
 keys: ## Generate the Sparkle signing key (Keychain) and set the public key
@@ -84,7 +84,7 @@ clean: ## Remove build artifacts
 .PHONY: help
 
 help: ## Show available targets
-	@awk 'BEGIN {FS = ":.*## "; printf "\n$(BOLD)Meantime$(RESET) — world clocks in your menu bar\n"} \
+	@awk 'BEGIN {FS = ":.*## "; printf "\n$(BOLD)Meantime$(RESET): world clocks in your menu bar\n"} \
 		/^# -- / {n = $$0; gsub(/(^# -- | -+$$)/, "", n); printf "\n$(BOLD)%s$(RESET)\n", n} \
 		/^[a-zA-Z_-]+:.*## / {printf "  $(CYAN)make %-16s$(RESET) %s\n", $$1, $$2} \
 		END {printf "\n"}' $(MAKEFILE_LIST)

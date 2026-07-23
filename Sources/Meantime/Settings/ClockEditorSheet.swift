@@ -1,28 +1,17 @@
 import SwiftUI
 import MeantimeKit
 
-/// Save-gated creation and editing. The draft previews through
-/// `SettingsPreview`, while typed preferences change exactly once on commit.
-struct ClockEditorSheet: View {
-    @Environment(Preferences.self) private var preferences
+/// Save-gated creation and editing inside the Clocks settings pane. The draft
+/// previews through `SettingsPreview`; preferences change only on Save.
+struct ClockEditorView: View {
     @Environment(SettingsPreview.self) private var settingsPreview
+    @Environment(ClockEditingSession.self) private var editingSession
 
     let formatter: ClockFormatter
-    let onFinish: () -> Void
-    let onBack: (() -> Void)?
 
-    @State private var editDraft: ClockEditDraft
-    @State private var unsavedConfirmationShown = false
     @State private var restoreConfirmationShown = false
 
-    init(draft: ClockEditDraft, formatter: ClockFormatter,
-         onFinish: @escaping () -> Void, onBack: (() -> Void)? = nil) {
-        _editDraft = State(initialValue: draft)
-        self.formatter = formatter
-        self.onFinish = onFinish
-        self.onBack = onBack
-    }
-
+    private var editDraft: ClockEditDraft { editingSession.draft! }
     private var clock: WorldClock { editDraft.clock }
     private var issues: [ClockValidationIssue] { editDraft.validationIssues }
     private var actionTitle: String { editDraft.isNew ? "Add Clock" : "Save" }
@@ -30,7 +19,14 @@ struct ClockEditorSheet: View {
         editDraft.isNew ? "Discard New Clock" : "Discard Changes"
     }
 
+    @ViewBuilder
     var body: some View {
+        if editingSession.draft != nil {
+            editorContent
+        }
+    }
+
+    private var editorContent: some View {
         VStack(spacing: 0) {
             EditorPreview(clock: clock, formatter: formatter)
             Divider()
@@ -38,37 +34,31 @@ struct ClockEditorSheet: View {
             Divider()
             actions
         }
-        .frame(width: Token.Size.editorWidth, height: Token.Size.editorHeight)
-        .onAppear { settingsPreview.preview(clock: clock) }
-        .onChange(of: editDraft.clock) { _, value in
-            settingsPreview.preview(clock: value)
-        }
-        .interactiveDismissDisabled(editDraft.hasChanges)
         .confirmationDialog(
-            editDraft.isNew ? "Add this clock?" : "Save changes to this clock?",
-            isPresented: $unsavedConfirmationShown
+            editDraft.isNew ? "Add this clock before leaving?" : "Save changes before leaving?",
+            isPresented: pendingExitPresented
         ) {
             if editDraft.canCommit {
                 Button(actionTitle) { commit() }
             }
-            Button(discardTitle, role: .destructive) { finishWithoutSaving() }
+            Button(discardTitle, role: .destructive) {
+                editingSession.discardPendingExit()
+            }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("The live preview contains changes that have not been saved.")
+            Text("Changes are visible in the menu bar until you save or discard them.")
         }
         .confirmationDialog("Restore this clock to its defaults?",
                             isPresented: $restoreConfirmationShown) {
             Button("Restore Defaults", role: .destructive) {
-                editDraft.clock = editDraft.clock.restoredToDefaults()
+                editingSession.restoreDefaults()
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Its time zone stays the same. Name, leading item, menu-bar style, visibility, and scheduled hours return to their defaults after you save.")
+            Text("The time zone stays the same. Name, leading item, menu bar style, visibility, and scheduled hours reset after you save.")
         }
         .background {
             Group {
-                Button("", action: requestDismiss)
-                    .keyboardShortcut("w", modifiers: .command)
                 Button("", action: requestDismiss)
                     .keyboardShortcut(.cancelAction)
             }
@@ -81,7 +71,7 @@ struct ClockEditorSheet: View {
         Form {
             identitySection
             menuBarSection
-            ScheduleSection(clock: $editDraft.clock)
+            ScheduleSection(clock: fullClockBinding)
 
             Section {
                 LabeledContent("Return this clock to its defaults") {
@@ -92,6 +82,7 @@ struct ClockEditorSheet: View {
             }
         }
         .formStyle(.grouped)
+        .scrollIndicators(.hidden)
     }
 
     private var identitySection: some View {
@@ -102,8 +93,8 @@ struct ClockEditorSheet: View {
                     \.customLabel, limit: UserInputPolicy.labelLimit),
                 prompt: Text(CityLabel.name(for: clock.timeZoneID)))
 
-            Picker("Leading item", selection: $editDraft.clock.adornmentStyle) {
-                Text("Country Flag").tag(ClockAdornmentStyle.flag)
+            Picker("Leading item", selection: clockBinding(\.adornmentStyle)) {
+                Text("Country flag").tag(ClockAdornmentStyle.flag)
                 Text("Emoji").tag(ClockAdornmentStyle.emoji)
                 Text("Text").tag(ClockAdornmentStyle.text)
                 Text("None").tag(ClockAdornmentStyle.none)
@@ -129,16 +120,16 @@ struct ClockEditorSheet: View {
                 }
             }
         } header: {
-            Text("Identity")
+            Text("Display")
         } footer: {
-            Text("The country flag is derived from the time zone. Emoji and text stay saved when you switch styles.")
+            Text("The country flag comes from the time zone. Custom emoji and text remain saved when you switch leading items.")
         }
     }
 
     private var menuBarSection: some View {
         Section {
-            Toggle("Show in menu bar", isOn: $editDraft.clock.isPinned)
-            Picker("Style", selection: $editDraft.clock.renderMode) {
+            Toggle("Show in menu bar", isOn: clockBinding(\.isPinned))
+            Picker("Style", selection: clockBinding(\.renderMode)) {
                 Text("Leading item and time").tag(ClockRenderMode.flagAndTime)
                 Text("Time only").tag(ClockRenderMode.timeOnly)
                 Text("Analog clock face").tag(ClockRenderMode.analogClock)
@@ -149,7 +140,7 @@ struct ClockEditorSheet: View {
             if settingsPreview.menuBarLayout == .combined,
                clock.renderMode == .analogClock {
                 Label(
-                    "The combined menu-bar item shows this clock as leading item and time. Its analog style is kept for individual layout.",
+                    "Combined layout shows this clock as a leading item and time. The analog face remains available in individual layout.",
                     systemImage: "info.circle")
                     .font(.callout)
                     .foregroundStyle(.secondary)
@@ -158,21 +149,21 @@ struct ClockEditorSheet: View {
             Text("Menu Bar")
         } footer: {
             if !clock.isPinned {
-                Text("This clock remains visible in the dropdown.")
+                Text("This clock remains visible in the panel.")
             }
         }
     }
 
     private var actions: some View {
         HStack(spacing: Token.Space.sm) {
-            if let onBack {
-                Button("Back", action: onBack)
+            if editDraft.isNew {
+                Button("Back") { editingSession.requestExit(to: .picker) }
             }
             Button("Cancel", action: requestDismiss)
                 .keyboardShortcut(.cancelAction)
             Spacer()
             if editDraft.hasChanges {
-                Text("Not saved")
+                Text("Unsaved changes")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .accessibilityLabel("Unsaved changes")
@@ -191,27 +182,42 @@ struct ClockEditorSheet: View {
             get: { editDraft.clock[keyPath: keyPath] ?? "" },
             set: { value in
                 let limited = UserInputPolicy.truncated(value, limit: limit)
-                editDraft.clock[keyPath: keyPath] = limited.isEmpty ? nil : limited
+                var updated = clock
+                updated[keyPath: keyPath] = limited.isEmpty ? nil : limited
+                editingSession.updateClock(updated)
             })
     }
 
-    private func commit() {
-        guard editDraft.commit(to: preferences) else { return }
-        settingsPreview.discardClock()
-        onFinish()
+    private func clockBinding<Value>(
+        _ keyPath: WritableKeyPath<WorldClock, Value>
+    ) -> Binding<Value> {
+        Binding(
+            get: { clock[keyPath: keyPath] },
+            set: { value in
+                var updated = clock
+                updated[keyPath: keyPath] = value
+                editingSession.updateClock(updated)
+            })
     }
 
-    private func finishWithoutSaving() {
-        settingsPreview.discardClock()
-        onFinish()
+    private var fullClockBinding: Binding<WorldClock> {
+        Binding(
+            get: { clock },
+            set: { value in editingSession.updateClock(value) })
+    }
+
+    private var pendingExitPresented: Binding<Bool> {
+        Binding(
+            get: { editingSession.pendingExit != nil },
+            set: { if !$0 { editingSession.cancelPendingExit() } })
+    }
+
+    private func commit() {
+        _ = editingSession.save()
     }
 
     private func requestDismiss() {
-        if editDraft.hasChanges {
-            unsavedConfirmationShown = true
-        } else {
-            finishWithoutSaving()
-        }
+        editingSession.requestExit(to: .list)
     }
 }
 
@@ -227,11 +233,11 @@ private struct EditorPreview: View {
     }
 
     private var status: String {
-        if !clock.isPinned { return "Dropdown only" }
-        if !clock.activeWindows.isEmpty { return "Scheduled menu-bar preview" }
+        if !clock.isPinned { return "Panel only" }
+        if !clock.activeWindows.isEmpty { return "Scheduled menu bar" }
         return settingsPreview.menuBarLayout == .combined
-            ? "Combined menu-bar preview"
-            : "Menu-bar preview"
+            ? "Combined menu bar"
+            : "Menu bar"
     }
 
     private var usesTextFallback: Bool {
@@ -357,7 +363,7 @@ private struct ScheduleSection: View {
         } header: {
             Text("Schedule")
         } footer: {
-            Text("Times use this clock's own time zone. An end earlier than its start continues overnight. Outside these hours, the clock stays in the dropdown.")
+            Text("Times use this clock's own time zone. If an end time is earlier than its start, the schedule continues overnight. Outside these hours, the clock stays in the panel.")
         }
     }
 

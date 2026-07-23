@@ -1,7 +1,7 @@
 import SwiftUI
 import MeantimeKit
 
-/// The panel's quick month calendar — the Windows-style "which day is that"
+/// The panel's quick month calendar: the Windows-style "which day is that"
 /// glance, drawn to match the panel. Browsing months is free; picking a day
 /// previews it across every clock (transient, resets with the panel).
 struct MonthCalendarView: View {
@@ -19,9 +19,9 @@ struct MonthCalendarView: View {
     }
 
     var body: some View {
-        VStack(spacing: Token.Space.xs) {
+        VStack(spacing: Token.Space.sm) {
             header
-            Grid(horizontalSpacing: 0, verticalSpacing: 0) {
+            Grid(horizontalSpacing: Token.Space.xs, verticalSpacing: Token.Space.xs) {
                 GridRow {
                     ForEach(Array(MonthGrid.weekdaySymbols(calendar: calendar).enumerated()),
                             id: \.offset) { index, symbol in
@@ -48,13 +48,14 @@ struct MonthCalendarView: View {
                 }
             }
         }
-        .padding(.horizontal, Token.Space.lg)
+        .padding(.horizontal, Token.Space.xl)
+        .padding(.vertical, Token.Space.xs)
     }
 
     private var header: some View {
         HStack(spacing: Token.Space.xs) {
             Text(monthTitle)
-                .font(Token.Font.label.weight(.semibold))
+                .font(.title3.weight(.semibold))
                 .foregroundStyle(Token.Color.primaryText)
                 .accessibilityAddTraits(.isHeader)
             Spacer()
@@ -72,7 +73,7 @@ struct MonthCalendarView: View {
             CalendarNavButton(symbol: "chevron.right", label: "Next month") { step(months: 1) }
             CalendarNavButton(symbol: "chevron.right.2", label: "Next year") { step(years: 1) }
         }
-        .padding(.bottom, Token.Space.xxs)
+        .padding(.bottom, Token.Space.xs)
     }
 
     private func isWeekendColumn(_ index: Int) -> Bool {
@@ -80,14 +81,14 @@ struct MonthCalendarView: View {
     }
 
     private func isSelected(_ day: MonthGrid.Day) -> Bool {
-        guard let selected = panelModel.selectedDay else { return false }
-        return calendar.isDate(day.date, inSameDayAs: selected)
+        let activeDay = panelModel.selectedDay ?? timeSource.now
+        return calendar.isDate(day.date, inSameDayAs: activeDay)
     }
 
     private func select(_ day: MonthGrid.Day) {
         withAnimation(Token.Motion.quick) {
             // Re-picking the selected day (or today with nothing else traveled)
-            // clears the day selection — tap to peek, tap to come back.
+            // clears the day selection: tap to peek, tap to come back.
             if isSelected(day) {
                 panelModel.selectedDay = nil
             } else if calendar.isDate(day.date, inSameDayAs: timeSource.now) {
@@ -131,8 +132,8 @@ private struct CalendarNavButton: View {
     }
 }
 
-/// One day: accent-filled when selected, accent-tinted when today, dimmed when
-/// outside the visible month.
+/// One day: a thin accent ring when selected, accent text for weekends and
+/// today, and reduced contrast outside the visible month.
 private struct DayCell: View {
     let day: MonthGrid.Day
     let isSelected: Bool
@@ -158,7 +159,6 @@ private struct DayCell: View {
     }
 
     private var textColor: Color {
-        if isSelected { return .white }
         if isToday { return Token.Color.accent }
         if day.isWeekend, day.isInMonth { return Token.Color.weekendText }
         return day.isInMonth ? Token.Color.primaryText : Token.Color.subordinateText
@@ -173,15 +173,11 @@ private struct DayCell: View {
                 .frame(maxWidth: .infinity, minHeight: cellHeight)
                 .background {
                     if isSelected {
-                        Circle().fill(Token.Color.accent)
+                        Circle().strokeBorder(Token.Color.accent, lineWidth: Token.Size.selectionStroke)
                             .frame(width: selectionSize, height: selectionSize)
                     } else if isHovering {
                         Circle().fill(Token.Color.rowHighlight)
                             .frame(width: selectionSize, height: selectionSize)
-                    } else if day.isWeekend {
-                        RoundedRectangle(cornerRadius: Token.Radius.sm)
-                            .fill(Token.Color.weekendBackground)
-                            .padding(.horizontal, Token.Space.xxxs)
                     }
                 }
                 .contentShape(Rectangle())

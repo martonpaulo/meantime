@@ -14,7 +14,7 @@ values (what it is), so a redesign changes one place.
 ## Compose, don't duplicate
 
 Anything that looks the same twice becomes one small view assembled by
-composition — a clock row, a preset option, a labeled slider. One definition,
+composition: a clock row, a preset option, a labeled slider. One definition,
 reused in the panel and settings.
 
 ## Native semantics first
@@ -44,21 +44,21 @@ ticks.
 
 - **Menu-bar panel**: a borderless, popover-material window anchored flush
   under its status item (no arrow, `panel` corner radius, hairline border). It
-  opens unfocused — no control grabs a focus ring on a glance surface. Sections
+  opens unfocused: no control grabs a focus ring on a glance surface. Sections
   are separated by hairline dividers with the panel's standard rhythm; action
   rows share one label style with a fixed icon column so everything aligns;
-  actions are **direct** (icon + text footer buttons) — never a nested menu
-  inside a menu-bar dropdown. ⌘W and Escape close it like any transient window.
-- **Sheets and transient windows** always answer ⌘W and Escape as dismissal.
-  Unlimited content owns a bounded native scroll area; primary actions stay in
-  a fixed footer.
+  actions are **direct** (icon + text footer buttons): never a nested menu
+  inside the menu-bar panel. ⌘W and Escape close it like any transient window.
+- **Transient windows** always answer ⌘W and Escape as dismissal. Unlimited
+  content owns a bounded native scroll area; primary actions stay in a fixed
+  footer.
 - **Settings**: a toolbar-style tab window (System Settings look) with one
   stable content size across panes. Grouped forms scroll inside that surface;
   clock management uses a native selectable list and bottom action bar.
-- **Editing a list item** happens in a sheet with an always-visible preview,
-  grouped scrolling form, and explicit Cancel/Save actions. New items are also
-  drafts and use Add Clock. Leaving a dirty editor offers commit, discard, and
-  cancel.
+- **Editing a list item** stays inside the Clocks pane with an always-visible
+  preview, grouped scrolling form, and explicit Cancel/Save actions. New items
+  are also drafts and use Add Clock. Leaving a dirty editor offers commit,
+  discard, and cancel.
 - **Choices render as their result**: format options show live samples of the
   exact fragment they contribute; sliders show their current value; previews
   update as you type.

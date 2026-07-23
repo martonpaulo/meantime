@@ -1,9 +1,8 @@
 import SwiftUI
 import MeantimeKit
 
-/// The Add Clock sheet: a proper search field over every place-bearing time
-/// zone, grouped by region, each row showing its flag, city, and live GMT
-/// offset. Selecting a row adds the clock.
+/// The first stage of Add Clock, embedded in the Clocks settings pane. Search
+/// covers every place-bearing time zone and selecting one opens its draft.
 struct TimeZonePickerView: View {
     let onSelect: (String) -> Void
     let onCancel: () -> Void
@@ -34,23 +33,15 @@ struct TimeZonePickerView: View {
                 zoneList
             }
         }
-        .frame(width: Token.Size.pickerWidth, height: Token.Size.pickerHeight)
         .searchable(text: $query, prompt: "City, time zone, or abbreviation")
         .onAppear {
             entries = TimeZoneCatalog.entries()
-        }
-        .background {
-            // ⌘W dismisses like any transient window (Escape is on Cancel).
-            Button("", action: onCancel)
-                .keyboardShortcut("w", modifiers: .command)
-                .opacity(0)
-                .accessibilityHidden(true)
         }
     }
 
     private var header: some View {
         HStack {
-            Text("Add Clock").font(.headline)
+            Text("Choose a Time Zone").font(.headline)
             Spacer()
             Button("Cancel", action: onCancel)
                 .keyboardShortcut(.cancelAction)
@@ -78,6 +69,7 @@ struct TimeZonePickerView: View {
             }
         }
         .listStyle(.inset)
+        .scrollIndicators(.hidden)
     }
 }
 

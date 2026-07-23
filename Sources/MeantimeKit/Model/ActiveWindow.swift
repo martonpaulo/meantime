@@ -1,7 +1,7 @@
 import Foundation
 
 /// A daily window during which a pinned clock appears in the menu bar,
-/// expressed in minutes from midnight **in the clock's own time zone** —
+/// expressed in minutes from midnight **in the clock's own time zone** -
 /// "NY 8:00–12:00" means 8 AM to noon New York time, whatever that is locally.
 /// An end at or before the start wraps past midnight (22:00–06:00).
 public struct ActiveWindow: Codable, Hashable, Sendable, Identifiable {

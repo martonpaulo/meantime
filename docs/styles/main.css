@@ -1,4 +1,4 @@
-/* Meantime landing page — self-contained, light/dark aware. */
+/* Meantime landing page: self-contained, light/dark aware. */
 :root {
   color-scheme: light dark;
   --bg: #f7f9ff;

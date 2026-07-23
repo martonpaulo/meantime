@@ -1,7 +1,7 @@
 import Foundation
 
 /// The searchable list of addable time zones, prepared for presentation:
-/// city-labeled, grouped by region, with a current GMT offset. Pure data —
+/// city-labeled, grouped by region, with a current GMT offset. Pure data -
 /// views filter and draw it.
 public enum TimeZoneCatalog {
     public struct Entry: Identifiable, Hashable, Sendable {

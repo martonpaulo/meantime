@@ -12,7 +12,7 @@ preferences contract. Every business rule lives here and is unit-tested.
 
 **App surface.** The menu-bar controller, the SwiftUI panel and settings, the
 lifecycle, the login item, and Sparkle. It consumes the kit and owns no business
-rules of its own — views render prepared state.
+rules of its own: views render prepared state.
 
 The kit never imports SwiftUI, AppKit, or Sparkle (enforced by the validation
 script). Sparkle is embedded only in the packaged app.
@@ -44,7 +44,7 @@ Correct time is non-negotiable; idle cost must be near zero.
   (seconds/minutes/hours/day) and returns the earliest next boundary across all
   of them, taking each zone into account (fractional-hour offsets shift the hour
   boundary). A single timer is armed to that absolute instant and re-armed on
-  each fire — no fixed intervals, no per-item timers, no drift.
+  each fire: no fixed intervals, no per-item timers, no drift.
 - When nothing visible shows changing time, no timer runs.
 - The ticker also refreshes immediately on system clock change, time-zone
   change, and wake from sleep.

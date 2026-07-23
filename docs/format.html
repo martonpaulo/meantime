@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>Time Format Builder — Meantime</title>
+  <title>Time Format Builder | Meantime</title>
   <meta name="description" content="Build a Unicode date and time pattern for Meantime from presets, grouped fields, separators, and literal text.">
   <link rel="canonical" href="https://martonpaulo.github.io/meantime/format.html">
   <link rel="icon" type="image/png" href="assets/favicon.png">
@@ -29,23 +29,23 @@
     <section class="section builder-page" aria-labelledby="title">
       <h1 id="title">Time Format Builder</h1>
       <p class="hint builder-intro">
-        Start with a common format, refine it from the grouped controls, then
+        Start with a common format, refine it with the grouped controls, then
         copy the pattern into <strong>Meantime → Settings → Format → Custom</strong>.
       </p>
 
       <div class="builder">
         <div class="preview-card" aria-live="polite">
-          <div class="preview-time" id="preview">—</div>
-          <p class="preview-caption">Live preview of your pattern, right now</p>
+          <div class="preview-time" id="preview">05:04</div>
+          <p class="preview-caption">Example date and time: August 8, 2026 at 5:04:09 AM</p>
         </div>
 
         <div class="preset-row">
           <label for="preset">Start with</label>
           <select id="preset">
-            <option value="HH:mm" selected>24-hour — 09:47</option>
-            <option value="HH:mm:ss">24-hour with seconds — 09:47:30</option>
-            <option value="h:mm a">12-hour — 9:47 AM</option>
-            <option value="h:mm:ss a">12-hour with seconds — 9:47:30 AM</option>
+            <option value="HH:mm" selected>24-hour: 09:47</option>
+            <option value="HH:mm:ss">24-hour with seconds: 09:47:30</option>
+            <option value="h:mm a">12-hour: 9:47 AM</option>
+            <option value="h:mm:ss a">12-hour with seconds: 9:47:30 AM</option>
             <option value="EEE d MMM · HH:mm">Date and time</option>
             <option value="EEEE, MMMM d, yyyy · h:mm a">Full date and time</option>
             <option value="custom">Custom</option>
@@ -199,95 +199,12 @@
   </footer>
 
   <script src="scripts/format-pattern.js"></script>
+  <script src="scripts/format-preview.js"></script>
   <script>
     "use strict";
 
-    const pad = (value, width) => String(value).padStart(width, "0");
-    const local = (date, options) => date.toLocaleString(undefined, options);
-    const twelveHour = date => ((date.getHours() + 11) % 12) + 1;
-    const offset = date => {
-      const total = -date.getTimezoneOffset();
-      if (total === 0) return "Z";
-      const sign = total < 0 ? "-" : "+";
-      return `${sign}${pad(Math.floor(Math.abs(total) / 60), 2)}:${pad(Math.abs(total) % 60, 2)}`;
-    };
-    const zoneName = (date, style) => {
-      const parts = new Intl.DateTimeFormat(undefined, { timeZoneName: style }).formatToParts(date);
-      return parts.find(part => part.type === "timeZoneName")?.value ?? "";
-    };
-
-    const FIELDS = {
-      yyyy: date => pad(date.getFullYear(), 4),
-      yy: date => pad(date.getFullYear() % 100, 2),
-      MMMM: date => local(date, { month: "long" }),
-      MMM: date => local(date, { month: "short" }),
-      MM: date => pad(date.getMonth() + 1, 2),
-      M: date => String(date.getMonth() + 1),
-      EEEE: date => local(date, { weekday: "long" }),
-      EEE: date => local(date, { weekday: "short" }),
-      dd: date => pad(date.getDate(), 2),
-      d: date => String(date.getDate()),
-      HH: date => pad(date.getHours(), 2),
-      H: date => String(date.getHours()),
-      hh: date => pad(twelveHour(date), 2),
-      h: date => String(twelveHour(date)),
-      mm: date => pad(date.getMinutes(), 2),
-      m: date => String(date.getMinutes()),
-      ss: date => pad(date.getSeconds(), 2),
-      s: date => String(date.getSeconds()),
-      a: date => date.getHours() < 12 ? "AM" : "PM",
-      zzzz: date => zoneName(date, "long"),
-      z: date => zoneName(date, "short"),
-      XXX: date => offset(date),
-      VV: () => Intl.DateTimeFormat().resolvedOptions().timeZone,
-    };
-    const FIELD_KEYS = Object.keys(FIELDS).sort((left, right) => right.length - left.length);
-
-    function parsePattern(pattern, date) {
-      let output = "";
-      let index = 0;
-      while (index < pattern.length) {
-        const character = pattern[index];
-        if (character === "'") {
-          if (pattern[index + 1] === "'") {
-            output += "'";
-            index += 2;
-            continue;
-          }
-          index += 1;
-          while (index < pattern.length) {
-            if (pattern[index] === "'" && pattern[index + 1] === "'") {
-              output += "'";
-              index += 2;
-            } else if (pattern[index] === "'") {
-              index += 1;
-              break;
-            } else {
-              output += pattern[index];
-              index += 1;
-            }
-          }
-          continue;
-        }
-
-        const token = FIELD_KEYS.find(field => pattern.startsWith(field, index));
-        if (token) {
-          output += FIELDS[token](date);
-          index += token.length;
-        } else if (/[A-Za-z]/.test(character)) {
-          let end = index + 1;
-          while (end < pattern.length && pattern[end] === character) end += 1;
-          output += "·";
-          index = end;
-        } else {
-          output += character;
-          index += 1;
-        }
-      }
-      return output;
-    }
-
     const { unquotedFields, validation: validatePattern } = MeantimeFormatPattern;
+    const { EXAMPLE_DATE, parsePattern } = MeantimeFormatPreview;
 
     const patternInput = document.getElementById("pattern");
     const preset = document.getElementById("preset");
@@ -295,17 +212,14 @@
     const copyButton = document.getElementById("copy");
     const status = document.getElementById("builder-status");
     const dayPeriodButton = document.getElementById("day-period");
-    let refreshTimer;
-
     function validation() {
       return validatePattern(patternInput.value);
     }
 
     function refresh() {
-      const now = new Date();
-      preview.textContent = parsePattern(patternInput.value, now) || "—";
+      preview.textContent = parsePattern(patternInput.value, EXAMPLE_DATE) || "Add a field to begin";
       document.querySelectorAll("[data-sample]").forEach(element => {
-        element.textContent = parsePattern(element.dataset.sample, now);
+        element.textContent = parsePattern(element.dataset.sample, EXAMPLE_DATE);
       });
 
       const parsed = unquotedFields(patternInput.value);
@@ -316,20 +230,8 @@
       copyButton.disabled = !result.valid;
     }
 
-    function scheduleRefresh() {
-      window.clearTimeout(refreshTimer);
-      const fields = unquotedFields(patternInput.value).fields;
-      const cadence = fields.has("s") ? 1000 : 60000;
-      const delay = cadence - (Date.now() % cadence) + 20;
-      refreshTimer = window.setTimeout(() => {
-        refresh();
-        scheduleRefresh();
-      }, delay);
-    }
-
     function patternChanged() {
       refresh();
-      scheduleRefresh();
     }
 
     preset.addEventListener("change", () => {

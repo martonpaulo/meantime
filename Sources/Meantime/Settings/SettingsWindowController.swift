@@ -18,13 +18,16 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
     private var tabs: SettingsTabViewController?
     private let preferences: Preferences
     private let settingsPreview: SettingsPreview
+    private let clockEditingSession: ClockEditingSession
     private let formatter: ClockFormatter
     private let updateManager: UpdateManager
 
     init(preferences: Preferences, settingsPreview: SettingsPreview,
+         clockEditingSession: ClockEditingSession,
          formatter: ClockFormatter, updateManager: UpdateManager) {
         self.preferences = preferences
         self.settingsPreview = settingsPreview
+        self.clockEditingSession = clockEditingSession
         self.formatter = formatter
         self.updateManager = updateManager
         super.init()
@@ -34,6 +37,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         if window == nil {
             let tabs = SettingsTabViewController(preferences: preferences,
                                                  settingsPreview: settingsPreview,
+                                                 clockEditingSession: clockEditingSession,
                                                  formatter: formatter,
                                                  updateManager: updateManager)
             let newWindow = NSWindow(contentViewController: tabs)
@@ -51,6 +55,15 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
+        if clockEditingSession.hasUnsavedChanges {
+            confirmUnsavedClock(in: sender, session: clockEditingSession) { shouldLeave in
+                if shouldLeave { sender.performClose(nil) }
+            }
+            return false
+        }
+        if clockEditingSession.isActive {
+            clockEditingSession.discardForExternalNavigation()
+        }
         guard settingsPreview.hasAppearanceChanges else {
             settingsPreview.discardAppearance()
             return true
@@ -64,22 +77,27 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
 
 /// Toolbar-style panes with SF Symbols; pane switches are instant (Reduce
 /// Motion friendly) and the selection is remembered.
-private final class SettingsTabViewController: NSTabViewController {
+final class SettingsTabViewController: NSTabViewController {
     private static let selectedPaneKey = "settingsSelectedPane"
 
     private let settingsPreview: SettingsPreview
+    private let clockEditingSession: ClockEditingSession
 
     init(preferences: Preferences, settingsPreview: SettingsPreview,
+         clockEditingSession: ClockEditingSession,
          formatter: ClockFormatter, updateManager: UpdateManager) {
         self.settingsPreview = settingsPreview
+        self.clockEditingSession = clockEditingSession
         super.init(nibName: nil, bundle: nil)
         tabStyle = .toolbar
         transitionOptions = []
         addPane(title: "Clocks", symbol: "globe",
                 view: ClocksPane(formatter: formatter)
-                    .environment(preferences).environment(settingsPreview))
+                    .environment(preferences)
+                    .environment(settingsPreview)
+                    .environment(clockEditingSession))
         addPane(title: "Format", symbol: "textformat",
-                view: FormatPane(formatter: formatter)
+                view: FormatPane()
                     .environment(preferences).environment(settingsPreview))
         addPane(title: "General", symbol: "gearshape",
                 view: GeneralPane(updateManager: updateManager).environment(preferences))
@@ -115,13 +133,26 @@ private final class SettingsTabViewController: NSTabViewController {
     override func tabView(_ tabView: NSTabView,
                           shouldSelect tabViewItem: NSTabViewItem?) -> Bool {
         guard super.tabView(tabView, shouldSelect: tabViewItem) else { return false }
+        guard let tabViewItem, tabViewItem !== tabView.selectedTabViewItem else { return true }
+        if tabView.selectedTabViewItem?.label == "Clocks",
+           clockEditingSession.hasUnsavedChanges,
+           let window = view.window {
+            confirmUnsavedClock(in: window, session: clockEditingSession) { shouldLeave in
+                if shouldLeave { tabView.selectTabViewItem(tabViewItem) }
+            }
+            return false
+        }
+        if tabView.selectedTabViewItem?.label == "Clocks",
+           clockEditingSession.isActive {
+            clockEditingSession.discardForExternalNavigation()
+        }
         guard tabView.selectedTabViewItem?.label == "Format",
               tabViewItem !== tabView.selectedTabViewItem else { return true }
         guard settingsPreview.hasAppearanceChanges else {
             settingsPreview.discardAppearance()
             return true
         }
-        guard let tabViewItem, let window = view.window else { return true }
+        guard let window = view.window else { return true }
 
         confirmUnsavedAppearance(in: window, settingsPreview: settingsPreview) { shouldLeave in
             if shouldLeave { tabView.selectTabViewItem(tabViewItem) }
@@ -137,7 +168,7 @@ private func confirmUnsavedAppearance(in window: NSWindow, settingsPreview: Sett
                                       completion: @escaping (Bool) -> Void) {
     let alert = NSAlert()
     alert.messageText = "Save changes to Format?"
-    alert.informativeText = "Your preview has unsaved changes."
+    alert.informativeText = "The menu bar is showing changes that have not been saved."
     let save = alert.addButton(withTitle: "Save")
     save.keyEquivalent = "\r"
     save.isEnabled = settingsPreview.canSaveAppearance
@@ -151,6 +182,34 @@ private func confirmUnsavedAppearance(in window: NSWindow, settingsPreview: Sett
             completion(true)
         case .alertSecondButtonReturn:
             settingsPreview.discardAppearance()
+            completion(true)
+        default:
+            completion(false)
+        }
+    }
+}
+
+/// Native Save / Discard / Cancel prompt for the inline clock editor.
+@MainActor
+private func confirmUnsavedClock(in window: NSWindow, session: ClockEditingSession,
+                                 completion: @escaping (Bool) -> Void) {
+    let alert = NSAlert()
+    alert.messageText = session.draft?.isNew == true
+        ? "Add this clock before leaving?"
+        : "Save changes to this clock?"
+    alert.informativeText = "Changes are visible in the menu bar until you save or discard them."
+    let save = alert.addButton(withTitle: session.draft?.isNew == true ? "Add Clock" : "Save")
+    save.keyEquivalent = "\r"
+    save.isEnabled = session.canSave
+    alert.addButton(withTitle: session.draft?.isNew == true ? "Discard New Clock" : "Discard Changes")
+    alert.addButton(withTitle: "Cancel")
+
+    alert.beginSheetModal(for: window) { response in
+        switch response {
+        case .alertFirstButtonReturn:
+            completion(session.save())
+        case .alertSecondButtonReturn:
+            session.discardForExternalNavigation()
             completion(true)
         default:
             completion(false)

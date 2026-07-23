@@ -48,16 +48,17 @@ struct AboutPane: View {
 
             Section {
                 LabeledContent("License", value: "MIT")
-                Text("Release builds bundle Sparkle for automatic updates.")
+                Text("Release builds include Sparkle for automatic updates.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             } footer: {
-                Text("© 2026 Marton Paulo. Free and open source under the MIT license.")
+                Text("© 2026 Marton Paulo. Open source under the MIT license.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
+        .scrollIndicators(.hidden)
         .frame(width: Token.Size.paneWidth, height: Token.Size.paneHeight)
     }
 }

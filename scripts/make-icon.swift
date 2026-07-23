@@ -1,5 +1,5 @@
 #!/usr/bin/env swift
-// Renders the Meantime app icon: a premium "world time" identity — a deep-space
+// Renders the Meantime app icon: a premium "world time" identity: a deep-space
 // blue plate holding a glassy globe dial (meridians as the clock face), lit with
 // a specular top-left highlight, white hands and an orange second hand.
 // Usage: swift scripts/make-icon.swift
@@ -19,7 +19,7 @@ func drawIcon() -> NSImage {
 
     let center = NSPoint(x: 512, y: 512)
 
-    // ── Plate: luminous azure-to-indigo gradient, gently glowing top-center —
+    // ── Plate: luminous azure-to-indigo gradient, gently glowing top-center -
     //    the vibrant-gradient-plus-white-glyph language of first-party icons.
     let plateRect = NSRect(x: 100, y: 100, width: 824, height: 824)
     let plate = NSBezierPath(roundedRect: plateRect, xRadius: 185, yRadius: 185)
@@ -42,7 +42,7 @@ func drawIcon() -> NSImage {
     rim.stroke()
     NSGraphicsContext.current?.restoreGraphicsState()
 
-    // ── Dial: a thin glass ring — nothing else. The plate is the face.
+    // ── Dial: a thin glass ring: nothing else. The plate is the face.
     let dialRadius: CGFloat = 318
     let dialRect = NSRect(x: center.x - dialRadius, y: center.y - dialRadius,
                           width: dialRadius * 2, height: dialRadius * 2)
@@ -71,7 +71,7 @@ func drawIcon() -> NSImage {
             width: dot, height: dot)).fill()
     }
 
-    // ── Hands at 10:09:30 — white with depth shadows; orange second hand.
+    // ── Hands at 10:09:30: white with depth shadows; orange second hand.
     func hand(angle: CGFloat, length: CGFloat, tail: CGFloat, width: CGFloat,
               color: NSColor, shadowBlur: CGFloat) {
         NSGraphicsContext.current?.saveGraphicsState()

@@ -18,11 +18,11 @@ public enum TimeFormatPreset: String, CaseIterable, Sendable, Identifiable {
     public var title: String {
         switch self {
         case .systemDefault: "System Default"
-        case .twentyFourHour: "24-Hour — 09:47"
-        case .twentyFourHourSeconds: "24-Hour with Seconds — 09:47:30"
-        case .twelveHour: "12-Hour — 9:47 AM"
-        case .twelveHourSeconds: "12-Hour with Seconds — 9:47:30 AM"
-        case .dateAndTime: "Date and Time — Thu 23 Jul · 09:47"
+        case .twentyFourHour: "24-Hour: 09:47"
+        case .twentyFourHourSeconds: "24-Hour with Seconds: 09:47:30"
+        case .twelveHour: "12-Hour: 9:47 AM"
+        case .twelveHourSeconds: "12-Hour with Seconds: 9:47:30 AM"
+        case .dateAndTime: "Date and Time: Thu 23 Jul · 09:47"
         case .fullDateAndTime: "Full Date and Time"
         case .custom: "Custom…"
         }

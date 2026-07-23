@@ -5,12 +5,11 @@ import MeantimeKit
 /// menu, keeping long labels and accessibility sizes from fighting controls.
 struct ClocksPane: View {
     @Environment(Preferences.self) private var preferences
-    @Environment(SettingsPreview.self) private var settingsPreview
+    @Environment(ClockEditingSession.self) private var editingSession
 
     let formatter: ClockFormatter
 
     @State private var selectedIDs = Set<WorldClock.ID>()
-    @State private var presentedSheet: ClockSheet?
     @State private var clocksPendingRemoval: [WorldClock] = []
 
     private var selectedClocks: [WorldClock] {
@@ -23,39 +22,22 @@ struct ClocksPane: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if preferences.clocks.isEmpty {
-                ContentUnavailableView {
-                    Label("No Clocks", systemImage: "clock.badge.questionmark")
-                } description: {
-                    Text("Add a time zone to show it in the menu bar and dropdown.")
-                } actions: {
-                    Button("Add Clock…") { presentAdd() }
-                        .keyboardShortcut(.defaultAction)
+            switch editingSession.destination {
+            case .list:
+                listContent
+                Divider()
+                actionBar
+            case .picker:
+                TimeZonePickerView { identifier in
+                    editingSession.beginAdding(timeZoneID: identifier)
+                } onCancel: {
+                    editingSession.requestExit(to: .list)
                 }
-            } else {
-                clockList
+            case .editor:
+                ClockEditorView(formatter: formatter)
             }
-            Divider()
-            actionBar
         }
         .frame(width: Token.Size.paneWidth, height: Token.Size.paneHeight)
-        .sheet(item: $presentedSheet, onDismiss: settingsPreview.discardClock) { sheet in
-            switch sheet.kind {
-            case .add:
-                AddClockFlow(formatter: formatter) {
-                    presentedSheet = nil
-                }
-                .environment(preferences)
-                .environment(settingsPreview)
-            case let .edit(clock):
-                ClockEditorSheet(
-                    draft: ClockEditDraft(existing: clock),
-                    formatter: formatter,
-                    onFinish: { presentedSheet = nil })
-                    .environment(preferences)
-                    .environment(settingsPreview)
-            }
-        }
         .alert(removalTitle, isPresented: removalConfirmationPresented) {
             Button(removalActionTitle, role: .destructive, action: removePendingClocks)
             Button("Cancel", role: .cancel) { clocksPendingRemoval = [] }
@@ -77,16 +59,35 @@ struct ClocksPane: View {
         }
     }
 
+    @ViewBuilder private var listContent: some View {
+        if preferences.clocks.isEmpty {
+            ContentUnavailableView {
+                Label("No clocks", systemImage: "clock.badge.questionmark")
+            } description: {
+                Text("Add a time zone to see its local time in the menu bar and panel.")
+            } actions: {
+                Button("Add Clock…") { presentAdd() }
+                    .keyboardShortcut(.defaultAction)
+            }
+        } else {
+            clockList
+        }
+    }
+
     private var clockList: some View {
         List(selection: $selectedIDs) {
             ForEach(preferences.clocks) { clock in
                 ClockListRow(clock: clock)
                     .tag(clock.id)
                     .contentShape(Rectangle())
+                    .onTapGesture(count: 2) {
+                        selectedIDs = [clock.id]
+                        editingSession.beginEditing(clock)
+                    }
                     .contextMenu {
                         Button("Edit…") {
                             selectedIDs = [clock.id]
-                            presentedSheet = ClockSheet(kind: .edit(clock))
+                            editingSession.beginEditing(clock)
                         }
                         Divider()
                         Button("Move Up") {
@@ -106,7 +107,13 @@ struct ClocksPane: View {
             .onMove { preferences.moveClocks(from: $0, to: $1) }
         }
         .listStyle(.inset)
+        .scrollIndicators(.hidden)
         .accessibilityLabel("Clocks")
+        .onAppear {
+            if selectedIDs.isEmpty, let first = preferences.clocks.first {
+                selectedIDs = [first.id]
+            }
+        }
     }
 
     private var actionBar: some View {
@@ -171,17 +178,17 @@ struct ClocksPane: View {
 
     private var removalMessage: String {
         clocksPendingRemoval.count == 1
-            ? "This removes the clock from the menu bar and dropdown. This can’t be undone."
-            : "These clocks will be removed from the menu bar and dropdown. This can’t be undone."
+            ? "This removes the clock from the menu bar and panel. This action can’t be undone."
+            : "These clocks will be removed from the menu bar and panel. This action can’t be undone."
     }
 
     private func presentAdd() {
-        presentedSheet = ClockSheet(kind: .add)
+        editingSession.showPicker()
     }
 
     private func editSelection() {
         guard let singleSelection else { return }
-        presentedSheet = ClockSheet(kind: .edit(singleSelection))
+        editingSession.beginEditing(singleSelection)
     }
 
     private func requestRemoval() {
@@ -213,7 +220,7 @@ private struct ClockListRow: View {
     let clock: WorldClock
 
     private var detail: String {
-        guard clock.isPinned else { return "\(clock.timeZoneID) · Dropdown only" }
+        guard clock.isPinned else { return "\(clock.timeZoneID) · Panel only" }
         guard !clock.activeWindows.isEmpty else { return clock.timeZoneID }
         return "\(clock.timeZoneID) · Scheduled"
     }
@@ -222,7 +229,7 @@ private struct ClockListRow: View {
         LabeledContent {
             Image(systemName: clock.isPinned ? "menubar.rectangle" : "rectangle.bottomthird.inset.filled")
                 .foregroundStyle(.secondary)
-                .help(clock.isPinned ? "Shown in menu bar" : "Dropdown only")
+                .help(clock.isPinned ? "Shown in menu bar" : "Panel only")
         } label: {
             HStack(spacing: Token.Space.md) {
                 Text(clock.displayAdornment ?? "")
@@ -242,37 +249,6 @@ private struct ClockListRow: View {
         .padding(.vertical, Token.Space.xs)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
-            "\(clock.displayLabel), \(detail), \(clock.isPinned ? "shown in menu bar" : "dropdown only")")
-    }
-}
-
-private struct ClockSheet: Identifiable {
-    enum Kind {
-        case add
-        case edit(WorldClock)
-    }
-
-    let id = UUID()
-    let kind: Kind
-}
-
-/// The add workflow owns both stages, so selecting a zone never mutates
-/// preferences and no sheet-to-sheet race is possible.
-private struct AddClockFlow: View {
-    let formatter: ClockFormatter
-    let onFinish: () -> Void
-
-    @State private var draft: ClockEditDraft?
-
-    var body: some View {
-        if let draft {
-            ClockEditorSheet(draft: draft, formatter: formatter, onFinish: onFinish)
-        } else {
-            TimeZonePickerView { identifier in
-                draft = ClockEditDraft(newTimeZoneID: identifier)
-            } onCancel: {
-                onFinish()
-            }
-        }
+            "\(clock.displayLabel), \(detail), \(clock.isPinned ? "shown in menu bar" : "panel only")")
     }
 }

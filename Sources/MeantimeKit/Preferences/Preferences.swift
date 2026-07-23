@@ -5,7 +5,7 @@ import Observation
 /// `PreferenceDefaults` and nowhere else. Persistence is write-through: mutating
 /// a property (directly or via a SwiftUI binding) saves it immediately.
 ///
-/// The login-at-startup state is intentionally *not* stored here — the system
+/// The login-at-startup state is intentionally *not* stored here: the system
 /// owns it (see the app's login-item helper), so mirroring it would create a
 /// second source of truth.
 @MainActor

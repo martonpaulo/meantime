@@ -4,7 +4,7 @@ import Foundation
 /// `DateFormatter`s so the menu-bar update path allocates nothing.
 ///
 /// Thread-safe: `DateFormatter.string(from:)` is safe for concurrent use once
-/// the formatter is configured, and `NSCache` is itself thread-safe — hence the
+/// the formatter is configured, and `NSCache` is itself thread-safe: hence the
 /// audited `@unchecked Sendable`.
 public final class ClockFormatter: @unchecked Sendable {
     private let cache = NSCache<NSString, DateFormatter>()
@@ -38,7 +38,7 @@ public final class ClockFormatter: @unchecked Sendable {
         case let .custom(pattern):
             // Honor the user's explicit pattern verbatim. macOS rewrites explicit
             // hour fields (H ↔ h a) to match the system 12/24-hour override, so
-            // pin the locale's hour cycle to what the pattern actually asks for —
+            // pin the locale's hour cycle to what the pattern actually asks for -
             // keeping localized weekday/month names intact.
             formatter.locale = Self.pinningHourCycle(of: locale, to: pattern)
             formatter.dateFormat = pattern

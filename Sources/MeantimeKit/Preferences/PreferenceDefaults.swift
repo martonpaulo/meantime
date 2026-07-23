@@ -1,7 +1,7 @@
 import Foundation
 
 /// Every preference fallback, in one place. Never duplicate a default in views,
-/// controllers, tests, or migrations — read it from here.
+/// controllers, tests, or migrations: read it from here.
 public enum PreferenceDefaults {
     public static let timeFormat: TimeFormat = .system
     public static let menuBarLayout: MenuBarLayout = .individual

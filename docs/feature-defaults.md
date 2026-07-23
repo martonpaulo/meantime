@@ -20,7 +20,7 @@ its default and touches nothing else (not the login item, not identity).
 | Element spacing | 4 pt | yes | 0–12 pt |
 | Open at login | off | yes | owned by the system login-item service, not stored in preferences |
 | Automatic update checks | on (release builds) | yes | persisted by Sparkle itself; manual check always available |
-| Panel row time | complete time (min. minutes) | no | a coarser menu-bar format falls back to system short time in the panel — a glance surface must answer "what time is it" fully |
+| Panel row time | complete time (min. minutes) | no | a coarser menu-bar format falls back to system short time in the panel: a glance surface must answer "what time is it" fully |
 | Time-travel preview | now | transient | day + typed time; resets every time the panel opens; never persisted |
 | Calendar browsing | current month | transient | six stable week rows, locale-aware weekends, month/year navigation, labeled Today action |
 | Update cadence | boundary-aligned to the coarsest visible unit, plus schedule transitions | no | correctness + energy behavior; a single valid outcome |
@@ -32,5 +32,5 @@ its default and touches nothing else (not the login item, not identity).
   them would only let a user make the clock wrong or wasteful.
 - **Panel completeness**: hour-only is a menu-bar economy, not an answer; the
   panel exists to give the full time.
-- **Explicit hour patterns defeat the system 12/24 override** — an explicit
+- **Explicit hour patterns defeat the system 12/24 override**: an explicit
   `HH` must never silently render as `h a`.

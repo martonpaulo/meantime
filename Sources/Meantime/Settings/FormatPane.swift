@@ -6,7 +6,6 @@ import MeantimeKit
 struct FormatPane: View {
     @Environment(Preferences.self) private var preferences
     @Environment(SettingsPreview.self) private var settingsPreview
-    let formatter: ClockFormatter
 
     @State private var discardConfirmationShown = false
     @FocusState private var patternFieldFocused: Bool
@@ -16,28 +15,9 @@ struct FormatPane: View {
             ?? SettingsPreview.AppearanceDraft(preferences: preferences)
     }
 
-    private var previewText: String {
-        let value = FormatSample.example(settingsPreview.timeFormat, formatter: formatter)
-        return value.isEmpty ? "—" : value
-    }
-
     var body: some View {
         VStack(spacing: 0) {
             Form {
-                Section {
-                    LabeledContent("Preview") {
-                        Text(previewText)
-                            .font(Token.Font.time(16))
-                            .foregroundStyle(Token.Color.primaryText)
-                            .textSelection(.enabled)
-                    }
-                    if draft.formatPreset == .systemDefault {
-                        Text("Following your Mac's date and time format.")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
                 Section {
                     Picker("Format", selection: presetBinding) {
                         ForEach(TimeFormatPreset.allCases) { preset in
@@ -52,23 +32,29 @@ struct FormatPane: View {
                             .focused($patternFieldFocused)
 
                         if !draft.isValid {
-                            Label("Enter a nonempty pattern and close every quoted literal.",
+                            Label("Enter a pattern and close every quoted literal.",
                                   systemImage: "exclamationmark.circle")
                                 .font(.callout)
                                 .foregroundStyle(Token.Color.errorText)
                         }
                     }
 
+                    if draft.formatPreset == .systemDefault {
+                        Text("Uses your Mac's current date and time format.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
+
                     Link(destination: URL(string: "https://martonpaulo.github.io/meantime/format.html")!) {
-                        Label("Open the interactive format builder", systemImage: "curlybraces.square")
+                        Label("Open Format Builder", systemImage: "curlybraces.square")
                     }
                     Link(destination: URL(string: "https://unicode.org/reports/tr35/tr35-dates.html#Date_Format_Patterns")!) {
-                        Label("Advanced Unicode pattern documentation", systemImage: "book")
+                        Label("View Advanced Format Documentation", systemImage: "book")
                     }
                 } header: {
                     Text("Date and Time Format")
                 } footer: {
-                    Text("Choose a common preset or use Custom for any Unicode UTS-35 pattern. Quote literal words with single quotes; write two single quotes for an apostrophe.")
+                    Text("Choose a preset or use Custom for any Unicode UTS-35 pattern. Put literal text in single quotes and use two single quotes for an apostrophe.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
@@ -83,13 +69,13 @@ struct FormatPane: View {
                     if draft.menuBarLayout == .combined {
                         TextField("Separator", text: separatorBinding,
                                   prompt: Text(PreferenceDefaults.combinedSeparator))
-                        Text("Up to \(UserInputPolicy.separatorLimit) characters. Leave empty for spacing only.")
+                        Text("Enter up to \(UserInputPolicy.separatorLimit) characters. Leave blank to use spacing only.")
                             .font(.callout)
                             .foregroundStyle(.secondary)
 
                         if preferences.clocks.contains(where: { $0.renderMode == .analogClock }) {
                             Label(
-                                "Analog clocks use leading item and time in the combined item. Their analog style is preserved for individual layout.",
+                                "Combined layout shows analog clocks as a leading item and time. The analog face remains available in individual layout.",
                                 systemImage: "info.circle")
                                 .font(.callout)
                                 .foregroundStyle(.secondary)
@@ -105,6 +91,7 @@ struct FormatPane: View {
                 }
             }
             .formStyle(.grouped)
+            .scrollIndicators(.hidden)
             Divider()
             actionBar
         }
@@ -178,7 +165,7 @@ struct FormatPane: View {
             .disabled(!settingsPreview.hasAppearanceChanges)
             Spacer()
             if settingsPreview.hasAppearanceChanges {
-                Text("Not saved")
+                Text("Unsaved changes")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .accessibilityLabel("Unsaved changes")
@@ -192,7 +179,7 @@ struct FormatPane: View {
     }
 }
 
-/// A titled slider with a live value readout — one definition for every
+/// A titled slider with a live value readout: one definition for every
 /// appearance control.
 private struct LabeledSlider: View {
     let title: String

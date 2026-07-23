@@ -4,7 +4,7 @@
 #
 # Signing:
 #   - With DEVELOPER_ID_IDENTITY set: Developer ID + hardened runtime (release).
-#   - Otherwise: ad-hoc signing — free to build and run locally.
+#   - Otherwise: ad-hoc signing: free to build and run locally.
 #
 # Usage: scripts/package-app.sh [version] [build-number]
 # Optional output overrides: APP_OUTPUT and ZIP_OUTPUT.

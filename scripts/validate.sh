@@ -44,9 +44,9 @@ else
         || note "Dependabot must define exactly the two supported ecosystems"
 fi
 
-# The panel is a menu-style status-item surface, not an arrowed popover.
-if ! grep -q 'view.material = \.menu' Sources/Meantime/MenuBar/PanelController.swift; then
-    note "the menu-bar panel must use AppKit's menu material"
+# The panel is a status-item surface using AppKit's semantic popover material.
+if ! grep -q 'view.material = \.popover' Sources/Meantime/MenuBar/PanelController.swift; then
+    note "the menu-bar panel must use AppKit's popover material"
 fi
 
 # Website navigation stays identical across the landing page and builder.
@@ -90,6 +90,10 @@ if ! grep -q 'hasUpperHour' docs/format.html; then
     fi
 fi
 node scripts/test-format-builder.js || note "format builder behavior tests failed"
+if grep -q 'const now = new Date' docs/format.html \
+    || grep -q 'scheduleRefresh' docs/format.html; then
+    note "format builder preview must use a fixed illustrative date without a refresh timer"
+fi
 if ! grep -q ':focus-visible' docs/styles/main.css; then
     note "website must expose a deliberate keyboard focus treatment"
 fi
@@ -98,8 +102,8 @@ if ! grep -q 'screenshots/settings-current.png' docs/index.html; then
 fi
 for image_and_width in \
     "docs/screenshots/menu-bar.png:400" \
-    "docs/screenshots/panel.png:680" \
-    "docs/screenshots/panel-current.png:680" \
+    "docs/screenshots/panel.png:840" \
+    "docs/screenshots/panel-current.png:840" \
     "docs/screenshots/settings-clocks.png:1120" \
     "docs/screenshots/settings-format.png:1120" \
     "docs/screenshots/settings-general.png:1120" \
@@ -111,6 +115,27 @@ for image_and_width in \
     [ "${width:-0}" -ge "$minimum_width" ] \
         || note "$image must be Retina quality (at least $minimum_width px wide)"
 done
+
+# Durable product contracts for a single-window editor and restrained native UI.
+if grep -q '\.sheet' Sources/Meantime/Settings/ClocksPane.swift; then
+    note "clock add and edit flows must stay inside the Settings window"
+fi
+if grep -q 'LabeledContent("Preview")' Sources/Meantime/Settings/FormatPane.swift; then
+    note "Format must rely on the real menu bar preview"
+fi
+if ! grep -q 'scrollIndicators(\.hidden)' Sources/Meantime/Settings/ClockEditorSheet.swift; then
+    note "the clock editor must hide the native scroll indicator without replacing scrolling"
+fi
+if grep -q 'weekendBackground' Sources/Meantime/Panel/MonthCalendarView.swift; then
+    note "weekends must use restrained text color without background blocks"
+fi
+if grep -Eq 'screencapture|osascript|open .*Meantime' scripts/capture-screenshots.sh; then
+    note "documentation screenshots must render offscreen without controlling the user's desktop"
+fi
+if rg -q '—' CHANGELOG.md CONTEXT.md CONTRIBUTING.md Makefile README.md \
+    Sources Support docs scripts --glob '!validate.sh'; then
+    note "project copy and documentation must not contain em dashes"
+fi
 
 # Never publish a known-dead updater enclosure.
 if grep -q '<sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>' appcast.xml; then

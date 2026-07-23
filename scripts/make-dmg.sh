@@ -2,7 +2,7 @@
 # Creates the Meantime installer DMG: drag-to-Applications layout with background
 # artwork, fixed icon positions, a volume icon, and (locally) a matching icon on
 # the .dmg file itself. Built with appdmg (pinned), which writes the Finder
-# layout programmatically — works headless, no Finder scripting.
+# layout programmatically: works headless, no Finder scripting.
 # Usage: scripts/make-dmg.sh [version]
 # Optional output overrides: APP_OUTPUT, DMG_OUTPUT, and DMG_WORK_DIR.
 set -euo pipefail
@@ -48,7 +48,7 @@ JSON
 npx --yes "appdmg@$APPDMG_VERSION" "$SPEC" "$DMG"
 
 # Give the .dmg file itself the Meantime icon (resource fork; survives local
-# copies — download services strip xattrs, so the VOLUME icon is the one users
+# copies: download services strip xattrs, so the VOLUME icon is the one users
 # see after mounting).
 if xcrun --find Rez >/dev/null 2>&1 && command -v SetFile >/dev/null 2>&1; then
     cp Support/AppInstallerIcon.icns "$DMG_WORK_DIR/dmg-file-icon.icns"

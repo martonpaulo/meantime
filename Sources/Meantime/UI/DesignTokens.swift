@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The single source of truth for every visual constant. Views must read from
-/// here — no hardcoded sizes, insets, radii, or colors. Names are semantic so
+/// here: no hardcoded sizes, insets, radii, or colors. Names are semantic so
 /// intent survives redesigns.
 enum Token {
     /// Spacing scale (points).
@@ -19,37 +19,35 @@ enum Token {
     enum Radius {
         static let sm: CGFloat = 6
         static let md: CGFloat = 10
-        /// Menu-bar dropdown panel corners (matches system menu panels).
+        /// Menu-bar panel corners (matches system menu panels).
         static let panel: CGFloat = 12
     }
 
     /// Fixed dimensions (points).
     enum Size {
-        static let panelWidth: CGFloat = 340
-        static let panelClockListMaxHeight: CGFloat = 168
-        static let rowMinHeight: CGFloat = 32
+        static let panelWidth: CGFloat = 420
+        static let panelClockListMaxHeight: CGFloat = 216
+        static let rowMinHeight: CGFloat = 46
         static let analogClock: CGFloat = 18
-        static let hitTarget: CGFloat = 26
+        static let hitTarget: CGFloat = 32
         static let statusItemMaxWidth: CGFloat = 260
         /// Stable content size shared by every Settings pane.
         static let paneWidth: CGFloat = 560
         static let paneHeight: CGFloat = 520
-        static let editorWidth: CGFloat = 480
-        static let editorHeight: CGFloat = 620
-        static let pickerWidth: CGFloat = 460
-        static let pickerHeight: CGFloat = 540
         static let aboutIcon: CGFloat = 64
         /// Gap between the menu bar and the anchored panel.
         static let panelGap: CGFloat = 5
         /// Screen-edge margin the panel never crosses.
         static let screenMargin: CGFloat = 8
         /// Calendar day-cell height and selection-circle diameter.
-        static let calendarCell: CGFloat = 29
-        static let calendarSelection: CGFloat = 26
+        static let calendarCell: CGFloat = 36
+        static let calendarSelection: CGFloat = 31
+        static let panelTimeBoost: CGFloat = 3
         /// Fixed icon column in panel action rows, so labels align.
         static let actionIconColumn: CGFloat = 16
         static let adornmentColumn: CGFloat = 22
         static let hairline: CGFloat = 0.5
+        static let selectionStroke: CGFloat = 1.5
     }
 
     /// Typography. Time uses monospaced digits so it never jitters as it ticks.
@@ -58,12 +56,12 @@ enum Token {
             .system(size: size, weight: .regular).monospacedDigit()
         }
 
-        static let label = SwiftUI.Font.body
-        static let secondary = SwiftUI.Font.caption
+        static let label = SwiftUI.Font.headline
+        static let secondary = SwiftUI.Font.callout
         static let sectionTitle = SwiftUI.Font.caption.weight(.semibold)
         static let action = SwiftUI.Font.body
-        static let calendarDay = SwiftUI.Font.callout
-        static let calendarNavigation = SwiftUI.Font.caption.weight(.semibold)
+        static let calendarDay = SwiftUI.Font.body
+        static let calendarNavigation = SwiftUI.Font.body.weight(.medium)
     }
 
     /// Semantic colors, all derived from system materials so light/dark and
@@ -76,8 +74,7 @@ enum Token {
         static let separator = SwiftUI.Color(nsColor: .separatorColor)
         static let hairlineSeparator = separator.opacity(0.5)
         static let subordinateText = secondaryText.opacity(0.5)
-        static let weekendText = SwiftUI.Color(nsColor: .systemRed)
-        static let weekendBackground = SwiftUI.Color(nsColor: .systemRed).opacity(0.07)
+        static let weekendText = SwiftUI.Color(nsColor: .systemBlue).opacity(0.85)
         static let errorText = SwiftUI.Color(nsColor: .systemRed)
         static let previewBackground = SwiftUI.Color(nsColor: .controlBackgroundColor)
     }

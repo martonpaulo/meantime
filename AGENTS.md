@@ -184,8 +184,15 @@ agreed, document it here in the same turn.
 - Use focused Conventional Commits for durable changes. Commit only files that
   belong to the task; leave unrelated dirty files untouched and report them.
 - Do not revert, overwrite, or discard user changes unless explicitly asked.
-- Delete current-task temp artifacts before closeout unless they are requested
-  deliverables or failure evidence. Never delete pre-existing user files.
+- Retain every current and future task artifact under `artifacts/` for user
+  review. Never delete, move, truncate, destructively replace, or prune an
+  artifact unless the user explicitly requests that exact cleanup; this
+  includes temporary validation logs and failure evidence. Append new evidence,
+  and update indexes/status files without erasing their prior findings.
+- Every task or SDD cycle must keep a `REMAINING.md` in its artifact directory
+  listing every skipped, incomplete, externally blocked, manually-only, or
+  otherwise unvalidated item and every remaining risk/follow-up. Write an
+  explicit `None` when nothing remains.
 - Before finishing, close anything opened during the task (build processes,
   simulators, editors) so nothing runs unnecessarily.
 - Final report includes: changed files, validation performed, artifacts

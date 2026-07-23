@@ -71,6 +71,9 @@ enum Token {
         static let secondaryText = SwiftUI.Color.secondary
         static let accent = SwiftUI.Color.accentColor
         static let rowHighlight = SwiftUI.Color.primary.opacity(0.06)
+        /// Subtle fill behind a compact editable control (the time field), so it
+        /// reads as one tidy pill instead of the default stepper bezel.
+        static let controlFill = SwiftUI.Color.primary.opacity(0.08)
         static let separator = SwiftUI.Color(nsColor: .separatorColor)
         static let hairlineSeparator = separator.opacity(0.5)
         static let subordinateText = secondaryText.opacity(0.5)

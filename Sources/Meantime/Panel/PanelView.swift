@@ -219,7 +219,6 @@ private struct TimeTravelSection: View {
                 .accessibilityLabel("Return to now")
             }
             TimeField(date: timeBinding, accessibilityLabel: "Preview time")
-                .fixedSize()
         }
         .padding(.horizontal, Token.Space.xl)
         .padding(.vertical, Token.Space.sm)

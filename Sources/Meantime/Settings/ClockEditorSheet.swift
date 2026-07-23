@@ -34,6 +34,7 @@ struct ClockEditorView: View {
 
     private var editorContent: some View {
         VStack(spacing: 0) {
+            editorHeader
             EditorPreview(clock: clock, formatter: formatter)
             Divider()
             editorForm
@@ -63,14 +64,22 @@ struct ClockEditorView: View {
         } message: {
             Text("The time zone stays the same. Name, leading item, menu bar style, visibility, and scheduled hours reset after you save.")
         }
-        .background {
-            Group {
-                Button("", action: requestDismiss)
-                    .keyboardShortcut(.cancelAction)
+    }
+
+    /// A clear way back to the previous step. Existing edits return to the Clocks list;
+    /// a new clock returns to the time-zone picker. Escape triggers it too.
+    private var editorHeader: some View {
+        HStack {
+            Button(action: requestBack) {
+                Label(backTitle, systemImage: "chevron.left")
             }
-            .opacity(0)
-            .accessibilityHidden(true)
+            .buttonStyle(.link)
+            .keyboardShortcut(.cancelAction)
+            .accessibilityLabel("Back to \(backTitle)")
+            Spacer()
         }
+        .padding(.horizontal, Token.Space.lg)
+        .padding(.top, Token.Space.md)
     }
 
     private var editorForm: some View {
@@ -162,15 +171,10 @@ struct ClockEditorView: View {
 
     private var actions: some View {
         HStack(spacing: Token.Space.sm) {
-            if editDraft.isNew {
-                Button("Back") { editingSession.requestExit(to: .picker) }
-            }
-            Button("Cancel", action: requestDismiss)
-                .keyboardShortcut(.cancelAction)
-            Spacer()
             if editDraft.hasChanges {
                 UnsavedBadge()
             }
+            Spacer()
             Button(actionTitle, action: commit)
                 .keyboardShortcut(.defaultAction)
                 .disabled(!editDraft.canCommit)
@@ -219,8 +223,10 @@ struct ClockEditorView: View {
         _ = editingSession.save()
     }
 
-    private func requestDismiss() {
-        editingSession.requestExit(to: .list)
+    private var backTitle: String { editDraft.isNew ? "Time Zones" : "Clocks" }
+
+    private func requestBack() {
+        editingSession.requestExit(to: editDraft.isNew ? .picker : .list)
     }
 }
 
@@ -263,7 +269,9 @@ private struct EditorPreview: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .padding(Token.Space.lg)
+        .padding(.horizontal, Token.Space.xl)
+        .padding(.vertical, Token.Space.lg)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Token.Color.previewBackground)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(status), \(clock.displayLabel), \(time)")
@@ -368,9 +376,7 @@ private struct ScheduleSection: View {
     private func scheduleField(_ title: String, date: Binding<Date>) -> some View {
         HStack(spacing: Token.Space.xs) {
             Text(title).foregroundStyle(.secondary)
-            TimeField(date: date, timeZone: ScheduleTime.zone,
-                      controlSize: .small, accessibilityLabel: title)
-                .fixedSize()
+            TimeField(date: date, timeZone: ScheduleTime.zone, accessibilityLabel: title)
         }
     }
 

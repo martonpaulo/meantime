@@ -51,20 +51,38 @@ enum ScreenshotCapture {
         try renderMenuBar(title: statusTitle,
                           to: directory.appendingPathComponent("menu-bar.png"))
 
-        for (pane, name) in [
-            (SettingsPane.clocks, "settings-clocks.png"),
-            (.format, "settings-format.png"),
-            (.general, "settings-general.png"),
-        ] {
-            let tabs = SettingsTabViewController(
-                preferences: preferences,
-                settingsPreview: preview,
-                clockEditingSession: editing,
-                formatter: formatter,
-                updateManager: UpdateManager())
-            tabs.select(pane)
-            try renderSettings(tabs, to: directory.appendingPathComponent(name))
+        // Render each Settings pane in a plain titled window. A window gives the native
+        // List/Form the context they need to lay out, while dropping the tab-style toolbar
+        // whose vibrant selection offscreen cacheDisplay cannot composite (it comes out as a
+        // solid white block). Documentation capture must stay offscreen.
+        func renderPane(_ view: some View, to name: String) throws {
+            try renderPaneWindow(view, to: directory.appendingPathComponent(name))
         }
+        try renderPane(ClocksPane(formatter: formatter)
+            .environment(preferences).environment(preview).environment(editing),
+            to: "settings-clocks.png")
+        try renderPane(FormatPane()
+            .environment(preferences).environment(preview),
+            to: "settings-format.png")
+        try renderPane(GeneralPane(updateManager: UpdateManager())
+            .environment(preferences),
+            to: "settings-general.png")
+    }
+
+    private static func renderPaneWindow(_ view: some View, to destination: URL) throws {
+        let hosting = NSHostingController(rootView: AnyView(view.preferredColorScheme(.dark)))
+        let window = NSWindow(contentViewController: hosting)
+        window.styleMask = [.titled, .closable, .miniaturizable]
+        window.title = "Meantime Settings"
+        window.appearance = NSAppearance(named: .darkAqua)
+        // Size the window content to the pane exactly, so there is no centering gap.
+        window.setContentSize(NSSize(width: Token.Size.paneWidth, height: Token.Size.paneHeight))
+        window.contentView?.layoutSubtreeIfNeeded()
+        guard let frameView = window.contentView?.superview else {
+            throw CaptureError.missingWindowFrame
+        }
+        frameView.layoutSubtreeIfNeeded()
+        try writePNG(of: frameView, to: destination)
     }
 
     private static func renderHostingView<Content: View>(
@@ -94,22 +112,6 @@ enum ScreenshotCapture {
             y: floor((height - label.frame.height) / 2))
         effect.addSubview(label)
         try writePNG(of: effect, to: destination)
-    }
-
-    private static func renderSettings(
-        _ tabs: SettingsTabViewController, to destination: URL
-    ) throws {
-        let window = NSWindow(contentViewController: tabs)
-        window.styleMask = [.titled, .closable, .miniaturizable]
-        window.title = "Meantime Settings"
-        window.appearance = NSAppearance(named: .darkAqua)
-        window.setContentSize(NSSize(width: Token.Size.paneWidth, height: 590))
-        window.contentView?.layoutSubtreeIfNeeded()
-        guard let frameView = window.contentView?.superview else {
-            throw CaptureError.missingWindowFrame
-        }
-        frameView.layoutSubtreeIfNeeded()
-        try writePNG(of: frameView, to: destination)
     }
 
     private static func writePNG(of view: NSView, to destination: URL) throws {

@@ -86,15 +86,11 @@ struct ClocksPane: View {
     private var clockList: some View {
         List(selection: $selectedIDs) {
             ForEach(preferences.clocks) { clock in
-                ClockListRow(clock: clock, isPinned: pinnedBinding(for: clock))
+                ClockListRow(clock: clock, isPinned: pinnedBinding(for: clock)) {
+                    selectedIDs = [clock.id]
+                    editingSession.beginEditing(clock)
+                }
                     .tag(clock.id)
-                    .contentShape(Rectangle())
-                    // A simultaneous gesture recognizes the double-click to edit without
-                    // consuming the List's native single-click selection and highlight.
-                    .simultaneousGesture(TapGesture(count: 2).onEnded {
-                        selectedIDs = [clock.id]
-                        editingSession.beginEditing(clock)
-                    })
                     .contextMenu {
                         Button("Edit…") {
                             selectedIDs = [clock.id]
@@ -242,6 +238,7 @@ struct ClocksPane: View {
 private struct ClockListRow: View {
     let clock: WorldClock
     @Binding var isPinned: Bool
+    let onEdit: () -> Void
 
     private var detail: String {
         guard !clock.activeWindows.isEmpty else { return clock.timeZoneID }
@@ -250,14 +247,27 @@ private struct ClockListRow: View {
 
     var body: some View {
         LabeledContent {
-            // A direct switch replaces the old status glyph: it both shows whether the
-            // clock appears in the menu bar and toggles it in place.
-            Toggle("Show in menu bar", isOn: $isPinned)
-                .toggleStyle(.switch)
-                .controlSize(.small)
-                .labelsHidden()
-                .help("Show this clock in the menu bar")
-                .accessibilityLabel("Show \(clock.displayLabel) in menu bar")
+            HStack(spacing: Token.Space.md) {
+                // A direct switch replaces the old status glyph: it shows whether the
+                // clock appears in the menu bar and toggles it in place.
+                Toggle("Show in menu bar", isOn: $isPinned)
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .labelsHidden()
+                    .help("Show this clock in the menu bar")
+                    .accessibilityLabel("Show \(clock.displayLabel) in menu bar")
+                // An explicit disclosure chevron makes "open to edit" discoverable;
+                // single-click still selects the row for the footer actions.
+                Button(action: onEdit) {
+                    Image(systemName: "chevron.right")
+                        .font(.callout.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
+                .help("Edit this clock")
+                .accessibilityLabel("Edit \(clock.displayLabel)")
+            }
         } label: {
             HStack(spacing: Token.Space.md) {
                 Text(clock.displayAdornment ?? "")

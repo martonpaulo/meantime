@@ -4,6 +4,27 @@ All notable changes to Meantime are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-07-23
+
+### Fixed
+
+- Scheduled menu-bar hours now edit in the clock's own zone, so a typed time is stored and applied as that wall-clock time rather than shifted by the editor's local offset.
+- Single-click again selects a clock row; the removed double-click gesture no longer swallows the selection.
+- Menu-bar leading text no longer spreads its letters; the element-spacing gap sits only after the leading item.
+- Reopening Settings returns to the Clocks list instead of resuming a half-finished edit.
+- The Clocks list Return and Delete shortcuts are scoped to the list, so a stray key no longer edits or removes a row behind an open picker or editor.
+- Hardened the clock editor against a draft force-unwrap that could close the app mid-dialog.
+
+### Changed
+
+- Time entry for schedules and time travel uses one compact custom field instead of the stepper control.
+- Each clock row has a direct menu-bar visibility switch and a disclosure chevron that opens its editor.
+- The clock editor gained a labeled back control, a clearer unsaved-changes badge, and more room around the preview.
+- The calendar Today action is disabled while the calendar is already on the current day.
+- Entering time travel no longer resizes the panel.
+- The updates toggle reflects Sparkle's state on first paint instead of flipping after appearing.
+- Documentation screenshots render each Settings pane without the tab toolbar, so the selected item is no longer a blank block.
+
 ## [1.2.0] - 2026-07-23
 
 ### Added

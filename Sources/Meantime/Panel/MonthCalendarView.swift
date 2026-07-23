@@ -68,12 +68,27 @@ struct MonthCalendarView: View {
             }
             .buttonStyle(.plain)
             .font(Token.Font.calendarNavigation)
-            .foregroundStyle(Token.Color.secondaryText)
+            .foregroundStyle(isAtToday ? Token.Color.subordinateText : Token.Color.secondaryText)
+            .disabled(isAtToday)
             .help("Return to the current month")
             CalendarNavButton(symbol: "chevron.right", label: "Next month") { step(months: 1) }
             CalendarNavButton(symbol: "chevron.right.2", label: "Next year") { step(years: 1) }
         }
         .padding(.bottom, Token.Space.xs)
+    }
+
+    /// Whether the calendar is already on the current month with no other day picked, so
+    /// "Today" would do nothing and should read as disabled.
+    private var isAtToday: Bool {
+        let showingCurrentMonth = panelModel.displayedMonth == nil
+            || calendar.isDate(visibleMonth, equalTo: timeSource.now, toGranularity: .month)
+        let dayIsToday: Bool
+        if let selectedDay = panelModel.selectedDay {
+            dayIsToday = calendar.isDate(selectedDay, inSameDayAs: timeSource.now)
+        } else {
+            dayIsToday = true
+        }
+        return showingCurrentMonth && dayIsToday
     }
 
     private func isWeekendColumn(_ index: Int) -> Bool {

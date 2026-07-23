@@ -34,6 +34,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
     }
 
     func show(pane: SettingsPane? = nil) {
+        let firstShow = window == nil
         if window == nil {
             let tabs = SettingsTabViewController(preferences: preferences,
                                                  settingsPreview: settingsPreview,
@@ -48,6 +49,11 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
             newWindow.center()
             self.tabs = tabs
             window = newWindow
+        }
+        // Reopening a closed window returns to the Clocks list rather than resuming a
+        // half-finished edit. An already-visible window (re-triggered ⌘,) is left alone.
+        if !firstShow, window?.isVisible == false {
+            clockEditingSession.discardForExternalNavigation()
         }
         if let pane { tabs?.select(pane) }
         NSApp.activate()

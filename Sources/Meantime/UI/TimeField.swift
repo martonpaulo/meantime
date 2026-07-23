@@ -1,61 +1,34 @@
-import AppKit
 import SwiftUI
 
-/// A compact, native hour-and-minute entry that reads as one clean field instead of the
-/// default stepper control. Wraps `NSDatePicker` so the displayed wall-clock time maps
-/// 1:1 to the bound `Date` in the given `timeZone`: the panel's time travel edits in the
-/// local zone, while a clock's schedule edits in a fixed zone so a typed "5 PM" is stored
-/// and shown as 5 PM (then interpreted at runtime in the clock's own zone).
-struct TimeField: NSViewRepresentable {
+/// A compact hour-and-minute entry that reads as one tidy pill. It renders the time as a
+/// single formatted string, so the colon sits naturally in the text run (centered) instead
+/// of a segmented picker's off-center separator, and parses typed input through the same
+/// style. Digits are monospaced so the value never jitters. The bound `Date` maps 1:1 to
+/// the wall-clock time in `timeZone`: the panel's time travel edits in the local zone,
+/// while a clock's schedule edits in a fixed zone so a typed "5:11 PM" stays 5:11.
+struct TimeField: View {
     @Binding var date: Date
-    /// The zone the field displays and edits in. Local by default.
     var timeZone: TimeZone = .current
-    var controlSize: NSControl.ControlSize = .regular
     var accessibilityLabel: String?
 
-    func makeNSView(context: Context) -> NSDatePicker {
-        let picker = NSDatePicker()
-        picker.datePickerStyle = .textField
-        picker.datePickerElements = .hourMinute
-        picker.isBezeled = true
-        picker.drawsBackground = false
-        picker.controlSize = controlSize
-        picker.font = .monospacedDigitSystemFont(
-            ofSize: NSFont.systemFontSize(for: controlSize), weight: .regular)
-        picker.target = context.coordinator
-        picker.action = #selector(Coordinator.dateChanged(_:))
-        picker.setContentHuggingPriority(.required, for: .horizontal)
-        picker.setContentCompressionResistancePriority(.required, for: .horizontal)
-        apply(to: picker)
-        return picker
+    private var format: Date.FormatStyle {
+        var style = Date.FormatStyle(date: .omitted, time: .shortened)
+        style.timeZone = timeZone
+        return style
     }
 
-    func updateNSView(_ picker: NSDatePicker, context: Context) {
-        apply(to: picker)
-    }
-
-    private func apply(to picker: NSDatePicker) {
-        picker.calendar = Self.calendar(for: timeZone)
-        picker.timeZone = timeZone
-        if picker.dateValue != date { picker.dateValue = date }
-        picker.setAccessibilityLabel(accessibilityLabel)
-    }
-
-    func makeCoordinator() -> Coordinator { Coordinator(date: $date) }
-
-    private static func calendar(for timeZone: TimeZone) -> Calendar {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = timeZone
-        return calendar
-    }
-
-    @MainActor
-    final class Coordinator: NSObject {
-        private let date: Binding<Date>
-        init(date: Binding<Date>) { self.date = date }
-
-        @objc func dateChanged(_ sender: NSDatePicker) {
-            date.wrappedValue = sender.dateValue
-        }
+    var body: some View {
+        TextField("Time", value: $date, format: format)
+            .textFieldStyle(.plain)
+            .labelsHidden()
+            .multilineTextAlignment(.center)
+            .monospacedDigit()
+            .fixedSize()
+            .padding(.horizontal, Token.Space.sm)
+            .padding(.vertical, Token.Space.xxs)
+            .background(
+                RoundedRectangle(cornerRadius: Token.Radius.sm, style: .continuous)
+                    .fill(Token.Color.controlFill))
+            .accessibilityLabel(accessibilityLabel ?? "Time")
     }
 }

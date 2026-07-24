@@ -6,12 +6,20 @@
     <description>Most recent updates to Meantime</description>
     <language>en</language>
     <item>
+      <title>1.2.3</title>
+      <pubDate>Fri, 24 Jul 2026 16:35:48 +0000</pubDate>
+      <sparkle:version>10203</sparkle:version>
+      <sparkle:shortVersionString>1.2.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <enclosure url="https://github.com/martonpaulo/meantime/releases/download/v1.2.3/Meantime-1.2.3.zip" sparkle:edSignature="NSWjNopg0IUSKGVBSUKo8W48z5zM0iqeZH38h6LQpaz0Bmr1tJOpMVEi2pxu//YDIrm48wBRjZxAI/Ca9LOwAQ==" length="2350220" type="application/octet-stream"/>
+    </item>
+    <item>
       <title>1.2.2</title>
       <pubDate>Fri, 24 Jul 2026 15:30:40 +0000</pubDate>
       <sparkle:version>10202</sparkle:version>
       <sparkle:shortVersionString>1.2.2</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
-      <enclosure url="https://github.com/martonpaulo/meantime/releases/download/v1.2.2/Meantime-1.2.2.zip" sparkle:edSignature=... length=... type="application/octet-stream"/>
+      <enclosure url="https://github.com/martonpaulo/meantime/releases/download/v1.2.2/Meantime-1.2.2.zip" sparkle:edSignature="cRRZi2I3li/fyjB8R1aeJHB3mVKxyGIF6QEWAF/0iPQHp/YGOfzWSajOutNiuebV1XZrNiuFEDIqnvya/DvsDA==" length="2320298" type="application/octet-stream"/>
     </item>
     <item>
       <title>1.2.0</title>

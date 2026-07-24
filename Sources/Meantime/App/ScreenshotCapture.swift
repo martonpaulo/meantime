@@ -42,7 +42,7 @@ enum ScreenshotCapture {
 
         let statusTitle = StatusItemTitle.combined(
             entries: preferences.clocks.map { clock in
-                (clock.displayAdornment,
+                (clock.displayAdornment, clock.adornmentStyle == .text,
                  formatter.string(for: exampleDate, clock: clock, format: preferences.timeFormat))
             },
             separator: preferences.combinedSeparator,

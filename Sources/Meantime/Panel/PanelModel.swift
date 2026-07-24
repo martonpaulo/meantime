@@ -18,6 +18,21 @@ final class PanelModel {
 
     var isTraveling: Bool { selectedDay != nil || selectedTime != nil }
 
+    /// Whether the panel is previewing a moment that differs from now, given the
+    /// real current time. A preview that lands on the current minute reads as
+    /// inactive so the "Previewing…" state never shows for a no-op, and the
+    /// minute-granular comparison keeps it from flickering as the seconds tick.
+    func isActive(now: Date) -> Bool {
+        isTraveling && !TimeTravel.sameMinute(previewDate(from: now), now)
+    }
+
+    /// Applies a typed preview time. A time that resolves to the current minute
+    /// clears the selection instead of freezing a value that would drift one
+    /// minute into the past at the next boundary, keeping the panel on "now".
+    func setPreviewTime(_ time: Date, now: Date) {
+        selectedTime = TimeTravel.sameMinute(time, now) ? nil : time
+    }
+
     func reset() {
         selectedDay = nil
         selectedTime = nil

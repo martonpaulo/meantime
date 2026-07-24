@@ -203,4 +203,28 @@ private func utc(_ year: Int, _ month: Int, _ day: Int,
         let combined = TimeTravel.combine(day: day, time: time, timeZone: utcZone)
         #expect(combined == utc(2026, 12, 25, 14, 30, 0))
     }
+
+    @Test func sameMinuteIgnoresSecondsWithinAMinute() {
+        let utcZone = TimeZone(identifier: "UTC")!
+        // Seconds differ, minute is the same: treated as the same minute so the
+        // panel drops the redundant "Previewing" state when the preview equals now.
+        #expect(TimeTravel.sameMinute(utc(2026, 7, 24, 17, 39, 0),
+                                      utc(2026, 7, 24, 17, 39, 59), timeZone: utcZone))
+    }
+
+    @Test func sameMinuteSeparatesAcrossTheMinuteBoundary() {
+        let utcZone = TimeZone(identifier: "UTC")!
+        #expect(!TimeTravel.sameMinute(utc(2026, 7, 24, 17, 39, 59),
+                                       utc(2026, 7, 24, 17, 40, 0), timeZone: utcZone))
+        #expect(!TimeTravel.sameMinute(utc(2026, 7, 24, 17, 39, 0),
+                                       utc(2026, 7, 25, 17, 39, 0), timeZone: utcZone))
+    }
+
+    @Test func sameMinuteIsEvaluatedInTheGivenZone() {
+        // The same instant is a different wall-clock minute in a half-hour zone.
+        let instant = utc(2026, 7, 24, 12, 0, 0)
+        let kolkata = TimeZone(identifier: "Asia/Kolkata")! // +5:30
+        #expect(TimeTravel.sameMinute(instant, instant, timeZone: kolkata))
+        #expect(!TimeTravel.sameMinute(instant, instant.addingTimeInterval(60), timeZone: kolkata))
+    }
 }

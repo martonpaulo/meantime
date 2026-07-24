@@ -11,26 +11,26 @@ struct SearchField: NSViewRepresentable {
     /// Focuses the field the first time it appears so typing starts immediately.
     var focusesOnAppear = true
 
-    func makeNSView(context: Context) -> NSSearchField {
-        let field = NSSearchField()
+    func makeNSView(context: Context) -> AutoFocusSearchField {
+        let field = AutoFocusSearchField()
         field.placeholderString = prompt
         field.delegate = context.coordinator
         field.sendsWholeSearchString = false
+        field.focusesOnAppear = focusesOnAppear
         return field
     }
 
-    func updateNSView(_ nsView: NSSearchField, context: Context) {
+    func updateNSView(_ nsView: AutoFocusSearchField, context: Context) {
         nsView.placeholderString = prompt
-        // Only sync the value when the field is not being edited. Rewriting stringValue
-        // mid-edit resets the field editor and drops the first (or first few) keystrokes.
+        nsView.focusesOnAppear = focusesOnAppear
+        // Sync the value only when the field is not being edited. Rewriting
+        // `stringValue` mid-edit resets the field editor and drops keystrokes.
+        // Focusing is handled by the view itself (see AutoFocusSearchField), never
+        // here: scheduling `makeFirstResponder` from an update triggered by the
+        // first keystroke re-installs the field editor and clears what was typed.
         if nsView.currentEditor() == nil, nsView.stringValue != text {
             nsView.stringValue = text
         }
-        guard focusesOnAppear, !context.coordinator.didFocus, let window = nsView.window else {
-            return
-        }
-        context.coordinator.didFocus = true
-        DispatchQueue.main.async { window.makeFirstResponder(nsView) }
     }
 
     func makeCoordinator() -> Coordinator {
@@ -40,7 +40,6 @@ struct SearchField: NSViewRepresentable {
     @MainActor
     final class Coordinator: NSObject, NSSearchFieldDelegate {
         private let text: Binding<String>
-        var didFocus = false
 
         init(text: Binding<String>) {
             self.text = text
@@ -49,6 +48,27 @@ struct SearchField: NSViewRepresentable {
         func controlTextDidChange(_ obj: Notification) {
             guard let field = obj.object as? NSSearchField else { return }
             text.wrappedValue = field.stringValue
+        }
+    }
+}
+
+/// A search field that grabs focus once, exactly when it enters a window, so the
+/// initial focus never races a SwiftUI update. Because focusing happens here and
+/// not from `updateNSView`, no re-render (including the one caused by the first
+/// keystroke) can re-install the field editor and discard buffered characters.
+final class AutoFocusSearchField: NSSearchField {
+    var focusesOnAppear = false
+    private var didFocus = false
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        guard focusesOnAppear, !didFocus, let window else { return }
+        didFocus = true
+        // Defer one runloop turn so the field is fully installed in the responder
+        // chain; guard against stealing focus from an edit already under way.
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.currentEditor() == nil else { return }
+            window.makeFirstResponder(self)
         }
     }
 }

@@ -185,15 +185,20 @@ private struct TimeTravelSection: View {
     private var timeBinding: Binding<Date> {
         Binding(
             get: { panelModel.selectedTime ?? timeSource.now },
-            set: { panelModel.selectedTime = $0 }
+            set: { panelModel.setPreviewTime($0, now: timeSource.now) }
         )
     }
+
+    /// True while the panel previews a moment other than the current one. A
+    /// preview that equals the current minute reads as inactive, so the row
+    /// returns to its plain "Time Travel" appearance.
+    private var isActive: Bool { panelModel.isActive(now: timeSource.now) }
 
     /// The left label carries the action name, or the previewed day while traveling.
     /// The time stays in the field on the right and the "Now" button only changes the
     /// row's width, so entering time travel never changes the row (or panel) height.
     private var travelLabel: String {
-        guard panelModel.isTraveling else { return String(localized: "Time Travel") }
+        guard isActive else { return String(localized: "Time Travel") }
         let day = panelModel.previewDate(from: timeSource.now).formatted(
             .dateTime.weekday(.abbreviated).month(.abbreviated).day())
         return String(localized: "Previewing \(day)")
@@ -209,7 +214,7 @@ private struct TimeTravelSection: View {
                 .truncationMode(.tail)
                 .accessibilityLabel(travelLabel)
             Spacer(minLength: Token.Space.sm)
-            if panelModel.isTraveling {
+            if isActive {
                 Button("Now") {
                     withAnimation(Token.Motion.quick) { panelModel.reset() }
                 }

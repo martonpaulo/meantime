@@ -4,6 +4,19 @@ All notable changes to Meantime are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2026-07-24
+
+### Fixed
+
+- The time-zone search field reliably keeps the first keystrokes: it now grabs focus once, when it enters the window, so a re-render from the first character can no longer re-install the field editor and clear what was typed.
+- Time travel no longer shows the "Previewing…" state when the chosen time is the current minute; the row returns to its plain appearance and the minute-granular check keeps it from flickering across the minute boundary.
+
+### Changed
+
+- Time entry (time travel and scheduled hours) uses a fixed-width, locale-aware segmented editor: `[h]:[mm]` on a 24-hour clock and `[h]:[mm] [AM/PM]` on a 12-hour one. Each numeric segment takes one or two digits, invalid or incomplete input reverts on commit, and values normalize sensibly (minutes into 00–59, and `15` into `3 PM` on a 12-hour clock).
+- The Add-clock time-zone picker's back control now sits inline with the title instead of on its own row, so the title, search field, and list are no longer pushed down.
+- The gap between a text leading item and its time in the menu bar is tighter, matching the element-spacing preference instead of adding an extra space glyph on top of it.
+
 ## [1.2.2] - 2026-07-24
 
 ### Fixed

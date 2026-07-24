@@ -17,4 +17,15 @@ public enum TimeTravel {
         combined.minute = timeParts.minute
         return calendar.date(from: combined) ?? day
     }
+
+    /// Whether `a` and `b` fall in the same wall-clock minute in `timeZone`.
+    /// Lets the panel tell a genuine time-travel preview from one that merely
+    /// matches the current minute, so the redundant indicator hides without
+    /// flickering as the seconds advance.
+    public static func sameMinute(_ a: Date, _ b: Date, timeZone: TimeZone = .current) -> Bool {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        let fields: Set<Calendar.Component> = [.era, .year, .month, .day, .hour, .minute]
+        return calendar.dateComponents(fields, from: a) == calendar.dateComponents(fields, from: b)
+    }
 }

@@ -173,23 +173,24 @@ final class MenuBarController: NSObject {
             button.image = nil
             button.imagePosition = .noImage
             button.attributedTitle = StatusItemTitle.attributed(
-                adornment: nil, time: time, textSize: settingsPreview.textSize,
-                spacing: settingsPreview.elementSpacing)
+                adornment: nil, adornmentIsText: false, time: time,
+                textSize: settingsPreview.textSize, spacing: settingsPreview.elementSpacing)
         case .flagAndTime:
             button.image = nil
             button.imagePosition = .noImage
             button.attributedTitle = StatusItemTitle.attributed(
-                adornment: clock.displayAdornment, time: time,
-                textSize: settingsPreview.textSize, spacing: settingsPreview.elementSpacing)
+                adornment: clock.displayAdornment, adornmentIsText: clock.adornmentStyle == .text,
+                time: time, textSize: settingsPreview.textSize, spacing: settingsPreview.elementSpacing)
         }
         button.toolTip = "\(clock.displayLabel): \(time)"
         button.setAccessibilityLabel("\(clock.displayLabel), \(time)")
     }
 
     private func applyCombined(_ shown: [WorldClock], to button: NSStatusBarButton, now: Date) {
-        let entries = shown.map { clock -> (adornment: String?, time: String) in
+        let entries = shown.map { clock -> (adornment: String?, adornmentIsText: Bool, time: String) in
             let time = formatter.string(for: now, clock: clock, format: settingsPreview.timeFormat)
-            return (textualMode(for: clock) == .timeOnly ? nil : clock.displayAdornment, time)
+            let adornment = textualMode(for: clock) == .timeOnly ? nil : clock.displayAdornment
+            return (adornment, clock.adornmentStyle == .text, time)
         }
         button.image = nil
         button.imagePosition = .noImage

@@ -38,20 +38,24 @@ struct TimeZonePickerView: View {
         }
     }
 
-    /// A top-left back control, matching the clock editor, so every step of the Add flow
-    /// (list -> picker -> editor) returns to the previous one from the same place.
+    /// The back control sits inline with the title, as a leading chevron, rather
+    /// than on its own row: it stays discoverable in the top-left (and keeps the
+    /// Escape shortcut) without pushing the title, search field, and list down.
     private var header: some View {
         VStack(alignment: .leading, spacing: Token.Space.sm) {
-            HStack {
+            HStack(spacing: Token.Space.sm) {
                 Button(action: onCancel) {
-                    Label("Clocks", systemImage: "chevron.left")
+                    Image(systemName: "chevron.left")
+                        .font(.headline)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.link)
                 .keyboardShortcut(.cancelAction)
+                .help("Back to Clocks")
                 .accessibilityLabel("Back to Clocks")
+                Text("Choose a Time Zone").font(.headline)
                 Spacer()
             }
-            Text("Choose a Time Zone").font(.headline)
             SearchField(text: $query, prompt: "City, time zone, or abbreviation")
         }
         .padding(Token.Space.lg)

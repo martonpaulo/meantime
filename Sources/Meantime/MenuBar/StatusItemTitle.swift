@@ -26,10 +26,15 @@ enum StatusItemTitle {
         let result = NSMutableAttributedString()
 
         if let adornment, !adornment.isEmpty {
-            // The gap belongs after the adornment, not between its letters, so a
-            // multi-character leading text ("br") reads as one word rather than "b r".
-            result.append(run(adornment, font: NSFont.systemFont(ofSize: textSize),
-                              trailingKern: spacing + Token.Space.xxs))
+            // Append the adornment with no internal kerning. Kerning applied inside the
+            // adornment lands within a regional-indicator flag (or any emoji cluster) and
+            // splits it into boxed letters. The gap belongs after it, as a separate spacer.
+            result.append(NSAttributedString(
+                string: adornment, attributes: [.font: NSFont.systemFont(ofSize: textSize)]))
+            result.append(NSAttributedString(string: " ", attributes: [
+                .font: NSFont.systemFont(ofSize: textSize),
+                .kern: spacing,
+            ]))
         }
 
         result.append(NSAttributedString(string: time, attributes: [

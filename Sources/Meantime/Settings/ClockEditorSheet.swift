@@ -257,11 +257,6 @@ private struct EditorPreview: View {
         Grid(alignment: .leading, horizontalSpacing: Token.Space.md,
              verticalSpacing: Token.Space.sm) {
             GridRow {
-                Text("Preview")
-                    .font(.headline)
-                    .gridCellColumns(2)
-            }
-            GridRow {
                 previewContent
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Text(status)

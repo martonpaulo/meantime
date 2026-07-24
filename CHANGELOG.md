@@ -4,6 +4,21 @@ All notable changes to Meantime are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2026-07-24
+
+### Fixed
+
+- Menu-bar leading flags no longer split into boxed letters; the element-spacing gap is applied after the adornment rather than inside its regional-indicator cluster.
+- The time-zone search field no longer drops the first keystrokes; its value is synced only while it is not being edited.
+
+### Changed
+
+- Double-click a clock row to open its editor, alongside the disclosure chevron and single-click selection.
+- The Add-clock time-zone picker uses the same top-left back control as the editor.
+- The clock editor no longer shows a redundant "Preview" label.
+- The website format builder keeps the live preview and pattern input pinned while the token reference scrolls.
+- Documentation screenshots are framed on a soft backdrop with a drop shadow instead of a flat opaque window.
+
 ## [1.2.1] - 2026-07-23
 
 ### Fixed

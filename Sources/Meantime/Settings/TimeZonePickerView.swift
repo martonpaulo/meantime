@@ -32,29 +32,27 @@ struct TimeZonePickerView: View {
             } else {
                 zoneList
             }
-            Divider()
-            footer
         }
         .onAppear {
             entries = TimeZoneCatalog.entries()
         }
     }
 
+    /// A top-left back control, matching the clock editor, so every step of the Add flow
+    /// (list -> picker -> editor) returns to the previous one from the same place.
     private var header: some View {
         VStack(alignment: .leading, spacing: Token.Space.sm) {
+            HStack {
+                Button(action: onCancel) {
+                    Label("Clocks", systemImage: "chevron.left")
+                }
+                .buttonStyle(.link)
+                .keyboardShortcut(.cancelAction)
+                .accessibilityLabel("Back to Clocks")
+                Spacer()
+            }
             Text("Choose a Time Zone").font(.headline)
             SearchField(text: $query, prompt: "City, time zone, or abbreviation")
-        }
-        .padding(Token.Space.lg)
-    }
-
-    /// Dismissal lives in a bottom action bar, so the exit control stays in the same
-    /// place across the Add flow (list → picker → editor) instead of jumping corners.
-    private var footer: some View {
-        HStack {
-            Button("Cancel", action: onCancel)
-                .keyboardShortcut(.cancelAction)
-            Spacer()
         }
         .padding(Token.Space.lg)
     }

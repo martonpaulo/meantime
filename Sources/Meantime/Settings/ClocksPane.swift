@@ -91,6 +91,10 @@ struct ClocksPane: View {
                     editingSession.beginEditing(clock)
                 }
                     .tag(clock.id)
+                    .onTapGesture(count: 2) {
+                        selectedIDs = [clock.id]
+                        editingSession.beginEditing(clock)
+                    }
                     .contextMenu {
                         Button("Edit…") {
                             selectedIDs = [clock.id]

@@ -20,10 +20,12 @@ struct SearchField: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: NSSearchField, context: Context) {
-        if nsView.stringValue != text {
+        nsView.placeholderString = prompt
+        // Only sync the value when the field is not being edited. Rewriting stringValue
+        // mid-edit resets the field editor and drops the first (or first few) keystrokes.
+        if nsView.currentEditor() == nil, nsView.stringValue != text {
             nsView.stringValue = text
         }
-        nsView.placeholderString = prompt
         guard focusesOnAppear, !context.coordinator.didFocus, let window = nsView.window else {
             return
         }

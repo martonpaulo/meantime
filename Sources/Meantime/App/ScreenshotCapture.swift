@@ -82,7 +82,7 @@ enum ScreenshotCapture {
             throw CaptureError.missingWindowFrame
         }
         frameView.layoutSubtreeIfNeeded()
-        try writePNG(of: frameView, to: destination)
+        try writePNG(of: frameView, framed: true, cornerRadius: 12, to: destination)
     }
 
     private static func renderHostingView<Content: View>(
@@ -93,7 +93,7 @@ enum ScreenshotCapture {
         hosting.appearance = NSAppearance(named: .darkAqua)
         hosting.frame.size = hosting.fittingSize
         hosting.layoutSubtreeIfNeeded()
-        try writePNG(of: hosting, to: destination)
+        try writePNG(of: hosting, framed: true, cornerRadius: Token.Radius.panel, to: destination)
     }
 
     private static func renderMenuBar(title: NSAttributedString, to destination: URL) throws {
@@ -114,28 +114,78 @@ enum ScreenshotCapture {
         try writePNG(of: effect, to: destination)
     }
 
-    private static func writePNG(of view: NSView, to destination: URL) throws {
-        view.layoutSubtreeIfNeeded()
-        let bounds = view.bounds
-        guard bounds.width > 0, bounds.height > 0,
-              let bitmap = NSBitmapImageRep(
-                bitmapDataPlanes: nil,
-                pixelsWide: Int(ceil(bounds.width * scale)),
-                pixelsHigh: Int(ceil(bounds.height * scale)),
-                bitsPerSample: 8,
-                samplesPerPixel: 4,
-                hasAlpha: true,
-                isPlanar: false,
-                colorSpaceName: .deviceRGB,
-                bytesPerRow: 0,
-                bitsPerPixel: 0)
-        else { throw CaptureError.invalidBounds }
-        bitmap.size = bounds.size
-        view.cacheDisplay(in: bounds, to: bitmap)
-        guard let data = bitmap.representation(using: .png, properties: [:]) else {
+    private static func writePNG(of view: NSView, framed: Bool = false,
+                                 cornerRadius: CGFloat = 0, to destination: URL) throws {
+        let captured = try bitmap(of: view)
+        let output = framed ? presentationFrame(captured, cornerRadius: cornerRadius) : captured
+        guard let data = output.representation(using: .png, properties: [:]) else {
             throw CaptureError.encodingFailed
         }
         try data.write(to: destination, options: .atomic)
+    }
+
+    private static func bitmap(of view: NSView) throws -> NSBitmapImageRep {
+        view.layoutSubtreeIfNeeded()
+        let bounds = view.bounds
+        guard bounds.width > 0, bounds.height > 0,
+              let bitmap = newBitmap(pointSize: bounds.size)
+        else { throw CaptureError.invalidBounds }
+        view.cacheDisplay(in: bounds, to: bitmap)
+        return bitmap
+    }
+
+    private static func newBitmap(pointSize: NSSize) -> NSBitmapImageRep? {
+        let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: Int(ceil(pointSize.width * scale)),
+            pixelsHigh: Int(ceil(pointSize.height * scale)),
+            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+            colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)
+        rep?.size = pointSize
+        return rep
+    }
+
+    /// Frames a captured surface on a soft gradient with a drop shadow and rounded corners,
+    /// so documentation reads as a presentation shot rather than a flat, opaque system
+    /// window. Offscreen capture cannot composite the real desktop, so this substitutes a
+    /// deliberate backdrop instead.
+    private static func presentationFrame(_ inner: NSBitmapImageRep,
+                                          cornerRadius: CGFloat) -> NSBitmapImageRep {
+        let pad: CGFloat = 56
+        let innerSize = inner.size
+        let canvas = NSSize(width: innerSize.width + pad * 2, height: innerSize.height + pad * 2)
+        guard let out = newBitmap(pointSize: canvas),
+              let ctx = NSGraphicsContext(bitmapImageRep: out) else { return inner }
+
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = ctx
+        let cg = ctx.cgContext
+
+        let top = NSColor(calibratedRed: 0.29, green: 0.34, blue: 0.47, alpha: 1).cgColor
+        let bottom = NSColor(calibratedRed: 0.12, green: 0.14, blue: 0.21, alpha: 1).cgColor
+        if let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                                     colors: [top, bottom] as CFArray, locations: [0, 1]) {
+            cg.drawLinearGradient(gradient, start: CGPoint(x: 0, y: canvas.height),
+                                  end: CGPoint(x: canvas.width, y: 0), options: [])
+        }
+
+        let innerRect = NSRect(x: pad, y: pad, width: innerSize.width, height: innerSize.height)
+        let rounded = NSBezierPath(roundedRect: innerRect, xRadius: cornerRadius, yRadius: cornerRadius)
+
+        cg.saveGState()
+        cg.setShadow(offset: CGSize(width: 0, height: -12), blur: 36,
+                     color: NSColor.black.withAlphaComponent(0.42).cgColor)
+        NSColor.black.setFill()
+        rounded.fill()
+        cg.restoreGState()
+
+        NSGraphicsContext.saveGraphicsState()
+        rounded.addClip()
+        inner.draw(in: innerRect)
+        NSGraphicsContext.restoreGraphicsState()
+
+        NSGraphicsContext.restoreGraphicsState()
+        return out
     }
 
     private enum CaptureError: Error {

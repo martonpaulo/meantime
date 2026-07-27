@@ -73,6 +73,10 @@ struct TimeField: View {
             .overlay {
                 TextField("", text: text)
                     .textFieldStyle(.plain)
+                    // Without this a text field reserves a line of vertical space
+                    // for its (here empty) label, so the digits render a full line
+                    // below the reserved box and outside the control's background.
+                    .labelsHidden()
                     .multilineTextAlignment(alignment)
                     .monospacedDigit()
                     .focused($focused, equals: segment)

@@ -65,8 +65,10 @@ notarize: ## Notarize + staple a signed DMG: args: DMG, env NOTARY_PROFILE
 sign-update: ## Print the appcast signature for a release zip: args: ZIP
 	@bash scripts/sign-update.sh $(ZIP)
 
+# SIG is single-quoted below: it carries the double-quoted attributes that
+# sign_update prints, which the recipe's own shell would otherwise strip.
 appcast: ## Update appcast.xml: args: VERSION BUILD ZIP "SIG"
-	@bash scripts/make-appcast.sh $(VERSION) $(BUILD) $(ZIP) "$(SIG)"
+	@bash scripts/make-appcast.sh $(VERSION) $(BUILD) $(ZIP) '$(SIG)'
 
 keys: ## Generate the Sparkle signing key (Keychain) and set the public key
 	@bash scripts/make-keys.sh

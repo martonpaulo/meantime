@@ -222,10 +222,6 @@ agreed, document it here in the same turn.
   artifact unless the user explicitly requests that exact cleanup; this
   includes temporary validation logs and failure evidence. Append new evidence,
   and update indexes/status files without erasing their prior findings.
-- Every task or SDD cycle must keep a `REMAINING.md` in its artifact directory
-  listing every skipped, incomplete, externally blocked, manually-only, or
-  otherwise unvalidated item and every remaining risk/follow-up. Write an
-  explicit `None` when nothing remains.
 - Before finishing, close anything opened during the task (build processes,
   simulators, editors) so nothing runs unnecessarily.
 - Final report includes: changed files, validation performed, artifacts

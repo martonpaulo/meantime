@@ -8,6 +8,38 @@ specific `AGENTS.md` inside a subtree overrides this one for that subtree.
 > Describe responsibilities, not exact file or folder names — names drift, and
 > stale structure docs are worse than none.
 
+## Project identity and policy
+
+Stable, one-time decisions. Change an established identifier, license,
+visibility, branch policy, versioning model, localization strategy, landing-page
+contract, or release policy only through an explicit task that describes the
+migration and its downstream effects.
+
+- Project and public name: `Meantime`
+- Description: world clocks in your macOS menu bar — scheduled clocks, quick
+  calendar, time travel. Native, fast, private.
+- Repository: `martonpaulo/meantime` (public)
+- Public identifiers: bundle `com.perso.meantime`; SwiftPM package `Meantime`,
+  library target `MeantimeKit`, executable target `Meantime`
+- Landing page: `https://martonpaulo.github.io/meantime/`, built from `docs/`
+  in this repository and published by GitHub Pages
+- License: `MIT`, © 2026 Marton Paulo
+- Development language: English (code, comments, commits, filenames, tests,
+  configuration, developer docs)
+- Product copy: English only; source strings live in the app target, no
+  additional locales ship. Dates, times, and weekday names always follow the
+  user's own locale and calendar
+- Branch policy: work only on `main`; never create, switch, or rename branches
+- Commit policy: commit automatically on task completion, one concern per commit
+- Push policy: push to `origin/main` automatically after committing
+- Product versioning: user-visible SemVer, canonical in the app's
+  `CFBundleShortVersionString` (with a derived numeric `CFBundleVersion`).
+  Increments only during an explicitly requested release, which also updates
+  `CHANGELOG.md`, tags `vX.Y.Z`, and regenerates the appcast. Ordinary tasks
+  add to `## [Unreleased]` and never bump a version
+- Delete branches after merge: enabled (bot PRs are the only branches)
+- Release, signing, and secret storage: see **Distribution & signing** below
+
 ## Product
 
 Meantime shows world clocks in the macOS menu bar. It is a native, accessory
@@ -16,8 +48,8 @@ Meantime shows world clocks in the macOS menu bar. It is a native, accessory
 - Add a clock for any time zone; give it a custom label and choose a country
   flag, custom emoji, custom text, or no leading item.
 - Show any clock directly in the menu bar (its own item, or all clocks combined
-  into one), keep it panel-only, or schedule the hours — in the clock's own
-  zone — during which it appears.
+  into one), keep it panel-only, or schedule the days and hours — in the clock's
+  own zone — during which it appears.
 - The dropdown panel is a glance surface: complete times with GMT/day captions,
   a quick month calendar, and typed time travel (pick a day, type a time) that
   previews the moment across every clock and resets on close.
@@ -179,8 +211,9 @@ agreed, document it here in the same turn.
 
 ## Git and completion
 
-- Check `git status --short --branch` before editing and before the final
-  reply. Work only on `main`; never create, switch, or rename branches.
+- Follow the branch, commit, push, and versioning policies recorded in
+  **Project identity and policy**.
+- Check `git status --short --branch` before editing and before the final reply.
 - Use focused Conventional Commits for durable changes. Commit only files that
   belong to the task; leave unrelated dirty files untouched and report them.
 - Do not revert, overwrite, or discard user changes unless explicitly asked.

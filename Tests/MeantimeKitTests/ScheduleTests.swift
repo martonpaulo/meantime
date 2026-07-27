@@ -80,6 +80,147 @@ private func utc(_ year: Int, _ month: Int, _ day: Int,
     }
 }
 
+@Suite struct WeekdayScheduleTests {
+    let newYork = TimeZone(identifier: "America/New_York")!
+    // The user's canonical split: office hours on weekdays, a later start at
+    // the weekend. All times are New York wall-clock time.
+    let split = [
+        ActiveWindow(days: Weekday.workweek, startMinute: 9 * 60, endMinute: 17 * 60),
+        ActiveWindow(days: Weekday.weekend, startMinute: 11 * 60, endMinute: 14 * 60),
+    ]
+
+    @Test func eachDaySeesOnlyItsOwnWindow() {
+        // Thursday 2026-07-23, 14:00 UTC = 10:00 NY → inside the workweek window.
+        #expect(ClockSchedule.isActive(at: utc(2026, 7, 23, 14, 0), windows: split, timeZone: newYork))
+        // Thursday 16:00 NY → still the workweek window.
+        #expect(ClockSchedule.isActive(at: utc(2026, 7, 23, 20, 0), windows: split, timeZone: newYork))
+        // Saturday 2026-07-25, 10:00 NY → before the weekend window starts.
+        #expect(!ClockSchedule.isActive(at: utc(2026, 7, 25, 14, 0), windows: split, timeZone: newYork))
+        // Saturday 12:00 NY → inside the weekend window.
+        #expect(ClockSchedule.isActive(at: utc(2026, 7, 25, 16, 0), windows: split, timeZone: newYork))
+        // Saturday 16:00 NY → the workweek window must not leak into Saturday.
+        #expect(!ClockSchedule.isActive(at: utc(2026, 7, 25, 20, 0), windows: split, timeZone: newYork))
+    }
+
+    @Test func daysAreReadInTheClocksOwnZoneNotTheMacs() {
+        // Friday 2026-07-24 23:30 NY is already Saturday 03:30 UTC. A Friday-only
+        // window must still be active: the day comes from the clock's zone.
+        let friday = [ActiveWindow(days: [.friday], startMinute: 23 * 60, endMinute: 23 * 60 + 59)]
+        #expect(ClockSchedule.isActive(at: utc(2026, 7, 25, 3, 30), windows: friday, timeZone: newYork))
+    }
+
+    @Test func overnightWindowBelongsToTheDayItStartsOn() {
+        // Friday 22:00 → Saturday 06:00, listed on Friday only.
+        let nightShift = [ActiveWindow(days: [.friday], startMinute: 22 * 60, endMinute: 6 * 60)]
+        // Friday 2026-07-24 23:00 NY = Saturday 03:00 UTC.
+        #expect(ClockSchedule.isActive(at: utc(2026, 7, 25, 3, 0), windows: nightShift, timeZone: newYork))
+        // Saturday 02:00 NY = 06:00 UTC — still Friday's window.
+        #expect(ClockSchedule.isActive(at: utc(2026, 7, 25, 6, 0), windows: nightShift, timeZone: newYork))
+        // Saturday 07:00 NY — past the end.
+        #expect(!ClockSchedule.isActive(at: utc(2026, 7, 25, 11, 0), windows: nightShift, timeZone: newYork))
+        // Saturday 23:00 NY — Saturday is not a listed day, so no second night.
+        #expect(!ClockSchedule.isActive(at: utc(2026, 7, 26, 3, 0), windows: nightShift, timeZone: newYork))
+    }
+
+    @Test func nextTransitionSkipsDaysWithoutAWindow() {
+        // Friday 2026-07-24 18:00 NY, workweek-only window → the next edge is
+        // Monday 2026-07-27 09:00 NY (13:00 UTC), three days out.
+        let workweek = [ActiveWindow(days: Weekday.workweek, startMinute: 9 * 60, endMinute: 17 * 60)]
+        let next = ClockSchedule.nextTransition(after: utc(2026, 7, 24, 22, 0),
+                                                windows: workweek, timeZone: newYork)
+        #expect(next == utc(2026, 7, 27, 13, 0))
+    }
+
+    @Test func nextTransitionFindsAWindowAFullWeekAway() {
+        // A Sunday-only window seen on Monday: the edge is six days out, so a
+        // scan that only looked at today and tomorrow would find nothing.
+        let sunday = [ActiveWindow(days: [.sunday], startMinute: 10 * 60, endMinute: 11 * 60)]
+        let next = ClockSchedule.nextTransition(after: utc(2026, 7, 27, 13, 0),
+                                                windows: sunday, timeZone: newYork)
+        #expect(next == utc(2026, 8, 2, 14, 0)) // Sunday 2026-08-02, 10:00 NY
+    }
+
+    @Test func transitionEdgesStayOnWallClockAcrossSpringDST() {
+        // 2026-03-08 NY skips 02:00-03:00. A window ending at 03:30 must flip at
+        // 03:30 EDT (07:30 UTC), not 210 elapsed minutes after midnight EST.
+        let window = [ActiveWindow(startMinute: 90, endMinute: 210)]
+        let next = ClockSchedule.nextTransition(after: utc(2026, 3, 8, 6, 45),
+                                                windows: window, timeZone: newYork)
+        #expect(next == utc(2026, 3, 8, 7, 30))
+    }
+
+    @Test func aWindowWithNoDaysIsInvalidAndIgnoredAtRuntime() {
+        let empty = ActiveWindow(days: [], startMinute: 9 * 60, endMinute: 17 * 60)
+        #expect(ScheduleValidation.issues(in: [empty]) == [.noDays(windowID: empty.id)])
+        // Filtered like any other invalid row: no schedule left means always on.
+        #expect(ClockSchedule.isActive(at: utc(2026, 7, 23, 23, 0), windows: [empty], timeZone: newYork))
+        #expect(ClockSchedule.nextTransition(after: utc(2026, 7, 23, 23, 0),
+                                             windows: [empty], timeZone: newYork) == nil)
+    }
+
+    @Test func sameHoursOnDifferentDaysDoNotClash() {
+        #expect(ScheduleValidation.issues(in: [
+            ActiveWindow(days: Weekday.workweek, startMinute: 9 * 60, endMinute: 17 * 60),
+            ActiveWindow(days: Weekday.weekend, startMinute: 9 * 60, endMinute: 17 * 60),
+        ]).isEmpty)
+    }
+
+    @Test func sameHoursOnASharedDayStillClash() {
+        let first = ActiveWindow(days: [.monday, .tuesday], startMinute: 9 * 60, endMinute: 17 * 60)
+        let second = ActiveWindow(days: [.tuesday, .wednesday], startMinute: 10 * 60, endMinute: 12 * 60)
+        #expect(ScheduleValidation.issues(in: [first, second])
+            == [.overlap(firstID: first.id, secondID: second.id)])
+    }
+
+    @Test func overnightWindowClashesWithTheNextMorning() {
+        // Friday 22:00-06:00 spills into Saturday, so a Saturday early window
+        // that a per-day comparison would miss must still be reported.
+        let night = ActiveWindow(days: [.friday], startMinute: 22 * 60, endMinute: 6 * 60)
+        let morning = ActiveWindow(days: [.saturday], startMinute: 5 * 60, endMinute: 8 * 60)
+        #expect(ScheduleValidation.issues(in: [night, morning])
+            == [.overlap(firstID: night.id, secondID: morning.id)])
+    }
+
+    @Test func suggestionOffersTheUnusedDaysAtTheSameHours() throws {
+        let existing = [ActiveWindow(days: Weekday.workweek, startMinute: 9 * 60, endMinute: 17 * 60)]
+        let suggestion = try #require(ScheduleSuggestion.nextWindow(existing: existing))
+        #expect(suggestion.days == Weekday.weekend)
+        #expect(suggestion.startMinute == 9 * 60)
+        #expect(suggestion.endMinute == 17 * 60)
+    }
+
+    @Test func windowStoredBeforePerDaySchedulingRunsEveryDay() throws {
+        let legacy = """
+        {"id":"6F9619FF-8B86-D011-B42D-00C04FC964FF","startMinute":480,"endMinute":720}
+        """.data(using: .utf8)!
+        let window = try JSONDecoder().decode(ActiveWindow.self, from: legacy)
+        #expect(window.days == Weekday.everyDay)
+    }
+
+    @Test func encodedDayOrderIsStableAndRoundTrips() throws {
+        // A `Set` encodes in arbitrary order, which would rewrite stored
+        // preferences on every save; the days must come out sorted.
+        let window = ActiveWindow(days: [.friday, .monday, .wednesday],
+                                  startMinute: 60, endMinute: 120)
+        let data = try JSONEncoder().encode(window)
+        let object = try #require(
+            try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        #expect(object["days"] as? [Int] == [Weekday.monday, .wednesday, .friday].map(\.rawValue))
+        #expect(try JSONDecoder().decode(ActiveWindow.self, from: data) == window)
+    }
+
+    @Test func pickerOrderFollowsTheCalendarsFirstWeekday() {
+        var american = Calendar(identifier: .gregorian)
+        american.firstWeekday = 1
+        #expect(Weekday.ordered(for: american).first == .sunday)
+        var european = Calendar(identifier: .gregorian)
+        european.firstWeekday = 2
+        #expect(Weekday.ordered(for: european).first == .monday)
+        #expect(Weekday.ordered(for: european).count == 7)
+        #expect(Weekday.sunday.previous == .saturday)
+    }
+}
+
 @Suite struct ScheduleValidationTests {
     @Test func acceptsSeparateAndOvernightWindows() {
         let windows = [

@@ -4,6 +4,17 @@ All notable changes to Meantime are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Scheduled hours pick their own days of the week, so one clock can follow office hours Monday to Friday and different hours at the weekend. Days are read in the clock's own time zone, an overnight window belongs to the day it starts on, and Add Hours offers the days no window has claimed yet.
+
+### Fixed
+
+- The segmented time editor no longer draws its digits a line below the field: an empty text-field label was reserving vertical space, pushing the hours and minutes outside the control's background.
+- A scheduled clock now flips exactly on the wall-clock edge on daylight-saving days; transition times were computed from elapsed minutes since midnight, which drifted by an hour after a change.
+
 ## [1.2.3] - 2026-07-24
 
 ### Fixed

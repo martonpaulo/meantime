@@ -46,6 +46,9 @@ enum Token {
         /// Fixed icon column in panel action rows, so labels align.
         static let actionIconColumn: CGFloat = 16
         static let adornmentColumn: CGFloat = 22
+        /// Weekday toggle in the schedule day picker: wide enough that the seven
+        /// buttons form an even row whatever the locale's symbols are.
+        static let dayToggle: CGFloat = 22
         static let hairline: CGFloat = 0.5
         static let selectionStroke: CGFloat = 1.5
     }

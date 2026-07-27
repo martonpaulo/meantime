@@ -36,7 +36,7 @@ Open it, drag Meantime onto Applications, launch. Done: it updates itself.
 | 🎨 **Three styles per clock** | `09:47` · `🇺🇸 09:47` · a tiny analog face |
 | 📅 **Quick calendar** | Click the menu bar → see the month. "The 15th is a… Tuesday." |
 | 🔮 **Time travel** | Pick a day, type a time: every clock previews that moment |
-| ⏰ **Scheduled clocks** | Show the NY clock only 8–12 and 13–17 *NY time*; it hides itself outside those hours |
+| ⏰ **Scheduled clocks** | Show the NY clock only 8–12 and 13–17 Mon–Fri *NY time*; it hides itself outside those hours and days |
 | ✏️ **Your format, your pattern** | Start with a common preset, write any Unicode pattern, or assemble one visually in the [interactive format builder](https://martonpaulo.github.io/meantime/format.html) |
 | 🏷️ **Labels & leading items** | "Mom", "Tokyo Office": any name, with a country flag, custom emoji, custom text, or nothing before it |
 | 🌐 **Every system time zone** | Place zones, UTC/GMT, and stable fixed-offset IANA identifiers |

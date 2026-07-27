@@ -326,10 +326,11 @@ private struct ScheduleSection: View {
                 .disabled(!clock.isPinned)
 
             ForEach($clock.activeWindows) { $window in
-                Grid(alignment: .center, horizontalSpacing: Token.Space.sm) {
-                    GridRow {
+                VStack(alignment: .leading, spacing: Token.Space.sm) {
+                    HStack(spacing: Token.Space.sm) {
                         scheduleField("From", date: minuteBinding($window.startMinute))
                         scheduleField("To", date: minuteBinding($window.endMinute))
+                        Spacer(minLength: Token.Space.sm)
                         Button {
                             clock.activeWindows.removeAll { $0.id == window.id }
                         } label: {
@@ -337,15 +338,14 @@ private struct ScheduleSection: View {
                                 .foregroundStyle(.secondary)
                         }
                         .buttonStyle(.borderless)
-                        .accessibilityLabel(
-                            "Remove hours from \(ScheduleTime.label(fromMinute: window.startMinute)) to \(ScheduleTime.label(fromMinute: window.endMinute))")
+                        .accessibilityLabel(removeLabel(for: window))
                     }
+                    WeekdayPicker(days: $window.days)
                 }
             }
 
             if !scheduleIssues.isEmpty {
-                ValidationMessage(
-                    "Scheduled hours cannot have matching start and end times, repeat, or overlap.")
+                ValidationMessage(scheduleIssueMessage)
             }
 
             if !clock.activeWindows.isEmpty {
@@ -361,8 +361,26 @@ private struct ScheduleSection: View {
         } header: {
             Text("Schedule")
         } footer: {
-            Text("Times use this clock's own time zone. If an end time is earlier than its start, the schedule continues overnight. Outside these hours, the clock stays in the panel.")
+            Text("Times and days use this clock's own time zone. If an end time is earlier than its start, the schedule continues overnight into the next day. Outside these hours, the clock stays in the panel.")
         }
+    }
+
+    /// One message for the whole section: a missing day set is a different
+    /// mistake from clashing hours, and saying which one is wrong is the point.
+    private var scheduleIssueMessage: String {
+        if scheduleIssues.contains(where: { if case .noDays = $0 { return true } else { return false } }) {
+            return String(localized: "Every set of scheduled hours needs at least one day.")
+        }
+        return String(localized:
+            "Scheduled hours cannot have matching start and end times, repeat, or overlap on the same day.")
+    }
+
+    private func removeLabel(for window: ActiveWindow) -> String {
+        let hours = "\(ScheduleTime.label(fromMinute: window.startMinute)) to \(ScheduleTime.label(fromMinute: window.endMinute))"
+        let days = WeekdayLabel.summary(window.days)
+        return days.isEmpty
+            ? String(localized: "Remove hours from \(hours)")
+            : String(localized: "Remove hours from \(hours) on \(days)")
     }
 
     /// A labeled hour-and-minute field for one schedule edge. Fixed to the schedule's

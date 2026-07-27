@@ -14,7 +14,8 @@ its default and touches nothing else (not the login item, not identity).
 | Pinned to menu bar | on | yes | off ⇒ shown in the panel only |
 | Menu-bar layout | one item per clock | yes | or all clocks combined into a single item; analog falls back to leading item + time when combined |
 | Combined-item separator | `/` | yes | up to 3 graphemes; empty means spacing only |
-| Scheduled hours (per clock) | none (always shown) | yes | own-zone daily windows; end before start means overnight; equal, duplicate, and overlapping rows are invalid |
+| Scheduled hours (per clock) | none (always shown) | yes | own-zone windows; end before start means overnight; equal, duplicate, and same-day overlapping rows are invalid |
+| Scheduled days (per window) | every day | yes | own-zone weekdays; an overnight window belongs to the day it starts on; a window with no day selected is invalid |
 | Time format | system | yes | preset-first; Custom accepts structurally valid Unicode (UTS-35), quoted literal text, and up to 256 graphemes |
 | Menu-bar text size | 13 pt | yes | 10–18 pt |
 | Element spacing | 4 pt | yes | 0–12 pt |

@@ -6,6 +6,14 @@
     <description>Most recent updates to Meantime</description>
     <language>en</language>
     <item>
+      <title>1.3.0</title>
+      <pubDate>Mon, 27 Jul 2026 09:26:14 +0000</pubDate>
+      <sparkle:version>10300</sparkle:version>
+      <sparkle:shortVersionString>1.3.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <enclosure url="https://github.com/martonpaulo/meantime/releases/download/v1.3.0/Meantime-1.3.0.zip" sparkle:edSignature="a+pZGts/Xm0oOATYiYRsTnw2DI6upWtL2RpUExTrEzsovbrJ0IxyzR2N/N1Cd91GCy5NGiGDGwDmPkxse6ylAg==" length="2377299" type="application/octet-stream"/>
+    </item>
+    <item>
       <title>1.2.3</title>
       <pubDate>Fri, 24 Jul 2026 16:35:48 +0000</pubDate>
       <sparkle:version>10203</sparkle:version>

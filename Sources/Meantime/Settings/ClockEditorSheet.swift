@@ -157,8 +157,8 @@ struct ClockEditorView: View {
                 Label(
                     "Combined layout shows this clock as a leading item and time. The analog face remains available in individual layout.",
                     systemImage: "info.circle")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .font(Token.Font.secondary)
+                    .foregroundStyle(Token.Color.secondaryText)
             }
         } header: {
             Text("Menu Bar")
@@ -260,8 +260,8 @@ private struct EditorPreview: View {
                 previewContent
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Text(status)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .font(Token.Font.secondary)
+                    .foregroundStyle(Token.Color.secondaryText)
             }
         }
         .padding(.horizontal, Token.Space.xl)
@@ -284,8 +284,8 @@ private struct EditorPreview: View {
                     .lineLimit(1)
                 if clock.renderMode == .analogClock && !usesTextFallback {
                     Label("Analog clock face", systemImage: "clock")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+                        .font(Token.Font.secondary)
+                        .foregroundStyle(Token.Color.secondaryText)
                 } else {
                     Text(time)
                         .font(Token.Font.time(settingsPreview.textSize * timeScale))

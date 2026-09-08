@@ -158,8 +158,8 @@ struct ClocksPane: View {
             .labelStyle(.iconOnly)
 
             Text("\(preferences.clocks.count) \(preferences.clocks.count == 1 ? "clock" : "clocks")")
-                .font(.callout)
-                .foregroundStyle(.secondary)
+                .font(Token.Font.secondary)
+                .foregroundStyle(Token.Color.secondaryText)
 
             Spacer()
 
@@ -281,8 +281,8 @@ private struct ClockListRow: View {
                         .lineLimit(1)
                         .truncationMode(.tail)
                     Text(detail)
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+                        .font(Token.Font.secondary)
+                        .foregroundStyle(Token.Color.secondaryText)
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }

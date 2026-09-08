@@ -17,6 +17,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Settings helper and caption text now reads its typography and colour from the shared secondary tokens, so a future change to those tokens reaches every surface at once. No visible change.
 - Meantime Help, Date Format Guide, Open Format Builder, and Meantime Website now open `martonpaulo.com/meantime`, the site's canonical address.
 - Update canonical website metadata to `https://martonpaulo.com/meantime/`.
 - Record project workflow, browser acceptance, and release-configuration guidance.

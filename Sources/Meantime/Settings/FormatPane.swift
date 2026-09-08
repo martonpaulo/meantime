@@ -41,8 +41,8 @@ struct FormatPane: View {
 
                     if draft.formatPreset == .systemDefault {
                         Text("Uses your Mac's current date and time format.")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
+                            .font(Token.Font.secondary)
+                            .foregroundStyle(Token.Color.secondaryText)
                     }
 
                     Link(destination: URL(string: "https://martonpaulo.com/meantime/format.html")!) {
@@ -55,8 +55,8 @@ struct FormatPane: View {
                     Text("Date and Time Format")
                 } footer: {
                     Text("Choose a preset or use Custom for any Unicode UTS-35 pattern. Put literal text in single quotes and use two single quotes for an apostrophe.")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+                        .font(Token.Font.secondary)
+                        .foregroundStyle(Token.Color.secondaryText)
                 }
 
                 Section("Menu Bar Appearance") {
@@ -70,15 +70,15 @@ struct FormatPane: View {
                         TextField("Separator", text: separatorBinding,
                                   prompt: Text(PreferenceDefaults.combinedSeparator))
                         Text("Enter up to \(UserInputPolicy.separatorLimit) characters. Leave blank to use spacing only.")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
+                            .font(Token.Font.secondary)
+                            .foregroundStyle(Token.Color.secondaryText)
 
                         if preferences.clocks.contains(where: { $0.renderMode == .analogClock }) {
                             Label(
                                 "Combined layout shows analog clocks as a leading item and time. The analog face remains available in individual layout.",
                                 systemImage: "info.circle")
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
+                                .font(Token.Font.secondary)
+                                .foregroundStyle(Token.Color.secondaryText)
                         }
                     }
 

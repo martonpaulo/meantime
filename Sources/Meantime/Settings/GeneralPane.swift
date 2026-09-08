@@ -34,8 +34,8 @@ struct GeneralPane: View {
                     }
                 if launchAtLoginFailed {
                     Text("Meantime couldn't be added to Login Items. Move it to Applications, then try again.")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+                        .font(Token.Font.secondary)
+                        .foregroundStyle(Token.Color.secondaryText)
                 }
             }
 
@@ -51,13 +51,13 @@ struct GeneralPane: View {
                 }
                 if !updateManager.isAvailable {
                     Text("Updates are available in an installed release of Meantime, not in development builds.")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+                        .font(Token.Font.secondary)
+                        .foregroundStyle(Token.Color.secondaryText)
                 }
             } footer: {
                 Text("Update checks use GitHub and are Meantime's only network activity. No accounts or telemetry.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .font(Token.Font.secondary)
+                    .foregroundStyle(Token.Color.secondaryText)
             }
 
             Section {

@@ -24,8 +24,8 @@ struct AboutPane: View {
                         Text("World clocks in your menu bar.")
                             .foregroundStyle(.secondary)
                         Text("Developed by Marton Paulo")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
+                            .font(Token.Font.secondary)
+                            .foregroundStyle(Token.Color.secondaryText)
                             .padding(.top, Token.Space.xxs)
                     }
                 }
@@ -49,12 +49,12 @@ struct AboutPane: View {
             Section {
                 LabeledContent("License", value: "MIT")
                 Text("Release builds include Sparkle for automatic updates.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .font(Token.Font.secondary)
+                    .foregroundStyle(Token.Color.secondaryText)
             } footer: {
                 Text("© 2026 Marton Paulo. Open source under the MIT license.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .font(Token.Font.secondary)
+                    .foregroundStyle(Token.Color.secondaryText)
             }
         }
         .formStyle(.grouped)

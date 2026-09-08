@@ -23,8 +23,12 @@ public struct MonthGrid: Equatable, Sendable {
     /// The grid containing `date`'s month.
     public static func make(containing date: Date,
                             calendar: Calendar = .current) -> MonthGrid {
-        let monthStart = calendar.date(
-            from: calendar.dateComponents([.year, .month], from: date)) ?? date
+        // The month containing the instant, not one rebuilt from its year and
+        // month numbers: those two fields do not identify a month on their own.
+        // A Japanese-calendar year repeats in every era, and a leap month shares
+        // its number with the regular month, so reconstruction jumped decades.
+        let monthInterval = calendar.dateInterval(of: .month, for: date)
+        let monthStart = monthInterval?.start ?? date
 
         // Back up to the first day of the week containing the 1st.
         let weekdayOfFirst = calendar.component(.weekday, from: monthStart)
@@ -44,7 +48,13 @@ public struct MonthGrid: Equatable, Sendable {
                 days.append(Day(
                     date: dayDate,
                     dayNumber: calendar.component(.day, from: dayDate),
-                    isInMonth: calendar.isDate(dayDate, equalTo: monthStart, toGranularity: .month),
+                    // Membership is tested against the actual interval, so a leap
+                    // month never absorbs the days of the regular month it shares
+                    // a number with.
+                    // DateInterval.contains is closed at both ends, and a month's
+                    // end is the next month's first midnight, so compare half-open.
+                    isInMonth: monthInterval.map { dayDate >= $0.start && dayDate < $0.end }
+                        ?? calendar.isDate(dayDate, equalTo: monthStart, toGranularity: .month),
                     isWeekend: calendar.isDateInWeekend(dayDate)))
             }
             weeks.append(days)

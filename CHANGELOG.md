@@ -8,6 +8,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- The panel calendar shows the right month when your Mac uses a calendar whose year numbers repeat, such as the Japanese calendar. Browsing back into an earlier era used to jump the grid decades into the future, and picking a day from it travelled to the wrong date.
 - Copying a pattern from the Format Builder no longer fails silently when the browser refuses clipboard access: the builder says so, selects the pattern so it can be copied by hand, and only claims success after the clipboard actually accepted it.
 - The Format Builder explains an unusable pattern right under the field instead of after the whole token reference, marks the field invalid, and reads that explanation out to screen readers as the field's description.
 - The website no longer animates its scrolling for visitors who have asked their system for reduced motion.

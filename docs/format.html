@@ -219,6 +219,10 @@
       return validatePattern(patternInput.value);
     }
 
+    // The outcome of the last copy attempt, shown only while it still describes
+    // the pattern in the field. A validation error always outranks it.
+    let copyFeedback = null;
+
     function refresh() {
       preview.textContent = parsePattern(patternInput.value, EXAMPLE_DATE) || "Add a field to begin";
       document.querySelectorAll("[data-sample]").forEach(element => {
@@ -228,8 +232,9 @@
       const parsed = unquotedFields(patternInput.value);
       dayPeriodButton.disabled = !parsed.fields.has("h") || parsed.fields.has("H");
       const result = validation();
-      status.textContent = result.message;
-      status.classList.toggle("error", !result.valid);
+      const showing = result.valid ? copyFeedback : { message: result.message, error: true };
+      status.textContent = showing ? showing.message : "";
+      status.classList.toggle("error", Boolean(showing && showing.error));
       // The one validator owns validity: the field's invalid state and the
       // description the screen reader reads both come from its result.
       patternInput.setAttribute("aria-invalid", result.valid ? "false" : "true");
@@ -237,6 +242,8 @@
     }
 
     function patternChanged() {
+      // A new pattern makes any earlier copy outcome obsolete.
+      copyFeedback = null;
       refresh();
     }
 
@@ -286,9 +293,34 @@
 
     copyButton.addEventListener("click", async () => {
       if (!validation().valid) return;
-      await navigator.clipboard.writeText(patternInput.value);
-      copyButton.textContent = "Copied!";
-      window.setTimeout(() => { copyButton.textContent = "Copy"; }, 1400);
+      const requested = patternInput.value;
+      let copied = false;
+      try {
+        // Absent over plain HTTP and in older browsers; denied by permission too.
+        if (!navigator.clipboard?.writeText) throw new Error("clipboard unavailable");
+        await navigator.clipboard.writeText(requested);
+        copied = true;
+      } catch {
+        copied = false;
+      }
+      // The pattern may have changed while the write was in flight; a stale
+      // result must never describe what is in the field now.
+      if (patternInput.value !== requested) return;
+
+      if (copied) {
+        copyFeedback = { message: "Copied the pattern to the clipboard.", error: false };
+        copyButton.textContent = "Copied!";
+        window.setTimeout(() => { copyButton.textContent = "Copy"; }, 1400);
+      } else {
+        copyFeedback = {
+          message: "Couldn\u2019t copy the pattern. Select the pattern and copy it manually.",
+          error: true,
+        };
+        // Hand the pattern over ready to copy by keyboard.
+        patternInput.focus();
+        patternInput.select();
+      }
+      refresh();
     });
 
     patternChanged();

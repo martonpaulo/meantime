@@ -8,6 +8,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Copying a pattern from the Format Builder no longer fails silently when the browser refuses clipboard access: the builder says so, selects the pattern so it can be copied by hand, and only claims success after the clipboard actually accepted it.
 - The Format Builder explains an unusable pattern right under the field instead of after the whole token reference, marks the field invalid, and reads that explanation out to screen readers as the field's description.
 - The website no longer animates its scrolling for visitors who have asked their system for reduced motion.
 - The Format Builder's token buttons stay clickable on short screens. Only the pattern field and its Clear/Copy buttons follow the page now; the preview and preset scroll away with the rest, instead of covering the whole viewport and swallowing taps meant for the tokens underneath. Focusing a control with the keyboard also stops parking it under that bar or flush against the screen edge.

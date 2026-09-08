@@ -37,7 +37,7 @@ struct AboutPane: View {
 
             Section {
                 Link("Meantime Website",
-                     destination: URL(string: "https://martonpaulo.github.io/meantime/")!)
+                     destination: URL(string: "https://martonpaulo.com/meantime/")!)
                 Link("Meantime on GitHub",
                      destination: URL(string: "https://github.com/martonpaulo/meantime")!)
                 Link("Report an Issue",

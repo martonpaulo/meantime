@@ -55,10 +55,12 @@
         <div class="builder-sticky">
           <div class="pattern-row">
             <input id="pattern" type="text" spellcheck="false" autocomplete="off"
-                   aria-label="Unicode date and time pattern" value="HH:mm">
+                   aria-label="Unicode date and time pattern"
+                   aria-describedby="builder-status" value="HH:mm">
             <button class="builder-button" id="clear" type="button">Clear</button>
             <button class="builder-button primary" id="copy" type="button">Copy</button>
           </div>
+          <p class="builder-status" id="builder-status" role="status"></p>
         </div>
 
         <div class="builder-groups" aria-label="Pattern fields and separators">
@@ -179,7 +181,6 @@
           <p class="hint">The builder adds the UTS-35 quotes and safely escapes apostrophes.</p>
         </fieldset>
 
-        <p class="builder-status" id="builder-status" role="status"></p>
         <p class="hint builder-help">
           Need fields beyond this guided set? Read the
           <a href="https://unicode.org/reports/tr35/tr35-dates.html#Date_Format_Patterns">official Unicode UTS-35 date format pattern documentation</a>.
@@ -229,6 +230,9 @@
       const result = validation();
       status.textContent = result.message;
       status.classList.toggle("error", !result.valid);
+      // The one validator owns validity: the field's invalid state and the
+      // description the screen reader reads both come from its result.
+      patternInput.setAttribute("aria-invalid", result.valid ? "false" : "true");
       copyButton.disabled = !result.valid;
     }
 

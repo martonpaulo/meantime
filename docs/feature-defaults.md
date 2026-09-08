@@ -2,8 +2,18 @@
 
 Every user-facing behavior states its default and whether it is configurable.
 Defaults live in one place in the preferences layer; this table is the human
-summary. Reset ("Restore Defaults") returns every configurable value below to
-its default and touches nothing else (not the login item, not identity).
+summary.
+
+Reset ("Restore Defaults") returns the app-owned preferences to their defaults:
+the clocks and everything in the menu-bar appearance: time format, layout,
+combined separator, text size, and element spacing. It touches nothing else,
+and in particular it never changes the two settings this app does not own:
+
+- **Open at login** belongs to the system login-item service.
+- **Automatic update checks** belong to Sparkle, which persists them itself.
+
+Both survive a reset, exactly as the confirmation dialog promises. Identity,
+permissions, and non-preference state are untouched as well.
 
 | Behavior | Default | Configurable? | Notes |
 | --- | --- | --- | --- |
@@ -19,8 +29,8 @@ its default and touches nothing else (not the login item, not identity).
 | Time format | system | yes | preset-first; Custom accepts structurally valid Unicode (UTS-35), quoted literal text, and up to 256 graphemes |
 | Menu-bar text size | 13 pt | yes | 10–18 pt |
 | Element spacing | 4 pt | yes | 0–12 pt |
-| Open at login | off | yes | owned by the system login-item service, not stored in preferences |
-| Automatic update checks | on (release builds) | yes | persisted by Sparkle itself; manual check always available |
+| Open at login | off | yes | owned by the system login-item service, not stored in preferences; survives Restore Defaults |
+| Automatic update checks | on (release builds) | yes | persisted by Sparkle itself; manual check always available; survives Restore Defaults |
 | Panel row time | complete time (min. minutes) | no | a coarser menu-bar format falls back to system short time in the panel: a glance surface must answer "what time is it" fully |
 | Time-travel preview | now | transient | day + typed time; resets every time the panel opens; never persisted |
 | Calendar browsing | current month | transient | six stable week rows, locale-aware weekends, month/year navigation, labeled Today action |

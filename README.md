@@ -74,7 +74,15 @@ make dmg    # the full installer DMG
 [UI patterns](docs/ui-patterns.md) · [feature defaults](docs/feature-defaults.md) ·
 [agent policy](AGENTS.md).
 
+Website acceptance covers Chromium and WebKit/Safari. `make check` covers domain
+and JavaScript behavior; browser layout, clipboard permissions, and assistive
+technology still need the relevant real-browser or human checks.
+
 ## 📦 Releasing (maintainers)
+
+Optional release environment names are documented in [.env.example](.env.example).
+It contains examples only; build scripts do not automatically load an `.env` file.
+Keep real signing identity and notary credentials in local environment/Keychain.
 
 One-time: `make keys` (Sparkle key → Keychain) and a `notarytool`
 credentials profile. Per release:

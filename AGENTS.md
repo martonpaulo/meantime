@@ -21,7 +21,7 @@ migration and its downstream effects.
 - Repository: `martonpaulo/meantime` (public)
 - Public identifiers: bundle `com.perso.meantime`; SwiftPM package `Meantime`,
   library target `MeantimeKit`, executable target `Meantime`
-- Landing page: `https://martonpaulo.github.io/meantime/`, built from `docs/`
+- Landing page: `https://martonpaulo.com/meantime/`, built from `docs/`
   in this repository and published by GitHub Pages
 - License: `MIT`, © 2026 Marton Paulo
 - Development language: English (code, comments, commits, filenames, tests,
@@ -37,13 +37,35 @@ migration and its downstream effects.
   Increments only during an explicitly requested release, which also updates
   `CHANGELOG.md`, tags `vX.Y.Z`, and regenerates the appcast. Ordinary tasks
   add to `## [Unreleased]` and never bump a version
+- Agent automation: `disabled`. Work remains directly on `main`; no agent intake,
+  worker rules, authentication workflows, or automatic implementation/review are configured.
+- Browser acceptance: Chromium and WebKit/Safari for the landing page and Format
+  Builder. Gecko is outside the selected acceptance set.
+- Commit subject: a commit made for an issue ends with `(#<issue number>)`.
+- Merge policy: squash only for bot PRs; merge commits and rebase are disabled.
+  This does not authorize branches for ordinary project work.
+- Required approving review: disabled. Main-only direct delivery has no PR review gate.
+- Secret protection: GitHub secret scanning and push protection enabled.
+- GitHub topics: `clock`, `macos`, `menu-bar`, `productivity`, `sparkle`, `swift`,
+  `swiftui`, `time-travel`, `timezone`, `world-clock`.
+- Skills baseline revision: `7cfc324fcded57145c36cc678977c070ed800692`
+- Skills baseline applied: `2026-09-09`
+- Skills baseline divergence `merge-template-legacy` at `7cfc324fcded57145c36cc678977c070ed800692`: the owner approved squash-only bot PRs; the canonical publishing convention supersedes the setup template's stale merge-commit wording.
 - Delete branches after merge: enabled (bot PRs are the only branches)
 - Release, signing, and secret storage: see **Distribution & signing** below
 
 ## Product
 
 Meantime shows world clocks in the macOS menu bar. It is a native, accessory
-(menu-bar-only) app.
+(menu-bar-only) app for Mac users coordinating work or personal plans across
+multiple time zones. It replaces repeated time-zone lookups with a glance and
+a transient preview of another moment.
+
+Success means users can read the correct time in each chosen zone, see scheduled
+clocks appear at the intended local boundaries, and preview a date/time without
+changing saved clocks. Correctness follows the system clock and user calendar;
+idle operation does no unnecessary work. These are observable product contracts,
+not claims that every current implementation path already satisfies them.
 
 - Add a clock for any time zone; give it a custom label and choose a country
   flag, custom emoji, custom text, or no leading item.
@@ -63,6 +85,33 @@ direct-download build. Do not add cloud services, background jobs, or content
 polling. Keep the surface small; new capability is a deliberate product change,
 not a default.
 
+Accounts, sync, analytics, and telemetry are excluded to keep personal clock
+preferences local and avoid a service dependency. Widgets and unrelated calendar
+management are excluded to keep the product focused on its menu-bar glance
+surface. The website helps users understand and configure Meantime; it is not a
+second hosted clock service.
+
+## Instruction hierarchy and sources of truth
+
+- Follow the direct task, the most specific scoped guidance, this file, then
+  general working agreements. Read relevant guidance before changing files.
+- Code establishes current behavior, this file governs process, and accepted
+  issue requirements govern desired behavior. Surface contradictions explicitly.
+- Keep one canonical owner per rule. Documentation summarizes or links to it.
+- Auditing and planning do not authorize implementation. Do not broaden a task
+  into adjacent cleanup, dependency changes, or a later workflow phase.
+- Make consequential decisions visible with evidence, the proposed change and
+  its tradeoff. Use the client's structured question facility when available;
+  resolved decisions are not asked again.
+
+## Long-running operations
+
+Use bounded yields and observable progress for builds, browser work and delegated
+work. Report useful progress at least once per minute when supported. Inspect
+output and state before retrying or interrupting; elapsed time alone does not
+prove a stall. Preserve failure evidence, diagnose it, then choose a narrower
+retry. Never add a timer or background service just to monitor task progress.
+
 ## Build and validate
 
 Prefer the smallest relevant check. Use `make` targets; do not hand-roll
@@ -79,6 +128,15 @@ equivalents.
 
 Task logs and generated release artifacts live under `artifacts/` (gitignored).
 Inspect a failed log before rerunning; never rerun an unchanged failing command.
+
+For website behavior or layout changes, run `make check` for JavaScript logic and
+repository invariants, then exercise the affected flow in both Chromium and
+WebKit/Safari. The current CI runs domain/JavaScript checks, not browser layout
+or assistive-technology checks. Use an available compatible browser runtime; do
+not install a second browser manager. Record engine/version, viewport, tested
+states and results. Native Safari clipboard permission behavior and VoiceOver
+speech require a real integration or human verification when a browser harness
+cannot establish them; never report those checks from DOM assertions alone.
 
 ## Hard rules
 
@@ -217,6 +275,16 @@ agreed, document it here in the same turn.
 - Use focused Conventional Commits for durable changes. Commit only files that
   belong to the task; leave unrelated dirty files untouched and report them.
 - Do not revert, overwrite, or discard user changes unless explicitly asked.
+- Before any GitHub write, inspect the exact payload for secrets and sensitive
+  data; do not print a suspected secret. Use structured arguments and preserve
+  unrelated fields. Never force-push or rewrite history as routine cleanup.
+- Direct delivery closes an issue only after all criteria pass, its resolving
+  commit is pushed, and the remote default branch is verified to contain it.
+  Read the issue's closed state and reason back; a reference in a commit subject
+  alone does not close it. An accepted validation gap is not a met criterion.
+- Verified reusable project learning belongs in its existing canonical owner.
+  Required task documentation is included; unrelated learning is proposed with
+  evidence and an exact draft before any separate edit.
 - Retain every current and future task artifact under `artifacts/` for user
   review. Never delete, move, truncate, destructively replace, or prune an
   artifact unless the user explicitly requests that exact cleanup; this
@@ -228,8 +296,17 @@ agreed, document it here in the same turn.
   kept/deleted, commit and push status, final `git status --short --branch`,
   unrelated dirty files, and remaining risks.
 
+## Skills
+
+No project-owned Agent Skills are currently installed in this repository. Do not
+vendor personal skills here. A future project skill owns its project-specific
+procedure; a general skill keeps the surrounding workflow. Unclaimed tasks use
+normal skill triggering. Codex reads this root guidance; `CLAUDE.md` is a symlink
+to the same owner. No Gemini or Antigravity guidance surface is selected.
+
 ## Personal skill paths
 
+- Product definition: this file, **Product** (canonical; do not duplicate it)
 - Domain glossary: `CONTEXT.md` (optional; create only when useful)
 - ADRs: `docs/adr/` (only for hard-to-reverse, non-obvious decisions)
 - Research notes: `docs/research/` (create only when persisting research)

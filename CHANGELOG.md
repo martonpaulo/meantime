@@ -9,6 +9,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - Update canonical website metadata to `https://martonpaulo.com/meantime/`.
+- Record project workflow, browser acceptance, and release-configuration guidance.
 
 ## [1.3.0] - 2026-07-27
 

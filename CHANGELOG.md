@@ -6,6 +6,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Menu-bar clocks keep updating through a daylight-saving fall-back hour. During the repeated local hour the next refresh was computed for the first occurrence, so it landed in the past and the app rearmed an already-expired timer instead of waiting for the real boundary.
+
 ### Changed
 
 - Update canonical website metadata to `https://martonpaulo.com/meantime/`.

@@ -34,9 +34,14 @@ public enum ClockUpdatePlanner {
     }
 
     /// The next instant strictly after `now` at which a value shown at
-    /// `granularity` changes in `timeZone`. Computed by flooring `now` to the
-    /// unit in that zone and adding one unit, so DST and fractional-hour offsets
-    /// are handled by `Calendar`.
+    /// `granularity` changes in `timeZone`: the end of the calendar interval
+    /// that actually contains `now`.
+    ///
+    /// Flooring `now` into date components and adding one unit cannot express
+    /// which occurrence of a repeated local hour we are in, so on a DST fall-back
+    /// it reconstructs the *first* occurrence and returns a deadline in the past.
+    /// Asking the calendar for the interval around the instant keeps that
+    /// distinction, and handles fractional-hour offsets and short/long days.
     public static func nextBoundary(
         after now: Date,
         granularity: TimeGranularity,
@@ -46,24 +51,30 @@ public enum ClockUpdatePlanner {
         var calendar = calendar
         calendar.timeZone = timeZone
 
-        let flooringComponents: Set<Calendar.Component>
         let unit: Calendar.Component
         switch granularity {
-        case .second:
-            flooringComponents = [.year, .month, .day, .hour, .minute, .second]
-            unit = .second
-        case .minute:
-            flooringComponents = [.year, .month, .day, .hour, .minute]
-            unit = .minute
-        case .hour:
-            flooringComponents = [.year, .month, .day, .hour]
-            unit = .hour
-        case .day:
-            flooringComponents = [.year, .month, .day]
-            unit = .day
+        case .second: unit = .second
+        case .minute: unit = .minute
+        case .hour: unit = .hour
+        case .day: unit = .day
         }
 
-        let floored = calendar.date(from: calendar.dateComponents(flooringComponents, from: now)) ?? now
-        return calendar.date(byAdding: unit, value: 1, to: floored) ?? now.addingTimeInterval(1)
+        if let end = calendar.dateInterval(of: unit, for: now)?.end, end > now {
+            return end
+        }
+        // The scheduler must never hand the ticker an expired deadline: an
+        // exceptional calendar would otherwise make it rearm in a tight loop.
+        return now.addingTimeInterval(fallbackInterval(for: granularity))
+    }
+
+    /// Nominal length of one unit, used only when the calendar cannot bound the
+    /// interval containing `now`. A coarse but future deadline beats spinning.
+    private static func fallbackInterval(for granularity: TimeGranularity) -> TimeInterval {
+        switch granularity {
+        case .second: return 1
+        case .minute: return 60
+        case .hour: return 3_600
+        case .day: return 86_400
+        }
     }
 }

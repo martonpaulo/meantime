@@ -8,6 +8,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- The Format Builder's token buttons stay clickable on short screens. Only the pattern field and its Clear/Copy buttons follow the page now; the preview and preset scroll away with the rest, instead of covering the whole viewport and swallowing taps meant for the tokens underneath. Focusing a control with the keyboard also stops parking it under that bar or flush against the screen edge.
 - Menu-bar clocks keep updating through a daylight-saving fall-back hour. During the repeated local hour the next refresh was computed for the first occurrence, so it landed in the past and the app rearmed an already-expired timer instead of waiting for the real boundary.
 
 ### Changed

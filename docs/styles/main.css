@@ -125,18 +125,45 @@ h2 { font-size: clamp(1.5rem, 3.4vw, 2rem); line-height: 1.18; margin: 0.2rem 0 
 /* Format builder */
 .builder-page { padding-top: 2rem; }
 .builder-intro { max-width: 36rem; margin: 0 auto; }
-.builder { max-width: 720px; margin: 0 auto; text-align: left; }
-/* Keep the live preview and the pattern input in view while the token reference
-   below scrolls, so the effect of every change stays visible. */
+.builder {
+  max-width: 720px; margin: 0 auto; text-align: left;
+  /* Room the sticky pattern bar occupies, so scrolling a control into view
+     never parks it underneath. Below 560px the bar wraps onto two rows. */
+  --sticky-allowance: 6rem;
+}
+@media (max-width: 560px) { .builder { --sticky-allowance: 9.5rem; } }
+/* Keep only the pattern field and its buttons in view while the token reference
+   below scrolls: a compact bar the page can always spare room for. The preview
+   and preset stay in normal flow, because at their full-date height they used to
+   cover the whole short viewport and swallow clicks meant for the tokens below. */
 .builder-sticky {
   position: sticky;
   top: 0;
   z-index: 5;
   background: var(--bg);
-  padding-block: 1.4rem 1rem;
+  padding-block: 0.8rem;
+  margin-bottom: 1.6rem;
 }
-.builder-sticky .preview-card { margin-top: 0; }
 .builder-sticky .pattern-row { margin-bottom: 0; }
+/* Heights are in rem so the guard follows browser zoom and text scaling: below
+   roughly three bar heights of viewport there is nothing left to scroll past,
+   so the bar returns to normal flow rather than sitting on top of the tokens. */
+@media (max-height: 15rem) {
+  .builder-sticky { position: static; }
+  .builder { --sticky-allowance: 1rem; }
+}
+@media (max-width: 560px) and (max-height: 26rem) {
+  /* Below 560px the bar wraps onto two rows and needs proportionally more space. */
+  .builder-sticky { position: static; }
+  .builder { --sticky-allowance: 1rem; }
+}
+/* Never scroll a builder control flush against a viewport edge, and never under
+   the sticky bar: focus follows this margin, so keyboard users always see the
+   control they just reached. */
+.builder fieldset,
+.builder :is(button, input, select) {
+  scroll-margin-block: var(--sticky-allowance) 2rem;
+}
 .preview-card {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); box-shadow: var(--shadow);

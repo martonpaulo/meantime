@@ -231,11 +231,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func openWebsiteFromMenu() {
-        open("https://martonpaulo.com/meantime/")
+        open("https://meantime.martonpaulo.com/")
     }
 
     @objc private func openFormatGuideFromMenu() {
-        open("https://martonpaulo.com/meantime/format.html")
+        open("https://meantime.martonpaulo.com/format.html")
     }
 
     @objc private func openIssueReporterFromMenu() {

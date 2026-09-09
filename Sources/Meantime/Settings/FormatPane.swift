@@ -45,7 +45,7 @@ struct FormatPane: View {
                             .foregroundStyle(Token.Color.secondaryText)
                     }
 
-                    Link(destination: URL(string: "https://martonpaulo.com/meantime/format.html")!) {
+                    Link(destination: URL(string: "https://meantime.martonpaulo.com/format.html")!) {
                         Label("Open Format Builder", systemImage: "curlybraces.square")
                     }
                     Link(destination: URL(string: "https://unicode.org/reports/tr35/tr35-dates.html#Date_Format_Patterns")!) {

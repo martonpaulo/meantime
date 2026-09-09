@@ -6,6 +6,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- The website moved to `https://meantime.martonpaulo.com/`. Meantime Help, Date Format Guide, Open Format Builder, and Meantime Website now open the new address, and the canonical website metadata, sitemap, and robots.txt follow it.
+
 ## [1.4.0] - 2026-09-09
 
 ### Fixed

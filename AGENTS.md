@@ -21,7 +21,7 @@ migration and its downstream effects.
 - Repository: `martonpaulo/meantime` (public)
 - Public identifiers: bundle `com.perso.meantime`; SwiftPM package `Meantime`,
   library target `MeantimeKit`, executable target `Meantime`
-- Landing page: `https://martonpaulo.com/meantime/`, built from `docs/`
+- Landing page: `https://meantime.martonpaulo.com/`, built from `docs/`
   in this repository and published by GitHub Pages
 - License: `MIT`, © 2026 Marton Paulo
 - Development language: English (code, comments, commits, filenames, tests,

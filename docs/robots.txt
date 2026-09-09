@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://martonpaulo.com/meantime/sitemap.xml
+Sitemap: https://meantime.martonpaulo.com/sitemap.xml

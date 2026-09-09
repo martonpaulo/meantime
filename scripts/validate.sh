@@ -49,6 +49,23 @@ if ! grep -q 'view.material = \.popover' Sources/Meantime/MenuBar/PanelControlle
     note "the menu-bar panel must use AppKit's popover material"
 fi
 
+# The website is served from its own subdomain. Every absolute URL must use the
+# canonical origin; the old project path and the github.io host must never
+# reappear anywhere in the published set.
+SITE_ORIGIN="https://meantime.martonpaulo.com/"
+[ -f docs/CNAME ] && [ "$(cat docs/CNAME)" = "meantime.martonpaulo.com" ] \
+    || note "docs/CNAME must contain exactly meantime.martonpaulo.com"
+for page in docs/index.html docs/format.html; do
+    grep -q "<link rel=\"canonical\" href=\"$SITE_ORIGIN" "$page" \
+        || note "$page canonical must start with $SITE_ORIGIN"
+done
+grep -q "Sitemap: ${SITE_ORIGIN}sitemap.xml" docs/robots.txt \
+    || note "robots.txt must point at ${SITE_ORIGIN}sitemap.xml"
+if stale=$(grep -rElI 'martonpaulo\.com/meantime|martonpaulo\.github\.io' docs); then
+    note "docs/ must not reference the old site location: $(echo "$stale" | paste -sd ' ' -)"
+fi
+[ -f docs/404.html ] || note "website must ship a 404 page"
+
 # Website navigation stays identical across the landing page and builder.
 expected_navigation="Features|Format Builder|Download|GitHub"
 for page in docs/index.html docs/format.html; do

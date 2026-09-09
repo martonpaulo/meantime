@@ -43,8 +43,15 @@ Correct time is non-negotiable; idle cost must be near zero.
 - The planner computes the coarsest field any *visible* clock shows
   (seconds/minutes/hours/day) and returns the earliest next boundary across all
   of them, taking each zone into account (fractional-hour offsets shift the hour
-  boundary). A single timer is armed to that absolute instant and re-armed on
-  each fire: no fixed intervals, no per-item timers, no drift.
+  boundary). Boundaries come from the calendar interval containing the instant,
+  so a repeated local hour still moves forward. A single timer is armed to that
+  absolute instant and re-armed on each fire: no fixed intervals, no per-item
+  timers, no drift.
+- Some output changes at instants no field boundary predicts: a localized day
+  period (`a`, `b`, `B`) or a zone name that follows an offset transition. For
+  those, and only when no finer field is present, the planner finds the change
+  by comparing the cached formatter's own output at a small bounded candidate
+  set. Nothing is scanned second by second.
 - When nothing visible shows changing time, no timer runs.
 - The ticker also refreshes immediately on system clock change, time-zone
   change, and wake from sleep.

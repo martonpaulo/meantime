@@ -36,5 +36,8 @@ and rules. This is not a specification.
 - **Granularity**: the coarsest time field any visible clock displays. Governs
   how often the app updates (seconds, minutes, or hours). See the Time & Energy
   contract in `AGENTS.md`.
+- **Display dependency**: something a format shows whose change instant no field
+  boundary predicts, such as a localized day period or a zone name. Found by
+  comparing rendered output at a bounded candidate set, not by polling.
 - **Boundary**: the next instant the displayed granularity changes (next
   minute/hour). Updates are scheduled to boundaries, not fixed intervals.

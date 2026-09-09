@@ -3,6 +3,10 @@
 // slot actually needs. Deterministic: same input, same bytes.
 //
 //   swift scripts/render-web-assets.swift
+//
+// The committed files are a little smaller than what this script writes:
+// ImgBot re-encodes them losslessly after they land. Regenerating them is
+// still correct, it just gives back those bytes until ImgBot runs again.
 import AppKit
 
 let size = NSSize(width: 1200, height: 630)

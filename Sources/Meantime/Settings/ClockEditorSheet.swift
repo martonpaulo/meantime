@@ -298,6 +298,7 @@ private struct EditorPreview: View {
 
 /// Scheduled menu-bar hours in the clock's own time zone.
 private struct ScheduleSection: View {
+    @Environment(ClockEditingSession.self) private var editingSession
     @Binding var clock: WorldClock
 
     private var scheduleEnabled: Binding<Bool> {
@@ -312,12 +313,14 @@ private struct ScheduleSection: View {
             })
     }
 
+    /// Prepared by the editing session when the schedule changes, never derived
+    /// while rendering.
     private var scheduleIssues: [ScheduleValidationIssue] {
-        ScheduleValidation.issues(in: clock.activeWindows)
+        editingSession.scheduleAnalysis.issues
     }
 
     private var suggestedWindow: ActiveWindow? {
-        ScheduleSuggestion.nextWindow(existing: clock.activeWindows)
+        editingSession.scheduleAnalysis.suggestion
     }
 
     var body: some View {

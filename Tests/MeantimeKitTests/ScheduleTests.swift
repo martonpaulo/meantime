@@ -369,3 +369,118 @@ private func utc(_ year: Int, _ month: Int, _ day: Int,
         #expect(!TimeTravel.sameMinute(instant, instant.addingTimeInterval(60), timeZone: kolkata))
     }
 }
+
+/// The suggestion and validation owners were rewritten to reuse one weekly
+/// coverage pass instead of rebuilding it per candidate. These lock down the
+/// order and the edge semantics that reuse must not change. See issue #21.
+@Suite struct ScheduleAnalysisTests {
+    private func window(_ start: Int, _ end: Int,
+                        _ days: Set<Weekday> = Weekday.everyDay) -> ActiveWindow {
+        ActiveWindow(days: days, startMinute: start, endMinute: end)
+    }
+
+    @Test func emptyScheduleGetsTheFirstFourHourEveryDayWindow() throws {
+        let suggestion = try #require(ScheduleSuggestion.nextWindow(existing: []))
+        #expect(suggestion.days == Weekday.everyDay)
+        #expect(suggestion.startMinute == 0)
+        #expect(suggestion.endMinute == 240)
+    }
+
+    @Test func unusedWeekdaysComeBeforeAnyHourSearch() throws {
+        let weekdays: Set<Weekday> = [.monday, .tuesday, .wednesday, .thursday, .friday]
+        let existing = [window(540, 720, weekdays)]
+        let suggestion = try #require(ScheduleSuggestion.nextWindow(existing: existing))
+        #expect(suggestion.days == Weekday.everyDay.subtracting(weekdays))
+        #expect(suggestion.startMinute == 540)
+        #expect(suggestion.endMinute == 720)
+    }
+
+    /// With every day claimed, the search runs durations 4h, 2h, 1h against
+    /// ascending hourly starts and takes the first that fits.
+    @Test func durationAndStartOrderIsPreserved() throws {
+        // 00:00-04:00 taken, so the first free four-hour slot starts at 04:00.
+        let first = try #require(ScheduleSuggestion.nextWindow(existing: [window(0, 240)]))
+        #expect(first.startMinute == 240)
+        #expect(first.endMinute == 480)
+
+        // Only a two-hour gap left between 02:00 and 04:00: no four-hour slot fits.
+        let narrow = [window(0, 120), window(240, 1_440)]
+        let second = try #require(ScheduleSuggestion.nextWindow(existing: narrow))
+        #expect(second.startMinute == 120)
+        #expect(second.endMinute == 240)
+
+        // A single free hour falls through to the one-hour duration.
+        let tight = [window(0, 60), window(120, 1_440)]
+        let third = try #require(ScheduleSuggestion.nextWindow(existing: tight))
+        #expect(third.startMinute == 60)
+        #expect(third.endMinute == 120)
+    }
+
+    @Test func aFullyOccupiedWeekOffersNothing() {
+        #expect(ScheduleSuggestion.nextWindow(existing: [window(0, 1_440)]) == nil)
+    }
+
+    @Test func anAlreadyInvalidScheduleOffersNothing() {
+        #expect(ScheduleSuggestion.nextWindow(existing: [window(540, 540)]) == nil)       // equal bounds
+        #expect(ScheduleSuggestion.nextWindow(existing: [window(540, 720, [])]) == nil)   // no days
+        #expect(ScheduleSuggestion.nextWindow(existing: [window(540, 720), window(600, 780)]) == nil)
+        let duplicate = window(540, 720)
+        #expect(ScheduleSuggestion.nextWindow(existing: [duplicate, window(540, 720)]) == nil)
+    }
+
+    @Test func touchingBoundariesAreNotAnOverlap() throws {
+        // 00:00-04:00 then 04:00-08:00 share an endpoint but no minute.
+        let suggestion = try #require(ScheduleSuggestion.nextWindow(existing: [window(0, 240)]))
+        #expect(suggestion.startMinute == 240)
+        #expect(ScheduleValidation.issues(in: [window(0, 240), suggestion]).isEmpty)
+    }
+
+    @Test func anOvernightWindowBlocksTheFollowingMorning() throws {
+        // Friday 22:00 to 06:00 spills into Saturday, which the search must respect.
+        let overnight = window(1_320, 360, [.friday])
+        let suggestion = try #require(ScheduleSuggestion.nextWindow(existing: [overnight]))
+        #expect(ScheduleValidation.issues(in: [overnight, suggestion]).isEmpty)
+        #expect(!suggestion.days.contains(.friday))
+    }
+
+    /// Sunday is weekday 1, so a Saturday-night window wraps to the start of the
+    /// week. Coverage is compared modulo the week, and reuse must keep that.
+    @Test func aSaturdayNightWindowWrapsIntoSunday() {
+        let saturdayNight = window(1_380, 120, [.saturday])
+        let sundayMorning = window(0, 120, [.sunday])
+        #expect(!ScheduleValidation.issues(in: [saturdayNight, sundayMorning]).isEmpty)
+        let sundayLater = window(180, 300, [.sunday])
+        #expect(ScheduleValidation.issues(in: [saturdayNight, sundayLater]).isEmpty)
+    }
+
+    @Test func endMinuteOfFourteenFortyIsAcceptedAsMidnight() {
+        let untilMidnight = window(1_320, 1_440)
+        #expect(ScheduleValidation.issues(in: [untilMidnight]).isEmpty)
+        // Midnight is exclusive, so a window starting at 00:00 the next day fits.
+        #expect(ScheduleValidation.issues(in: [untilMidnight, window(0, 60)]).isEmpty)
+    }
+
+    @Test func analysisPairsValidationWithItsSuggestion() {
+        let valid = ScheduleAnalysis.analyze([window(540, 720)])
+        #expect(valid.issues.isEmpty)
+        #expect(valid.suggestion != nil)
+
+        let invalid = ScheduleAnalysis.analyze([window(540, 720), window(600, 780)])
+        #expect(!invalid.issues.isEmpty)
+        #expect(invalid.suggestion == nil)
+
+        #expect(ScheduleAnalysis.empty.issues.isEmpty)
+        #expect(ScheduleAnalysis.empty.suggestion == nil)
+    }
+
+    /// Each call must offer a distinct row, so appending one never creates a
+    /// duplicate identifier in the schedule.
+    @Test func everySuggestionCarriesItsOwnIdentifier() throws {
+        let existing = [window(540, 720)]
+        let first = try #require(ScheduleSuggestion.nextWindow(existing: existing))
+        let second = try #require(ScheduleSuggestion.nextWindow(existing: existing))
+        #expect(first.id != second.id)
+        #expect(first.startMinute == second.startMinute)
+        #expect(first.days == second.days)
+    }
+}

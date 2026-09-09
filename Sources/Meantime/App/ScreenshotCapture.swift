@@ -195,7 +195,9 @@ enum ScreenshotCapture {
     }
 }
 
-private final class EphemeralPreferenceStore: PreferenceStore {
+/// In-memory preferences for debug harnesses, so a diagnostic never writes
+/// through to the owner's real defaults.
+final class EphemeralPreferenceStore: PreferenceStore {
     private var storage: [String: Any] = [:]
 
     func data(forKey defaultName: String) -> Data? { storage[defaultName] as? Data }

@@ -25,6 +25,10 @@ final class ClockEditingSession {
     private(set) var destination: Destination = .list
     private(set) var draft: ClockEditDraft?
     private(set) var pendingExit: ExitDestination?
+    /// Prepared once per schedule change, so the editor renders from it instead
+    /// of revalidating every window pair on each unrelated keystroke.
+    private(set) var scheduleAnalysis: ScheduleAnalysis = .empty
+    @ObservationIgnored private var analyzedWindows: [ActiveWindow] = []
 
     init(preferences: Preferences, settingsPreview: SettingsPreview) {
         self.preferences = preferences
@@ -49,17 +53,20 @@ final class ClockEditingSession {
         draft = ClockEditDraft(newTimeZoneID: timeZoneID)
         destination = .editor
         previewDraft()
+        refreshScheduleAnalysis()
     }
 
     func beginEditing(_ clock: WorldClock) {
         draft = ClockEditDraft(existing: clock)
         destination = .editor
         previewDraft()
+        refreshScheduleAnalysis()
     }
 
     func updateClock(_ clock: WorldClock) {
         draft?.clock = clock
         previewDraft()
+        refreshScheduleAnalysis()
     }
 
     func restoreDefaults() {
@@ -113,6 +120,17 @@ final class ClockEditingSession {
     private func discardDraft() {
         draft = nil
         pendingExit = nil
+        analyzedWindows = []
+        scheduleAnalysis = .empty
         settingsPreview.discardClock()
+    }
+
+    /// Recomputes only when the schedule itself changed: a new label, leading
+    /// item, or pinning choice leaves the prepared analysis alone.
+    private func refreshScheduleAnalysis() {
+        let windows = draft?.clock.activeWindows ?? []
+        guard windows != analyzedWindows else { return }
+        analyzedWindows = windows
+        scheduleAnalysis = ScheduleAnalysis.analyze(windows)
     }
 }

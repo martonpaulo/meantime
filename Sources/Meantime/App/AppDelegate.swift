@@ -41,6 +41,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.terminate(nil)
             return
         }
+        if CommandLine.arguments.contains("--diagnose-schedule-analysis") {
+            let passed = ScheduleAnalysisDiagnostic.run()
+            print(passed ? "ALL CHECKS PASSED" : "CHECKS FAILED")
+            NSApp.terminate(nil)
+            return
+        }
         prepareValidationData()
 #endif
         let actions = PanelActions(

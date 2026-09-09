@@ -10,10 +10,28 @@ public enum ClockUpdatePlanner {
     public struct Visible: Sendable, Equatable {
         public var granularity: TimeGranularity
         public var timeZone: TimeZone
+        /// Set when the output also changes at instants no fixed field boundary
+        /// predicts: a localized day period, or a zone name that follows an
+        /// offset transition. Those instants are found by rendering.
+        public var rendered: RenderedOutput?
 
-        public init(granularity: TimeGranularity, timeZone: TimeZone) {
+        /// What to render when the change instants have to be observed rather
+        /// than derived.
+        public struct RenderedOutput: Sendable, Equatable {
+            public var format: TimeFormat
+            public var locale: Locale
+
+            public init(format: TimeFormat, locale: Locale) {
+                self.format = format
+                self.locale = locale
+            }
+        }
+
+        public init(granularity: TimeGranularity, timeZone: TimeZone,
+                    rendered: RenderedOutput? = nil) {
             self.granularity = granularity
             self.timeZone = timeZone
+            self.rendered = rendered
         }
     }
 
@@ -25,12 +43,77 @@ public enum ClockUpdatePlanner {
         after now: Date,
         visible: [Visible],
         transitions: [Date] = [],
+        calendar: Calendar = Calendar(identifier: .gregorian),
+        formatter: ClockFormatter = ClockFormatter()
+    ) -> Date? {
+        var deadlines: [Date] = []
+        for item in visible {
+            deadlines.append(nextBoundary(after: now, granularity: item.granularity,
+                                          timeZone: item.timeZone, calendar: calendar))
+            guard let rendered = item.rendered else { continue }
+            if let change = nextRenderedChange(after: now, format: rendered.format,
+                                               timeZone: item.timeZone, locale: rendered.locale,
+                                               formatter: formatter, calendar: calendar) {
+                deadlines.append(change)
+            }
+        }
+        return (deadlines + transitions.filter { $0 > now }).min()
+    }
+
+    /// How far ahead a day period is looked for: one long local day, so a
+    /// 25-hour daylight-saving day is still covered.
+    private static let dayPeriodHorizonHours = 26
+    /// How many offset transitions are examined before concluding the zone's
+    /// displayed form never changes (a `VV` identifier never does).
+    private static let zoneTransitionsExamined = 4
+
+    /// The next instant at which the pattern's own rendered output differs from
+    /// what it renders now.
+    ///
+    /// Localized day periods and zone names change on rules this app does not
+    /// own, so the instants are found by asking the formatter rather than by
+    /// reimplementing a locale table. The candidate set is small and bounded:
+    /// the ends of the coming hours, plus the zone's own offset transitions.
+    /// Nothing is scanned second by second.
+    public static func nextRenderedChange(
+        after now: Date,
+        format: TimeFormat,
+        timeZone: TimeZone,
+        locale: Locale,
+        formatter: ClockFormatter,
         calendar: Calendar = Calendar(identifier: .gregorian)
     ) -> Date? {
-        let boundaries = visible.map {
-            nextBoundary(after: now, granularity: $0.granularity, timeZone: $0.timeZone, calendar: calendar)
+        let dependencies = DisplayDependencies.of(renderMode: .timeOnly, format: format)
+        guard dependencies.needsRenderedComparison else { return nil }
+
+        var candidates: [Date] = []
+        if dependencies.showsDayPeriod {
+            // Hour ends, taken from the same future-safe interval helper the
+            // ordinary cadence uses, so a repeated or fractional hour advances.
+            var cursor = now
+            for _ in 0 ..< dayPeriodHorizonHours {
+                cursor = nextBoundary(after: cursor, granularity: .hour,
+                                      timeZone: timeZone, calendar: calendar)
+                candidates.append(cursor)
+            }
         }
-        return (boundaries + transitions.filter { $0 > now }).min()
+        if dependencies.showsZoneDisplay {
+            var cursor = now
+            for _ in 0 ..< zoneTransitionsExamined {
+                guard let jump = timeZone.nextDaylightSavingTimeTransition(after: cursor) else { break }
+                candidates.append(jump)
+                cursor = jump
+            }
+        }
+
+        let current = formatter.string(for: now, timeZone: timeZone, format: format, locale: locale)
+        for candidate in candidates.sorted() where candidate > now {
+            if formatter.string(for: candidate, timeZone: timeZone,
+                                format: format, locale: locale) != current {
+                return candidate
+            }
+        }
+        return nil
     }
 
     /// The next instant strictly after `now` at which a value shown at

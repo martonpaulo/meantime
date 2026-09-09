@@ -8,6 +8,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Custom formats built only from a day period or a time-zone name now refresh when they change instead of staying stale until midnight. `a` flips at noon, the localized `b` and `B` follow your locale's own periods, `z` and the other zone fields update when the offset changes, and `A` ticks once a second. Formats that already show minutes or hours are unaffected, and none of these starts a faster timer.
 - The dropdown panel always shows a complete time again. A custom menu-bar format that leaves out the hour or the minute, such as `ss` or `HH:ss`, used to be reused in the panel, where `HH:ss` displayed 09:30 at 09:47:30. The panel now falls back to your Mac's short time for those, while the menu bar keeps rendering your pattern exactly as written.
 - A scheduled clock now appears and disappears correctly on daylight-saving days. When the local clock repeats an hour the clock is shown for both passes, when the hour it was due to appear is skipped it appears at the jump instead, and a window that falls entirely inside a skipped hour correctly never appears.
 - The panel calendar shows the right month when your Mac uses a calendar whose year numbers repeat, such as the Japanese calendar. Browsing back into an earlier era used to jump the grid decades into the future, and picking a day from it travelled to the wrong date.

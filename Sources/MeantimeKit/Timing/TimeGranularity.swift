@@ -26,7 +26,9 @@ public enum TimeGranularity: Int, Comparable, Sendable, CaseIterable {
     /// The finest field a UTS-35 pattern displays.
     public static func from(pattern: String) -> TimeGranularity {
         let fields = patternFields(in: pattern)
-        if fields.contains(where: { "sS".contains($0) }) { return .second }
+        // `A` is milliseconds-in-day: its output moves continuously, and the
+        // second is this app's deliberate resolution floor.
+        if fields.contains(where: { "sSA".contains($0) }) { return .second }
         if TimeFormatPattern.showsMinute(fields) { return .minute }
         if TimeFormatPattern.showsHour(fields) { return .hour }
         // Only date fields (weekday/day/month/year): changes at the day boundary.

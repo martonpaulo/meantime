@@ -42,6 +42,7 @@ final class MenuBarController: NSObject {
         }
         ticker.onTick = { [weak self] in self?.handleTick() }
         ticker.planProvider = { [weak self] in self?.plan() ?? (visible: [], transitions: []) }
+        ticker.formatter = formatter
 
         observePreferences()
         ticker.refresh() // first paint + arm
@@ -62,17 +63,15 @@ final class MenuBarController: NSObject {
 
         for clock in shownClocks(at: now) {
             let mode = settingsPreview.menuBarLayout == .combined ? textualMode(for: clock) : clock.renderMode
-            visible.append(.init(
-                granularity: TimeGranularity.finest(renderMode: mode, format: settingsPreview.timeFormat),
-                timeZone: clock.timeZone))
+            visible.append(Self.contribution(renderMode: mode, format: settingsPreview.timeFormat,
+                                             timeZone: clock.timeZone))
         }
         if panel.isShown {
             // Panel rows always show complete time, even for hour-only bars.
-            let panelGranularity = TimeGranularity.finest(
-                renderMode: .timeOnly,
-                format: PanelRowFormatter.effectiveFormat(settingsPreview.timeFormat))
+            let panelFormat = PanelRowFormatter.effectiveFormat(settingsPreview.timeFormat)
             for clock in settingsPreview.clocks {
-                visible.append(.init(granularity: panelGranularity, timeZone: clock.timeZone))
+                visible.append(Self.contribution(renderMode: .timeOnly, format: panelFormat,
+                                                 timeZone: clock.timeZone))
             }
         }
         let transitions = settingsPreview.clocks.compactMap { clock -> Date? in
@@ -81,6 +80,19 @@ final class MenuBarController: NSObject {
                                                 timeZone: clock.timeZone)
         }
         return (visible, transitions)
+    }
+
+    /// One visible contribution. The domain decides what the format depends on;
+    /// this controller only reports what is on screen and in which zone.
+    static func contribution(renderMode: ClockRenderMode, format: TimeFormat,
+                             timeZone: TimeZone) -> ClockUpdatePlanner.Visible {
+        let dependencies = DisplayDependencies.of(renderMode: renderMode, format: format)
+        return .init(
+            granularity: dependencies.granularity,
+            timeZone: timeZone,
+            rendered: dependencies.needsRenderedComparison
+                ? .init(format: format, locale: .current)
+                : nil)
     }
 
     // MARK: Shown clocks

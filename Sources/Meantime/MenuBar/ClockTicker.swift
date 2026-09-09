@@ -15,6 +15,9 @@ final class ClockTicker {
     /// Supplies the currently visible clocks and pending visibility transitions
     /// (scheduled clocks appearing/disappearing) so the next wake can be planned.
     var planProvider: (() -> (visible: [ClockUpdatePlanner.Visible], transitions: [Date]))?
+    /// The app's shared formatter, so finding a day-period or zone-name change
+    /// reuses the cached `DateFormatter`s instead of building new ones.
+    var formatter: ClockFormatter?
 
     private var timer: Timer?
 
@@ -43,7 +46,8 @@ final class ClockTicker {
 
         guard let plan = planProvider?(),
               let next = ClockUpdatePlanner.nextUpdate(after: Date(), visible: plan.visible,
-                                                       transitions: plan.transitions)
+                                                       transitions: plan.transitions,
+                                                       formatter: formatter ?? ClockFormatter())
         else { return } // nothing visible changes and nothing scheduled → no timer
 
         // Scheduled to an absolute date in common modes so it still fires while a

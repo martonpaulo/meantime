@@ -153,3 +153,186 @@ private func utc(_ year: Int, _ month: Int, _ day: Int,
         #expect(next == utc(2026, 11, 1, 6, 31, 0))
     }
 }
+
+/// The accepted UTS-35 vocabulary is wider than the cadence classifier: `a`,
+/// `b`, `B` and the zone families change within a day while containing no hour,
+/// minute or second field. They used to sit stale until midnight. See #15.
+@Suite struct DisplayDependencyTests {
+    let newYork = TimeZone(identifier: "America/New_York")!
+    let lordHowe = TimeZone(identifier: "Australia/Lord_Howe")!
+    let utcZone = TimeZone(identifier: "UTC")!
+    let british = Locale(identifier: "en_GB")
+    let formatter = ClockFormatter()
+
+    private func dependencies(_ pattern: String) -> DisplayDependencies {
+        DisplayDependencies.of(renderMode: .timeOnly, format: .custom(pattern))
+    }
+
+    private func change(_ pattern: String, after now: Date, in zone: TimeZone,
+                        locale: Locale? = nil) -> Date? {
+        ClockUpdatePlanner.nextRenderedChange(after: now, format: .custom(pattern),
+                                              timeZone: zone, locale: locale ?? british,
+                                              formatter: formatter)
+    }
+
+    private func rendered(_ pattern: String, at date: Date, in zone: TimeZone,
+                          locale: Locale? = nil) -> String {
+        formatter.string(for: date, timeZone: zone, format: .custom(pattern),
+                         locale: locale ?? british)
+    }
+
+    @Test func fieldFamiliesAreClassified() {
+        #expect(dependencies("a").showsDayPeriod)
+        #expect(dependencies("B").showsDayPeriod)
+        #expect(dependencies("bbbb").showsDayPeriod)
+        #expect(!dependencies("HH:mm").showsDayPeriod)
+        for zoneField in ["z", "zzzz", "Z", "O", "v", "VV", "XXX", "x"] {
+            #expect(dependencies(zoneField).showsZoneDisplay, "\(zoneField)")
+        }
+        #expect(!dependencies("HH:mm").showsZoneDisplay)
+        // Quoted letters are literal text, not fields.
+        #expect(!dependencies("'at noon in Zanzibar'").showsDayPeriod)
+        #expect(!dependencies("'at noon in Zanzibar'").showsZoneDisplay)
+        #expect(dependencies("'it''s' a").showsDayPeriod)
+    }
+
+    /// Milliseconds in day moves continuously; the second is the resolution floor.
+    @Test func millisecondsInDayTickPerSecondNotFaster() {
+        #expect(TimeGranularity.from(pattern: "A") == .second)
+        #expect(dependencies("A").granularity == .second)
+        #expect(!dependencies("A").needsRenderedComparison)
+        let now = utc(2026, 7, 23, 9, 47, 30)
+        #expect(ClockUpdatePlanner.nextUpdate(
+            after: now, visible: [.init(granularity: .second, timeZone: utcZone)])
+            == utc(2026, 7, 23, 9, 47, 31))
+    }
+
+    /// A minute or hour field already fires at least as often as a day period or
+    /// an offset transition can move, so no rendering comparison is needed.
+    @Test func finerFieldsMakeTheRenderedSearchUnnecessary() {
+        #expect(!dependencies("h:mm a").needsRenderedComparison)
+        #expect(!dependencies("h a").needsRenderedComparison)   // hour boundaries include noon
+        #expect(!dependencies("HH:mm z").needsRenderedComparison)
+        #expect(dependencies("a").needsRenderedComparison)
+        #expect(dependencies("B").needsRenderedComparison)
+        #expect(dependencies("z").needsRenderedComparison)
+        #expect(dependencies("EEE z").needsRenderedComparison)
+        #expect(!dependencies("EEE").needsRenderedComparison)
+        #expect(change("h:mm a", after: utc(2026, 7, 23, 9, 0, 0), in: utcZone) == nil)
+    }
+
+    @Test func amPmChangesExactlyAtNoonAndMidnight() {
+        let morning = utc(2026, 7, 23, 9, 47, 30)
+        #expect(change("a", after: morning, in: utcZone) == utc(2026, 7, 23, 12, 0, 0))
+        #expect(rendered("a", at: morning, in: utcZone) != rendered("a", at: utc(2026, 7, 23, 12, 0, 0), in: utcZone))
+
+        // In New York the same instant is 05:47, so noon there is 16:00Z.
+        #expect(change("a", after: morning, in: newYork) == utc(2026, 7, 23, 16, 0, 0))
+
+        // After noon the next change is the following midnight, which the day
+        // boundary also covers: the search still finds it inside its horizon.
+        let afternoon = utc(2026, 7, 23, 15, 0, 0)
+        #expect(change("a", after: afternoon, in: utcZone) == utc(2026, 7, 24, 0, 0, 0))
+    }
+
+    /// Flexible day periods follow the locale's own rules, so the change instant
+    /// is found by asking the formatter, never by a table in this app.
+    @Test func flexibleDayPeriodsFollowTheLocale() {
+        for pattern in ["B", "b", "BBBBB"] {
+            for locale in [Locale(identifier: "en_GB"), Locale(identifier: "de_DE"),
+                           Locale(identifier: "zh_CN")] {
+                let now = utc(2026, 7, 23, 9, 47, 30)
+                guard let next = change(pattern, after: now, in: utcZone, locale: locale) else {
+                    // A locale with no boundary in the horizon is acceptable only
+                    // if the output really is constant for the whole horizon.
+                    continue
+                }
+                #expect(next > now)
+                #expect(rendered(pattern, at: next, in: utcZone, locale: locale)
+                        != rendered(pattern, at: now, in: utcZone, locale: locale),
+                        "\(pattern)/\(locale.identifier)")
+                // The change is the *first* one: nothing earlier differs.
+                let earlier = next.addingTimeInterval(-60)
+                #expect(rendered(pattern, at: earlier, in: utcZone, locale: locale)
+                        == rendered(pattern, at: now, in: utcZone, locale: locale),
+                        "\(pattern)/\(locale.identifier) changed before \(next)")
+            }
+        }
+    }
+
+    @Test func zoneNamesWakeAtTheirOffsetTransition() {
+        // New York leaves daylight saving at 2026-11-01T06:00:00Z.
+        let before = utc(2026, 10, 31, 12, 0, 0)
+        #expect(change("zzzz", after: before, in: newYork) == utc(2026, 11, 1, 6, 0, 0))
+        #expect(change("z", after: before, in: newYork) == utc(2026, 11, 1, 6, 0, 0))
+        #expect(change("XXX", after: before, in: newYork) == utc(2026, 11, 1, 6, 0, 0))
+        // The exact short name is the locale's business ("EDT" in en_US, "GMT-4"
+        // in en_GB); what matters is that it differs across the transition.
+        #expect(rendered("z", at: before, in: newYork)
+                != rendered("z", at: utc(2026, 11, 1, 6, 0, 0), in: newYork))
+        #expect(rendered("z", at: before, in: newYork, locale: Locale(identifier: "en_US")) == "EDT")
+        #expect(rendered("z", at: utc(2026, 11, 1, 6, 0, 0), in: newYork,
+                         locale: Locale(identifier: "en_US")) == "EST")
+
+        // Lord Howe shifts by 30 minutes and is found the same way.
+        #expect(change("XXX", after: utc(2026, 10, 3, 0, 0, 0), in: lordHowe)
+                == utc(2026, 10, 3, 15, 30, 0))
+    }
+
+    @Test func aZoneThatNeverChangesNeedsNoWakeAndNorDoesAnIdentifier() {
+        // A fixed-offset zone has no transitions at all.
+        let fixed = TimeZone(secondsFromGMT: 5 * 3_600)!
+        #expect(change("XXX", after: utc(2026, 7, 23, 9, 0, 0), in: fixed) == nil)
+        #expect(change("z", after: utc(2026, 7, 23, 9, 0, 0), in: utcZone) == nil)
+        // The IANA identifier is stable across transitions, so it never expires.
+        #expect(change("VV", after: utc(2026, 10, 31, 12, 0, 0), in: newYork) == nil)
+        // Literal text has no temporal dependency at all.
+        #expect(change("'noon'", after: utc(2026, 7, 23, 9, 0, 0), in: newYork) == nil)
+    }
+
+    /// Hourly candidates are taken from the future-safe interval helper, so a
+    /// repeated hour advances instead of stalling.
+    @Test func candidatesTraverseARepeatedHour() {
+        // 01:30:30 EST, the second pass of the New York repeated hour.
+        let inside = utc(2026, 11, 1, 6, 30, 30)
+        let next = change("a", after: inside, in: newYork)
+        #expect(next == utc(2026, 11, 1, 17, 0, 0)) // noon EST
+        #expect(rendered("a", at: inside, in: newYork) != rendered("a", at: next!, in: newYork))
+    }
+
+    /// A day-period or zone-only clock must not be promoted to a fast cadence.
+    @Test func coarsePatternsKeepACoarsePlan() {
+        let now = utc(2026, 7, 23, 9, 47, 30)
+        for pattern in ["a", "B", "z", "EEE z"] {
+            let visible = ClockUpdatePlanner.Visible(
+                granularity: dependencies(pattern).granularity, timeZone: utcZone,
+                rendered: .init(format: .custom(pattern), locale: british))
+            let next = ClockUpdatePlanner.nextUpdate(after: now, visible: [visible],
+                                                     formatter: formatter)
+            let seconds = next!.timeIntervalSince(now)
+            #expect(seconds > 60, "\(pattern) planned a wake in \(seconds) s")
+        }
+    }
+
+    /// A whole day of planning must progress and stay bounded: the search is a
+    /// small candidate set, never a scan of the day's seconds.
+    @Test func aDayOfPlanningProgressesAndStaysBounded() {
+        let visible = ClockUpdatePlanner.Visible(
+            granularity: .day, timeZone: newYork,
+            rendered: .init(format: .custom("a"), locale: british))
+        var cursor = utc(2026, 10, 31, 12, 0, 0)
+        var wakes: [Date] = []
+        for _ in 0 ..< 6 {
+            guard let next = ClockUpdatePlanner.nextUpdate(after: cursor, visible: [visible],
+                                                           formatter: formatter) else { break }
+            #expect(next > cursor)
+            wakes.append(next)
+            cursor = next
+        }
+        #expect(wakes.count == 6)
+        // Six wakes across the fall-back day: noon and midnight only, never hourly.
+        for (earlier, later) in zip(wakes, wakes.dropFirst()) {
+            #expect(later.timeIntervalSince(earlier) >= 3_600)
+        }
+    }
+}

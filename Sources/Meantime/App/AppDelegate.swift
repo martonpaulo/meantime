@@ -50,6 +50,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.terminate(nil)
             return
         }
+        if let index = CommandLine.arguments.firstIndex(of: "--capture-window"),
+           CommandLine.arguments.indices.contains(index + 1),
+           let subject = WindowCapture.Subject(rawValue: CommandLine.arguments[index + 1]) {
+            WindowCapture.present(subject)
+            return
+        }
         if CommandLine.arguments.contains("--diagnose-quit-drafts") {
             let passed = QuitDraftsDiagnostic.run()
             print(passed ? "ALL CHECKS PASSED" : "CHECKS FAILED")

@@ -15,6 +15,7 @@
   <meta property="og:description" content="A native macOS menu bar app for world clocks.">
   <meta property="og:url" content="https://martonpaulo.com/meantime/">
   <meta property="og:image" content="https://martonpaulo.com/meantime/assets/app-icon.png">
+  <link rel="preload" as="image" href="screenshots/panel.webp" fetchpriority="high">
   <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
@@ -43,7 +44,9 @@
         <a class="button secondary" href="https://github.com/martonpaulo/meantime">View on GitHub</a>
       </div>
       <p class="compatibility">Open source · Direct download · macOS 26 or later</p>
-      <img class="hero-shot" src="screenshots/panel-current.png?v=1.2.0-retina" alt="The Meantime panel showing world clocks, a month calendar, and time travel" width="420">
+      <img class="hero-shot" src="screenshots/panel.webp"
+           alt="The Meantime panel showing world clocks, a month calendar, and time travel"
+           width="466" height="562" fetchpriority="high" decoding="async">
     </section>
 
     <section class="section" id="features" aria-labelledby="features-title">
@@ -64,9 +67,9 @@
       <h2 id="settings-title">Settings that feel like the system.</h2>
       <p>Toolbar panes, grouped controls, immediate menu bar feedback, and explicit Save. Add clocks from a searchable catalog, reorder or remove them, rename them, and choose a flag, emoji, text, or no leading item.</p>
       <p>No accounts, sync, or telemetry. The only network request is the update check against this repository.</p>
-      <img class="settings-shot" src="screenshots/settings-current.png?v=1.2.0-retina"
+      <img class="settings-shot" src="screenshots/settings-clocks.webp"
            alt="Meantime Settings showing a native selectable list of clocks with add, remove, reorder, and edit controls"
-           width="560">
+           width="672" height="664" loading="lazy" decoding="async">
     </section>
 
     <section class="section download" id="download" aria-labelledby="download-title">

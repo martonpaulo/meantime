@@ -81,9 +81,6 @@ fi
 if grep -Eqi 'free[[:space:]-]+tool' docs/*.html; then
     note "website must not advertise itself as a free tool"
 fi
-if grep -Eq 'screenshots/settings-(clocks|format)\\.png' README.md docs/*.html; then
-    note "public pages must not reference the obsolete Settings screenshots"
-fi
 if ! grep -q 'hasUpperHour' docs/format.html; then
     if ! grep -q 'hasUpperHour' docs/scripts/format-pattern.js; then
         note "format builder must reject uppercase hours when a day period is present"
@@ -97,17 +94,23 @@ fi
 if ! grep -q ':focus-visible' docs/styles/main.css; then
     note "website must expose a deliberate keyboard focus treatment"
 fi
-if ! grep -q 'screenshots/settings-current.png' docs/index.html; then
-    note "homepage must show current Settings UI"
+if ! grep -q 'screenshots/settings-clocks.webp' docs/index.html; then
+    note "homepage must show the current Settings UI"
+fi
+if ! grep -q 'screenshots/panel.webp' docs/index.html; then
+    note "homepage must show the current panel"
+fi
+# Screenshots are published as lossless WebP: identical pixels, the window
+# shadow's alpha preserved, and far fewer bytes than PNG.
+if ls docs/screenshots/*.png >/dev/null 2>&1; then
+    note "screenshots must be published as lossless WebP, not PNG"
 fi
 for image_and_width in \
-    "docs/screenshots/menu-bar.png:400" \
-    "docs/screenshots/panel.png:840" \
-    "docs/screenshots/panel-current.png:840" \
-    "docs/screenshots/settings-clocks.png:1120" \
-    "docs/screenshots/settings-format.png:1120" \
-    "docs/screenshots/settings-general.png:1120" \
-    "docs/screenshots/settings-current.png:1120"; do
+    "docs/screenshots/menu-bar.webp:400" \
+    "docs/screenshots/panel.webp:840" \
+    "docs/screenshots/settings-clocks.webp:1120" \
+    "docs/screenshots/settings-format.webp:1120" \
+    "docs/screenshots/settings-general.webp:1120"; do
     image="${image_and_width%:*}"
     minimum_width="${image_and_width##*:}"
     [ -f "$image" ] || { note "missing current screenshot $image"; continue; }
@@ -115,6 +118,12 @@ for image_and_width in \
     [ "${width:-0}" -ge "$minimum_width" ] \
         || note "$image must be Retina quality (at least $minimum_width px wide)"
 done
+# An image already carrying the window's own corner and shadow must not get a
+# second one from CSS: that clips at the wrong radius and stacks two shadows.
+if grep -A3 -E '^\.(hero|settings)-shot' docs/styles/main.css \
+    | grep -Eq 'border-radius|box-shadow'; then
+    note "screenshots must not be given a second corner radius or shadow in CSS"
+fi
 
 # Durable product contracts for a single-window editor and restrained native UI.
 if grep -q '\.sheet' Sources/Meantime/Settings/ClocksPane.swift; then
@@ -129,8 +138,25 @@ fi
 if grep -q 'weekendBackground' Sources/Meantime/Panel/MonthCalendarView.swift; then
     note "weekends must use restrained text color without background blocks"
 fi
-if grep -Eq 'screencapture|osascript|open .*Meantime' scripts/capture-screenshots.sh; then
-    note "documentation screenshots must render offscreen without controlling the user's desktop"
+# Window screenshots are captured from the real windows on screen: an offscreen
+# bitmap loses the shadow, corner radius, material and elevation, and a larger
+# render does not bring them back. These rules keep that capture honest.
+if ! grep -q 'screencapture -l' scripts/capture-screenshots.sh; then
+    note "window screenshots must be captured with screencapture -l<windowid>"
+fi
+if grep -Eq 'screencapture[^|]*[[:space:]]-[a-zA-Z]*o' scripts/capture-screenshots.sh; then
+    note "screencapture must never be given -o: that is the flag that removes the shadow"
+fi
+if ! grep -q 'WINDOW_ID' scripts/capture-screenshots.sh \
+    || ! grep -q 'WINDOW_ID' Sources/Meantime/App/WindowCapture.swift; then
+    note "the app must print its own window id; the script must not guess from the window list"
+fi
+if ! grep -q 'scale' scripts/capture-screenshots.sh \
+    || ! grep -q '2.0' scripts/capture-screenshots.sh; then
+    note "the capture script must refuse a non-Retina display"
+fi
+if ! grep -q 'lossless' scripts/capture-screenshots.sh; then
+    note "screenshots must be encoded as lossless WebP"
 fi
 if rg -q '—' CHANGELOG.md CONTEXT.md CONTRIBUTING.md Makefile README.md \
     Sources Support docs scripts --glob '!validate.sh'; then

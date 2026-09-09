@@ -11,9 +11,9 @@
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B-blue)](#install)
 [![MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-<img src="docs/screenshots/menu-bar.png" alt="Two world clocks in the macOS menu bar" width="222">
+<img src="docs/screenshots/menu-bar.webp" alt="Two world clocks in the macOS menu bar" width="220">
 
-<img src="docs/screenshots/panel-current.png" alt="The Meantime panel: clocks, month calendar, and time travel" width="420">
+<img src="docs/screenshots/panel.webp" alt="The Meantime panel: clocks, month calendar, and time travel" width="466">
 
 </div>
 
@@ -95,8 +95,15 @@ make appcast VERSION=x.y.z BUILD=<n> ZIP=… SIG='…'
 git tag vx.y.z && git push --tags
 ```
 
-Then upload the DMG + zip to the GitHub release. `make screenshots` refreshes
-every image on this page from the real running app.
+Then upload the DMG + zip to the GitHub release.
+
+`make screenshots` refreshes every image on this page and on the website. It
+captures the real windows on screen with `screencapture -l<windowid>`, because
+the window shadow, corner radius and material are drawn by the window server
+and an offscreen render of the same view has none of them. It needs a Retina
+display and `cwebp`, and refuses to run without them. The method, and the
+reason for each rule, is documented at the top of
+[`scripts/capture-screenshots.sh`](scripts/capture-screenshots.sh).
 
 ## 📄 License
 

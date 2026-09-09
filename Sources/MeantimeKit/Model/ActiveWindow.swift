@@ -53,14 +53,21 @@ public struct ActiveWindow: Codable, Hashable, Sendable, Identifiable {
 public enum ClockSchedule {
     /// Whether a clock with `windows` is visible at `date`. No windows = always.
     public static func isActive(at date: Date, windows: [ActiveWindow], timeZone: TimeZone) -> Bool {
-        let windows = validWindows(windows)
-        guard !windows.isEmpty else { return true }
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = timeZone
+        return isActive(at: date, windows: validWindows(windows), calendar: calendar)
+    }
+
+    /// The same rule with the calendar already prepared and the windows already
+    /// filtered, so transition discovery can evaluate hundreds of candidates
+    /// without rebuilding a `Calendar` for each one.
+    static func isActive(at date: Date, windows: [ActiveWindow], calendar: Calendar) -> Bool {
+        guard !windows.isEmpty else { return true }
         guard let today = Weekday(calendarWeekday: calendar.component(.weekday, from: date)) else {
             return true
         }
-        let minute = minuteOfDay(at: date, in: timeZone)
+        let parts = calendar.dateComponents([.hour, .minute], from: date)
+        let minute = (parts.hour ?? 0) * 60 + (parts.minute ?? 0)
         return windows.contains { window in
             if window.startMinute < window.endMinute {
                 return window.days.contains(today)
@@ -85,42 +92,97 @@ public enum ClockSchedule {
         // single weekday can be a whole week out, so scan one week ahead plus
         // the day before.
         let startOfDay = calendar.startOfDay(for: date)
-        var earliest: Date?
-        for dayOffset in -1...7 {
-            guard let day = calendar.date(byAdding: .day, value: dayOffset, to: startOfDay),
+
+        // An offset jump can flip visibility with no nominal edge at all: a
+        // window starting inside a skipped hour begins at the jump itself. The
+        // API is named for daylight saving but Foundation reports plain
+        // political offset changes through it too.
+        let horizonStart = calendar.date(byAdding: .day, value: -2, to: startOfDay) ?? startOfDay
+        let horizonEnd = date.addingTimeInterval(9 * 86_400)
+        var candidates: Set<Date> = []
+        var jumps: [Date] = []
+        var cursor = horizonStart
+        while let jump = timeZone.nextDaylightSavingTimeTransition(after: cursor), jump <= horizonEnd {
+            jumps.append(jump)
+            if jump > date { candidates.insert(jump) }
+            cursor = jump
+        }
+
+        // Civil days are prepared once: `startOfDay` and day arithmetic are far
+        // too dear to repeat for every edge of every window.
+        let offsets = Array(-1...9)
+        let days = offsets.map { calendar.date(byAdding: .day, value: $0, to: startOfDay) }
+        let dayHasJump = days.indices.map { index -> Bool in
+            guard let start = days[index],
+                  let end = index + 1 < days.count ? days[index + 1] : nil else { return true }
+            return jumps.contains { $0 > start && $0 < end }
+        }
+
+        for index in offsets.indices where offsets[index] <= 8 {
+            guard let day = days[index],
                   let weekday = Weekday(calendarWeekday: calendar.component(.weekday, from: day))
             else { continue }
             for window in windows where window.days.contains(weekday) {
                 for edge in [window.startMinute, window.startMinute + window.durationMinutes] {
-                    guard let instant = instant(onDay: day, minuteOfDay: edge, calendar: calendar),
-                          instant > date else { continue }
-                    if earliest == nil || instant < earliest! { earliest = instant }
+                    // An edge past midnight belongs to the following civil day.
+                    let dayIndex = index + edge / 1_440
+                    guard dayIndex < days.count, let base = days[dayIndex] else { continue }
+                    collectRealizations(ofMinute: edge % 1_440, onDay: base, calendar: calendar,
+                                        dayHasJump: dayHasJump[dayIndex], after: date,
+                                        into: &candidates)
                 }
             }
         }
-        return earliest
+
+        // Visibility can only change at one of these instants, so it is constant
+        // between them: the first candidate whose state differs from the state
+        // now is the transition. Letting `isActive` decide keeps the two in
+        // step, so a repeated local time is offered twice, a skipped one never,
+        // and an edge hidden under another window is not reported as a change.
+        let current = isActive(at: date, windows: windows, calendar: calendar)
+        for candidate in candidates.sorted() {
+            if isActive(at: candidate, windows: windows, calendar: calendar) != current {
+                return candidate
+            }
+        }
+        return nil
     }
 
-    /// A wall-clock instant on `day`, where a minute past 1439 rolls into the
-    /// following day. Built from calendar components rather than by adding
-    /// elapsed minutes, so a DST day still puts "17:00" at 17:00 local.
-    private static func instant(onDay day: Date, minuteOfDay minute: Int,
-                                calendar: Calendar) -> Date? {
-        guard let base = minute >= 1_440
-            ? calendar.date(byAdding: .day, value: minute / 1_440, to: day)
-            : day else { return nil }
-        let inDay = minute % 1_440
-        var parts = calendar.dateComponents([.year, .month, .day], from: base)
-        parts.hour = inDay / 60
-        parts.minute = inDay % 60
-        return calendar.date(from: parts)
-    }
+    /// Adds every instant on `base` at which the local clock actually reads
+    /// `inDay` minutes past midnight.
+    ///
+    /// A repeated local hour yields two instants and a skipped one yields none,
+    /// which is exactly what `isActive` sees. Matching is strict on purpose: a
+    /// nonexistent 02:30 must not be normalized into 03:30 and reported as a
+    /// wake that the wall clock never reaches.
+    private static func collectRealizations(ofMinute inDay: Int, onDay base: Date,
+                                            calendar: Calendar, dayHasJump: Bool, after date: Date,
+                                            into candidates: inout Set<Date>) {
+        // On a day with no offset change every wall time exists exactly once, so
+        // build it from components. The strict calendar search below is an order
+        // of magnitude dearer, and almost every day is an ordinary day.
+        if !dayHasJump {
+            var parts = calendar.dateComponents([.year, .month, .day], from: base)
+            parts.hour = inDay / 60
+            parts.minute = inDay % 60
+            if let instant = calendar.date(from: parts), instant > date { candidates.insert(instant) }
+            return
+        }
 
-    static func minuteOfDay(at date: Date, in timeZone: TimeZone) -> Int {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = timeZone
-        let parts = calendar.dateComponents([.hour, .minute], from: date)
-        return (parts.hour ?? 0) * 60 + (parts.minute ?? 0)
+        var match = DateComponents()
+        match.hour = inDay / 60
+        match.minute = inDay % 60
+        match.second = 0
+
+        let searchFrom = calendar.startOfDay(for: base).addingTimeInterval(-1)
+        for policy: Calendar.RepeatedTimePolicy in [.first, .last] {
+            guard let instant = calendar.nextDate(after: searchFrom, matching: match,
+                                                  matchingPolicy: .strict,
+                                                  repeatedTimePolicy: policy,
+                                                  direction: .forward),
+                  calendar.isDate(instant, inSameDayAs: base), instant > date else { continue }
+            candidates.insert(instant)
+        }
     }
 
     private static func validWindows(_ windows: [ActiveWindow]) -> [ActiveWindow] {

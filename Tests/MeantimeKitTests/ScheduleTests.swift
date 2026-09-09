@@ -484,3 +484,191 @@ private func utc(_ year: Int, _ month: Int, _ day: Int,
         #expect(first.days == second.days)
     }
 }
+
+/// `isActive` compares local wall minutes, so a repeated local time is active
+/// twice and a skipped one never is. Transition discovery has to agree with it,
+/// or a hidden clock never gets the wake that would reveal it. See issue #14.
+@Suite struct ScheduleTransitionDSTTests {
+    let newYork = TimeZone(identifier: "America/New_York")!
+    let lordHowe = TimeZone(identifier: "Australia/Lord_Howe")!
+
+    private func utc(_ year: Int, _ month: Int, _ day: Int,
+                     _ hour: Int, _ minute: Int, _ second: Int = 0) -> Date {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        return calendar.date(from: DateComponents(
+            year: year, month: month, day: day, hour: hour, minute: minute, second: second))!
+    }
+
+    private func window(_ start: Int, _ end: Int, _ days: Set<Weekday>) -> ActiveWindow {
+        ActiveWindow(days: days, startMinute: start, endMinute: end)
+    }
+
+    /// Every returned wake must be an instant where visibility actually flips.
+    private func assertFlips(_ instant: Date, _ windows: [ActiveWindow], _ zone: TimeZone,
+                             becomes visible: Bool) {
+        let before = ClockSchedule.isActive(at: instant.addingTimeInterval(-1),
+                                            windows: windows, timeZone: zone)
+        let at = ClockSchedule.isActive(at: instant, windows: windows, timeZone: zone)
+        #expect(before != at, "no flip at \(instant)")
+        #expect(at == visible, "expected visible=\(visible) at \(instant)")
+    }
+
+    /// 2026-11-01: New York repeats 01:00-02:00. A 01:30-01:45 Sunday window is
+    /// therefore active twice, and all four edges need a wake.
+    @Test func repeatedLocalHourProducesBothOccurrences() {
+        let windows = [window(90, 105, [.sunday])]
+        let expected = [
+            utc(2026, 11, 1, 5, 30), utc(2026, 11, 1, 5, 45),
+            utc(2026, 11, 1, 6, 30), utc(2026, 11, 1, 6, 45),
+        ]
+        var cursor = utc(2026, 11, 1, 4, 0)
+        for (index, instant) in expected.enumerated() {
+            let next = ClockSchedule.nextTransition(after: cursor, windows: windows, timeZone: newYork)
+            #expect(next == instant, "step \(index): got \(String(describing: next))")
+            assertFlips(instant, windows, newYork, becomes: index % 2 == 0)
+            cursor = instant
+        }
+    }
+
+    /// The reproduction in the issue: after 05:45Z the next wake must be the
+    /// second 01:30, not the same weekday a week later.
+    @Test func theSecondOccurrenceIsNotSkippedForAWholeWeek() {
+        let windows = [window(90, 105, [.sunday])]
+        let next = ClockSchedule.nextTransition(after: utc(2026, 11, 1, 5, 45),
+                                                windows: windows, timeZone: newYork)
+        #expect(next == utc(2026, 11, 1, 6, 30))
+        #expect(ClockSchedule.isActive(at: utc(2026, 11, 1, 6, 30), windows: windows, timeZone: newYork))
+    }
+
+    /// 2026-03-08: New York skips 02:00-03:00. A 02:30-04:00 Sunday window has
+    /// no real 02:30, so it starts at the jump itself, 03:00 local = 07:00Z.
+    @Test func aStartInsideTheSpringGapWakesAtTheJump() {
+        let windows = [window(150, 240, [.sunday])]
+        let next = ClockSchedule.nextTransition(after: utc(2026, 3, 8, 6, 59),
+                                                windows: windows, timeZone: newYork)
+        #expect(next == utc(2026, 3, 8, 7, 0))
+        assertFlips(utc(2026, 3, 8, 7, 0), windows, newYork, becomes: true)
+
+        let end = ClockSchedule.nextTransition(after: utc(2026, 3, 8, 7, 0),
+                                               windows: windows, timeZone: newYork)
+        #expect(end == utc(2026, 3, 8, 8, 0))
+        assertFlips(utc(2026, 3, 8, 8, 0), windows, newYork, becomes: false)
+    }
+
+    /// A window entirely inside the skipped hour never becomes visible, so there
+    /// is nothing to wake for on that day.
+    @Test func aWindowSwallowedByTheSpringGapNeverBecomesVisible() {
+        let windows = [window(130, 170, [.sunday])] // 02:10-02:50, all skipped
+        var cursor = utc(2026, 3, 8, 5, 0)
+        for _ in 0 ..< 3 {
+            guard let next = ClockSchedule.nextTransition(after: cursor, windows: windows,
+                                                          timeZone: newYork) else { break }
+            #expect(next > utc(2026, 3, 8, 12, 0), "woke inside the skipped hour at \(next)")
+            cursor = next
+        }
+        // Nothing in the whole transition day makes it visible.
+        for minute in stride(from: 0, through: 1_439, by: 7) {
+            let instant = utc(2026, 3, 8, 0, 0).addingTimeInterval(Double(minute) * 60)
+            #expect(!ClockSchedule.isActive(at: instant, windows: windows, timeZone: newYork))
+        }
+    }
+
+    /// Lord Howe shifts by 30 minutes, so its gap and repeat are half an hour.
+    @Test func fractionalTransitionsStillFlipExactly() {
+        // 2026-10-04 local: 02:00 jumps to 02:30 (+10:30 -> +11:00).
+        let springWindows = [window(135, 300, [.sunday])] // 02:15-05:00, start skipped
+        let springWake = ClockSchedule.nextTransition(after: utc(2026, 10, 3, 15, 0),
+                                                      windows: springWindows, timeZone: lordHowe)
+        #expect(springWake == utc(2026, 10, 3, 15, 30))
+        assertFlips(utc(2026, 10, 3, 15, 30), springWindows, lordHowe, becomes: true)
+
+        // 2026-04-05 local: 02:00 falls back to 01:30, repeating 01:30-02:00.
+        let fallWindows = [window(105, 115, [.sunday])] // 01:45-01:55, happens twice
+        var cursor = utc(2026, 4, 4, 14, 0)
+        var wakes: [Date] = []
+        for _ in 0 ..< 4 {
+            guard let next = ClockSchedule.nextTransition(after: cursor, windows: fallWindows,
+                                                          timeZone: lordHowe) else { break }
+            wakes.append(next)
+            cursor = next
+        }
+        #expect(wakes.count == 4, "expected four flips, got \(wakes)")
+        for (index, wake) in wakes.enumerated() {
+            assertFlips(wake, fallWindows, lordHowe, becomes: index % 2 == 0)
+        }
+    }
+
+    /// An edge covered by another window is not a visibility change, so it must
+    /// not be reported as one.
+    @Test func anEdgeMaskedByAnotherWindowIsNotAFlip() {
+        let windows = [
+            window(540, 720, Weekday.everyDay),  // 09:00-12:00
+            window(660, 840, Weekday.everyDay),  // 11:00-14:00, overlaps deliberately
+        ]
+        // Overlapping windows are invalid at edit time but can exist in storage;
+        // runtime keeps both, and visibility is their union.
+        let next = ClockSchedule.nextTransition(after: utc(2026, 7, 22, 13, 0),
+                                                windows: windows, timeZone: newYork)
+        let instant = try! #require(next)
+        assertFlips(instant, windows, newYork, becomes: ClockSchedule.isActive(
+            at: instant, windows: windows, timeZone: newYork))
+        // 12:00, the first window's end, is inside the second: never a wake.
+        #expect(instant != utc(2026, 7, 22, 16, 0))
+    }
+
+    @Test func midnightBoundsAndOvernightOwnershipAreUnchanged() {
+        let untilMidnight = [window(1_320, 1_440, [.saturday])] // Sat 22:00-24:00
+        let next = ClockSchedule.nextTransition(after: utc(2026, 7, 25, 0, 0),
+                                                windows: untilMidnight, timeZone: newYork)
+        #expect(next == utc(2026, 7, 26, 2, 0)) // Sat 22:00 EDT
+        assertFlips(utc(2026, 7, 26, 2, 0), untilMidnight, newYork, becomes: true)
+
+        let overnight = [window(1_320, 360, [.friday])] // Fri 22:00-06:00 Sat
+        let start = ClockSchedule.nextTransition(after: utc(2026, 7, 24, 0, 0),
+                                                 windows: overnight, timeZone: newYork)
+        #expect(start == utc(2026, 7, 25, 2, 0))
+        let end = ClockSchedule.nextTransition(after: utc(2026, 7, 25, 2, 0),
+                                               windows: overnight, timeZone: newYork)
+        #expect(end == utc(2026, 7, 25, 10, 0)) // Sat 06:00 EDT
+    }
+
+    @Test func anEdgeAFullWeekAwayIsStillFound() {
+        let windows = [window(540, 600, [.wednesday])]
+        let next = ClockSchedule.nextTransition(after: utc(2026, 7, 22, 14, 0),
+                                                windows: windows, timeZone: newYork)
+        #expect(next == utc(2026, 7, 29, 13, 0)) // next Wednesday 09:00 EDT
+    }
+
+    /// The planner seam: with nothing else visible, the schedule's transition is
+    /// the only reason to wake, and it must survive to the planner.
+    @Test func aHiddenClocksTransitionSurvivesToThePlanner() {
+        let fall = [window(90, 105, [.sunday])]
+        let fallNow = utc(2026, 11, 1, 5, 45)
+        let fallTransition = ClockSchedule.nextTransition(after: fallNow, windows: fall, timeZone: newYork)
+        #expect(ClockUpdatePlanner.nextUpdate(after: fallNow, visible: [],
+                                              transitions: [fallTransition].compactMap { $0 })
+                == utc(2026, 11, 1, 6, 30))
+
+        let spring = [window(150, 240, [.sunday])]
+        let springNow = utc(2026, 3, 8, 6, 59)
+        let springTransition = ClockSchedule.nextTransition(after: springNow, windows: spring, timeZone: newYork)
+        #expect(ClockUpdatePlanner.nextUpdate(after: springNow, visible: [],
+                                              transitions: [springTransition].compactMap { $0 })
+                == utc(2026, 3, 8, 7, 0))
+    }
+
+    /// A political offset change is not a DST change, but Foundation reports it
+    /// through the same API and it can move a window's real instants.
+    @Test func aPoliticalOffsetChangeIsTreatedLikeAnyOtherJump() {
+        // Europe/Volgograd moved +04:00 to +03:00 at 2020-12-27 02:00 local.
+        let volgograd = TimeZone(identifier: "Europe/Volgograd")!
+        #expect(volgograd.nextDaylightSavingTimeTransition(after: utc(2020, 12, 1, 0, 0))
+                == utc(2020, 12, 26, 22, 0))
+        let windows = [window(120, 180, [.sunday])] // Sunday 02:00-03:00 local
+        let next = ClockSchedule.nextTransition(after: utc(2020, 12, 26, 21, 0),
+                                                windows: windows, timeZone: volgograd)
+        let instant = try! #require(next)
+        assertFlips(instant, windows, volgograd, becomes: true)
+    }
+}

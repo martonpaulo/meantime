@@ -15,6 +15,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         preferences: preferences, settingsPreview: settingsPreview)
     private var menuBar: MenuBarController?
     private var settingsWindow: SettingsWindowController?
+    /// Guards a second Quit while the first is still waiting on a prompt, so
+    /// only one termination reply is ever sent.
+    private var isResolvingTermination = false
 #if DEBUG
     private var validationPanelWindow: NSWindow?
     private var screenshotOutputURL: URL? {
@@ -43,6 +46,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         if CommandLine.arguments.contains("--diagnose-schedule-analysis") {
             let passed = ScheduleAnalysisDiagnostic.run()
+            print(passed ? "ALL CHECKS PASSED" : "CHECKS FAILED")
+            NSApp.terminate(nil)
+            return
+        }
+        if CommandLine.arguments.contains("--diagnose-quit-drafts") {
+            let passed = QuitDraftsDiagnostic.run()
             print(passed ? "ALL CHECKS PASSED" : "CHECKS FAILED")
             NSApp.terminate(nil)
             return
@@ -84,6 +93,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             showValidationPanel()
         }
 #endif
+    }
+
+    /// Quit must offer the same Save / Discard / Cancel decision that closing
+    /// Settings does: clock and appearance edits are transient until saved, so
+    /// terminating without asking loses them silently.
+    ///
+    /// `applicationWillTerminate` is too late to take back consent, so this uses
+    /// the public terminate-later reply and answers it exactly once.
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard let settingsWindow, settingsWindow.hasPendingDrafts else { return .terminateNow }
+        guard !isResolvingTermination else { return .terminateCancel }
+        isResolvingTermination = true
+        settingsWindow.resolvePendingDrafts { [weak self] shouldQuit in
+            self?.isResolvingTermination = false
+            sender.reply(toApplicationShouldTerminate: shouldQuit)
+        }
+        return .terminateLater
     }
 
     // MARK: Windows

@@ -8,6 +8,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Quitting with unsaved changes now asks. Editing a clock label or the menu-bar format and then pressing Command-Q used to throw the change away without a word; Meantime now offers the same Save, Discard, and Cancel choice that closing Settings does, and Cancel keeps both the app and your edit.
 - Settings now tells you when opening Meantime at login is waiting for your approval, with a button that takes you straight to Login Items, instead of showing the switch as simply off. It also re-reads the real state when you come back from System Settings or return to the General pane, and says which action failed rather than always blaming a failed registration.
 - Custom formats built only from a day period or a time-zone name now refresh when they change instead of staying stale until midnight. `a` flips at noon, the localized `b` and `B` follow your locale's own periods, `z` and the other zone fields update when the offset changes, and `A` ticks once a second. Formats that already show minutes or hours are unaffected, and none of these starts a faster timer.
 - The dropdown panel always shows a complete time again. A custom menu-bar format that leaves out the hour or the minute, such as `ss` or `HH:ss`, used to be reused in the panel, where `HH:ss` displayed 09:30 at 09:47:30. The panel now falls back to your Mac's short time for those, while the menu bar keeps rendering your pattern exactly as written.

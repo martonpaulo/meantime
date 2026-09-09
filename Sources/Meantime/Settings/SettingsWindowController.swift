@@ -14,6 +14,11 @@ enum SettingsPane: Int {
 /// app's Window menu; the selected pane persists across launches.
 @MainActor
 final class SettingsWindowController: NSObject, NSWindowDelegate {
+    /// The Save / Discard / Cancel prompts. Injectable so the termination
+    /// fixture can answer them; the app always uses the native sheets.
+    var confirmations: DraftConfirmations = .native
+    private var isResolvingPendingDrafts = false
+
     private var window: NSWindow?
     private var tabs: SettingsTabViewController?
     private let preferences: Preferences
@@ -31,6 +36,69 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         self.formatter = formatter
         self.updateManager = updateManager
         super.init()
+    }
+
+#if DEBUG
+    /// Debug-only: gives the termination fixture a window to host prompts on,
+    /// without going through `show()` and its reopening discard path.
+    func attachForTesting(window: NSWindow) {
+        self.window = window
+    }
+#endif
+
+    /// True when quitting or closing now would silently drop a draft.
+    var hasPendingDrafts: Bool {
+        clockEditingSession.hasUnsavedChanges || settingsPreview.hasAppearanceChanges
+    }
+
+    /// Resolves every pending draft through the same prompts a window close or
+    /// pane switch uses, then reports whether leaving may proceed.
+    ///
+    /// Clock drafts are resolved first, appearance second. A Save accepted for
+    /// the first is a real saved action even if the second is cancelled: this is
+    /// not an atomic multi-draft transaction, and pretending otherwise would
+    /// mean undoing something the user explicitly asked for.
+    func resolvePendingDrafts(completion: @escaping (Bool) -> Void) {
+        // Repeated Quit while a sheet is up must not stack a second prompt.
+        guard !isResolvingPendingDrafts else { completion(false); return }
+        guard let window else { completion(true); return }
+        isResolvingPendingDrafts = true
+
+        // Bring the window forward directly: `show()` would take the reopening
+        // path, which discards exactly the clock draft we are asking about.
+        NSApp.activate()
+        window.makeKeyAndOrderFront(nil)
+
+        resolveClockDraft(in: window) { [weak self] proceed in
+            guard let self else { return }
+            guard proceed else { finishResolving(false, completion); return }
+            resolveAppearanceDraft(in: window) { [weak self] proceed in
+                self?.finishResolving(proceed, completion)
+            }
+        }
+    }
+
+    private func resolveClockDraft(in window: NSWindow, completion: @escaping (Bool) -> Void) {
+        guard clockEditingSession.hasUnsavedChanges else { completion(true); return }
+        confirmations.clock(window, clockEditingSession) { [weak self] shouldLeave in
+            guard let self else { return completion(false) }
+            // Postcondition: a Save that did not actually clear the draft (an
+            // invalid one) must not be treated as permission to leave.
+            completion(shouldLeave && !clockEditingSession.hasUnsavedChanges)
+        }
+    }
+
+    private func resolveAppearanceDraft(in window: NSWindow, completion: @escaping (Bool) -> Void) {
+        guard settingsPreview.hasAppearanceChanges else { completion(true); return }
+        confirmations.appearance(window, settingsPreview) { [weak self] shouldLeave in
+            guard let self else { return completion(false) }
+            completion(shouldLeave && !settingsPreview.hasAppearanceChanges)
+        }
+    }
+
+    private func finishResolving(_ proceed: Bool, _ completion: @escaping (Bool) -> Void) {
+        isResolvingPendingDrafts = false
+        completion(proceed)
     }
 
     func show(pane: SettingsPane? = nil) {
@@ -62,7 +130,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         if clockEditingSession.hasUnsavedChanges {
-            confirmUnsavedClock(in: sender, session: clockEditingSession) { shouldLeave in
+            confirmations.clock(sender, clockEditingSession) { shouldLeave in
                 if shouldLeave { sender.performClose(nil) }
             }
             return false
@@ -74,7 +142,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
             settingsPreview.discardAppearance()
             return true
         }
-        confirmUnsavedAppearance(in: sender, settingsPreview: settingsPreview) { shouldLeave in
+        confirmations.appearance(sender, settingsPreview) { shouldLeave in
             if shouldLeave { sender.performClose(nil) }
         }
         return false
@@ -88,6 +156,7 @@ final class SettingsTabViewController: NSTabViewController {
 
     private let settingsPreview: SettingsPreview
     private let clockEditingSession: ClockEditingSession
+    var confirmations: DraftConfirmations = .native
 
     init(preferences: Preferences, settingsPreview: SettingsPreview,
          clockEditingSession: ClockEditingSession,
@@ -147,7 +216,7 @@ final class SettingsTabViewController: NSTabViewController {
         if tabView.selectedTabViewItem?.label == "Clocks",
            clockEditingSession.hasUnsavedChanges,
            let window = view.window {
-            confirmUnsavedClock(in: window, session: clockEditingSession) { shouldLeave in
+            confirmations.clock(window, clockEditingSession) { shouldLeave in
                 if shouldLeave { tabView.selectTabViewItem(tabViewItem) }
             }
             return false
@@ -164,7 +233,7 @@ final class SettingsTabViewController: NSTabViewController {
         }
         guard let window = view.window else { return true }
 
-        confirmUnsavedAppearance(in: window, settingsPreview: settingsPreview) { shouldLeave in
+        confirmations.appearance(window, settingsPreview) { shouldLeave in
             if shouldLeave { tabView.selectTabViewItem(tabViewItem) }
         }
         return false
@@ -174,7 +243,7 @@ final class SettingsTabViewController: NSTabViewController {
 /// Native Save / Discard / Cancel prompt shared by tab changes and window
 /// closing. Save is unavailable while a custom pattern is structurally invalid.
 @MainActor
-private func confirmUnsavedAppearance(in window: NSWindow, settingsPreview: SettingsPreview,
+func confirmUnsavedAppearance(in window: NSWindow, settingsPreview: SettingsPreview,
                                       completion: @escaping (Bool) -> Void) {
     let alert = NSAlert()
     alert.messageText = "Save changes to Format?"
@@ -201,7 +270,7 @@ private func confirmUnsavedAppearance(in window: NSWindow, settingsPreview: Sett
 
 /// Native Save / Discard / Cancel prompt for the inline clock editor.
 @MainActor
-private func confirmUnsavedClock(in window: NSWindow, session: ClockEditingSession,
+func confirmUnsavedClock(in window: NSWindow, session: ClockEditingSession,
                                  completion: @escaping (Bool) -> Void) {
     let alert = NSAlert()
     alert.messageText = session.draft?.isNew == true
@@ -225,6 +294,19 @@ private func confirmUnsavedClock(in window: NSWindow, session: ClockEditingSessi
             completion(false)
         }
     }
+}
+
+/// The Save / Discard / Cancel prompts, as functions, so every entrypoint that
+/// can lose a draft shares one behavior and a fixture can answer them without a
+/// person clicking a sheet.
+@MainActor
+struct DraftConfirmations {
+    var clock: (NSWindow, ClockEditingSession, @escaping (Bool) -> Void) -> Void
+    var appearance: (NSWindow, SettingsPreview, @escaping (Bool) -> Void) -> Void
+
+    static let native = DraftConfirmations(
+        clock: { confirmUnsavedClock(in: $0, session: $1, completion: $2) },
+        appearance: { confirmUnsavedAppearance(in: $0, settingsPreview: $1, completion: $2) })
 }
 
 extension Notification.Name {

@@ -1,0 +1,24 @@
+# Cheap gate: repository invariants and the format-builder behavior tests. No
+# compiler, so it is a good fit for every change, including documentation and
+# website work. Runs on macOS because the invariants use PlistBuddy and sips.
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Repository invariants
+        run: bash scripts/validate.sh

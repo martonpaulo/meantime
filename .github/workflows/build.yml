@@ -1,0 +1,45 @@
+# Expensive gate: a warning-free release build and the domain-kit test suite.
+# It can only observe Swift sources, the package manifest, and the packaged app
+# resources, so it is limited to the paths that change what it compiles. A
+# documentation or website change cannot alter this result, and the Validate
+# workflow still runs for those.
+name: Build and Test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Sources/**"
+      - "Tests/**"
+      - "Package.swift"
+      - "Package.resolved"
+      - "Support/**"
+      - "Makefile"
+      - ".github/workflows/build.yml"
+  pull_request:
+    paths:
+      - "Sources/**"
+      - "Tests/**"
+      - "Package.swift"
+      - "Package.resolved"
+      - "Support/**"
+      - "Makefile"
+      - ".github/workflows/build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build (release, warning-free)
+        run: swift build -c release
+      - name: Tests
+        run: swift test

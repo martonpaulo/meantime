@@ -18,13 +18,10 @@ struct PanelRow: Identifiable {
 /// caption ("Tomorrow", "Yesterday", or a weekday) that makes world clocks
 /// readable at a glance.
 enum PanelRowFormatter {
-    /// Panel rows always show a complete time of day. A menu-bar format coarser
-    /// than minutes (hour-only, weekday-only) falls back to the system short
-    /// time here; formats that already include minutes are honored as-is.
+    /// Panel rows always show a complete time of day; the domain owns what
+    /// counts as complete.
     static func effectiveFormat(_ format: TimeFormat) -> TimeFormat {
-        TimeGranularity.finest(renderMode: .timeOnly, format: format) >= .minute
-            ? format
-            : .system
+        format.completeTimeOfDay
     }
 
     static func rows(clocks: [WorldClock], at date: Date, format menuBarFormat: TimeFormat,

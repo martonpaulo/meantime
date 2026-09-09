@@ -31,7 +31,7 @@ permissions, and non-preference state are untouched as well.
 | Element spacing | 4 pt | yes | 0–12 pt |
 | Open at login | off | yes | owned by the system login-item service, not stored in preferences; survives Restore Defaults |
 | Automatic update checks | on (release builds) | yes | persisted by Sparkle itself; manual check always available; survives Restore Defaults |
-| Panel row time | complete time (min. minutes) | no | a coarser menu-bar format falls back to system short time in the panel: a glance surface must answer "what time is it" fully |
+| Panel row time | complete time of day | no | a custom menu-bar pattern is used in the panel only when it shows both an hour and a minute; anything else falls back to system short time, because a glance surface must answer "what time is it" fully. How often a pattern changes is not the test: `ss` changes every second and states no time at all |
 | Time-travel preview | now | transient | day + typed time; resets every time the panel opens; never persisted |
 | Calendar browsing | current month | transient | six stable week rows, locale-aware weekends, month/year navigation, labeled Today action |
 | Update cadence | boundary-aligned to the coarsest visible unit, plus schedule transitions | no | correctness + energy behavior; a single valid outcome |

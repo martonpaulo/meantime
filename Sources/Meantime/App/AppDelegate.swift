@@ -47,6 +47,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.terminate(nil)
             return
         }
+        if CommandLine.arguments.contains("--diagnose-panel-format") {
+            let passed = PanelFormatDiagnostic.run()
+            print(passed ? "ALL CHECKS PASSED" : "CHECKS FAILED")
+            NSApp.terminate(nil)
+            return
+        }
         prepareValidationData()
 #endif
         let actions = PanelActions(

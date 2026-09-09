@@ -8,6 +8,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- The dropdown panel always shows a complete time again. A custom menu-bar format that leaves out the hour or the minute, such as `ss` or `HH:ss`, used to be reused in the panel, where `HH:ss` displayed 09:30 at 09:47:30. The panel now falls back to your Mac's short time for those, while the menu bar keeps rendering your pattern exactly as written.
 - A scheduled clock now appears and disappears correctly on daylight-saving days. When the local clock repeats an hour the clock is shown for both passes, when the hour it was due to appear is skipped it appears at the jump instead, and a window that falls entirely inside a skipped hour correctly never appears.
 - The panel calendar shows the right month when your Mac uses a calendar whose year numbers repeat, such as the Japanese calendar. Browsing back into an earlier era used to jump the grid decades into the future, and picking a day from it travelled to the wrong date.
 - Copying a pattern from the Format Builder no longer fails silently when the browser refuses clipboard access: the builder says so, selects the pattern so it can be copied by hand, and only claims success after the clipboard actually accepted it.

@@ -27,21 +27,14 @@ public enum TimeGranularity: Int, Comparable, Sendable, CaseIterable {
     public static func from(pattern: String) -> TimeGranularity {
         let fields = patternFields(in: pattern)
         if fields.contains(where: { "sS".contains($0) }) { return .second }
-        if fields.contains("m") { return .minute }
-        if fields.contains(where: { "HhKk".contains($0) }) { return .hour }
+        if TimeFormatPattern.showsMinute(fields) { return .minute }
+        if TimeFormatPattern.showsHour(fields) { return .hour }
         // Only date fields (weekday/day/month/year): changes at the day boundary.
         return .day
     }
 
     /// Pattern letters that lie outside single-quoted literals.
     static func patternFields(in pattern: String) -> Set<Character> {
-        var fields: Set<Character> = []
-        var insideLiteral = false
-        for character in pattern {
-            if character == "'" { insideLiteral.toggle(); continue }
-            if insideLiteral { continue }
-            if character.isLetter { fields.insert(character) }
-        }
-        return fields
+        TimeFormatPattern.fields(in: pattern)
     }
 }

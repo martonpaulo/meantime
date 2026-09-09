@@ -114,3 +114,76 @@ private func utc(_ year: Int, _ month: Int, _ day: Int,
         }
     }
 }
+
+/// A panel row must answer "what time is it". How often a pattern changes says
+/// nothing about what it displays, so cadence cannot decide completeness:
+/// `HH:ss` ticks every second and still renders 09:30 at 09:47:30. See #16.
+@Suite struct CompleteTimeOfDayTests {
+    let instant = ISO8601DateFormatter().date(from: "2026-07-23T09:47:30Z")!
+    let utc = TimeZone(identifier: "UTC")!
+    let british = Locale(identifier: "en_GB")
+
+    private func rendered(_ format: TimeFormat) -> String {
+        let clock = WorldClock(timeZoneID: "UTC")
+        return ClockFormatter().string(for: instant, clock: clock,
+                                       format: format.completeTimeOfDay, locale: british)
+    }
+
+    private var systemShortTime: String {
+        ClockFormatter().string(for: instant, clock: WorldClock(timeZoneID: "UTC"),
+                                format: .system, locale: british)
+    }
+
+    @Test func patternsMissingAnHourOrMinuteFallBackToSystemTime() {
+        for pattern in ["mm", "ss", "HH:ss", "HH", "h a", "EEE", "yyyy-MM-dd", "s.SSS"] {
+            #expect(TimeFormat.custom(pattern).completeTimeOfDay == .system, "\(pattern)")
+            #expect(rendered(.custom(pattern)) == systemShortTime, "\(pattern)")
+        }
+    }
+
+    @Test func quotedLettersAreNotFields() {
+        // The letters here are literal text, so neither pattern states the time.
+        #expect(TimeFormat.custom("HH 'mm'").completeTimeOfDay == .system)
+        #expect(TimeFormat.custom("'HH' mm").completeTimeOfDay == .system)
+        #expect(TimeFormat.custom("'HH:mm'").completeTimeOfDay == .system)
+        // A doubled apostrophe is a literal apostrophe, not a quote toggle.
+        #expect(TimeFormat.custom("'it''s' HH").completeTimeOfDay == .system)
+        #expect(TimeFormat.custom("'it''s' HH:mm").completeTimeOfDay == .custom("'it''s' HH:mm"))
+    }
+
+    @Test func completePatternsAreKeptVerbatim() {
+        for pattern in ["HH:mm", "H:m", "h:mm a", "K:mm a", "k:mm", "HH:mm:ss",
+                        "EEEE, MMMM d, yyyy 'at' h:mm a", "HH'h'mm"] {
+            #expect(TimeFormat.custom(pattern).completeTimeOfDay == .custom(pattern), "\(pattern)")
+            #expect(rendered(.custom(pattern)) != systemShortTime || pattern == "HH:mm", "\(pattern)")
+        }
+        #expect(TimeFormat.system.completeTimeOfDay == .system)
+    }
+
+    /// The exact case from the report: 09:47:30 must never render as 09:30.
+    @Test func hourAndSecondsNeverRenderAsAWrongTime() {
+        #expect(rendered(.custom("HH:ss")) != "09:30")
+        #expect(rendered(.custom("HH:ss")) == systemShortTime)
+        // The stored setting itself is untouched, so the menu bar still obeys it.
+        let stored = TimeFormat.custom("HH:ss")
+        #expect(stored.customPattern == "HH:ss")
+        let menuBar = ClockFormatter().string(for: instant, clock: WorldClock(timeZoneID: "UTC"),
+                                              format: stored, locale: british)
+        #expect(menuBar == "09:30")
+    }
+
+    /// Cadence follows the format the surface actually renders, so an
+    /// incomplete seconds pattern no longer makes the panel wake every second.
+    @Test func panelCadenceFollowsTheEffectiveFormat() {
+        #expect(TimeGranularity.finest(renderMode: .timeOnly,
+                                       format: TimeFormat.custom("ss").completeTimeOfDay) == .minute)
+        #expect(TimeGranularity.finest(renderMode: .timeOnly,
+                                       format: TimeFormat.custom("HH:ss").completeTimeOfDay) == .minute)
+        // A complete seconds pattern keeps its second cadence.
+        #expect(TimeGranularity.finest(renderMode: .timeOnly,
+                                       format: TimeFormat.custom("HH:mm:ss").completeTimeOfDay) == .second)
+        // The menu bar keeps the user's own cadence for the same patterns.
+        #expect(TimeGranularity.finest(renderMode: .timeOnly, format: .custom("ss")) == .second)
+        #expect(TimeGranularity.finest(renderMode: .timeOnly, format: .custom("HH:ss")) == .second)
+    }
+}

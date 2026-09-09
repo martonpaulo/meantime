@@ -45,32 +45,3 @@ public enum TimeFormatPreset: String, CaseIterable, Sendable, Identifiable {
         allCases.first { $0.format == format } ?? .custom
     }
 }
-
-/// Minimal structural validation for a UTS-35 pattern. Field vocabulary stays
-/// unrestricted so advanced patterns documented by Unicode remain available.
-public enum TimeFormatPattern {
-    public static func isValid(_ pattern: String) -> Bool {
-        guard !pattern.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return false
-        }
-        guard UserInputPolicy.isWithinPatternLimit(pattern) else { return false }
-
-        var insideLiteral = false
-        var index = pattern.startIndex
-        while index < pattern.endIndex {
-            guard pattern[index] == "'" else {
-                index = pattern.index(after: index)
-                continue
-            }
-
-            let next = pattern.index(after: index)
-            if next < pattern.endIndex, pattern[next] == "'" {
-                index = pattern.index(after: next)
-            } else {
-                insideLiteral.toggle()
-                index = next
-            }
-        }
-        return !insideLiteral
-    }
-}

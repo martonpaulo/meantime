@@ -1,14 +1,14 @@
 import SwiftUI
 import MeantimeKit
 
-/// Startup, updates, and reset. Launch-at-login reflects the real system state
-/// so an external change (System Settings) stays in sync.
+/// Startup, updates, and reset. Launch-at-login renders the real system status,
+/// including a registration still waiting for the user's approval, and re-reads
+/// it whenever the user could have changed it in System Settings.
 struct GeneralPane: View {
     @Environment(Preferences.self) private var preferences
     let updateManager: UpdateManager
 
-    @State private var launchAtLogin = LoginItem.isEnabled
-    @State private var launchAtLoginFailed = false
+    @State private var loginItem = LoginItem()
     @State private var restoreConfirmationShown = false
     @State private var automaticChecks: Bool
 
@@ -22,18 +22,31 @@ struct GeneralPane: View {
     var body: some View {
         Form {
             Section {
-                Toggle("Open Meantime at login", isOn: $launchAtLogin)
-                    .onChange(of: launchAtLogin) { _, newValue in
-                        do {
-                            try LoginItem.setEnabled(newValue)
-                            launchAtLoginFailed = false
-                        } catch {
-                            launchAtLoginFailed = true
-                        }
-                        launchAtLogin = LoginItem.isEnabled
+                // The setter runs only on an explicit user action; rendering and
+                // refreshing never register or unregister anything.
+                Toggle("Open Meantime at login", isOn: Binding(
+                    get: { loginItem.status == .enabled },
+                    set: { loginItem.request(enabled: $0) }))
+                    .disabled(loginItem.status == .unavailable)
+
+                if loginItem.status == .requiresApproval {
+                    LabeledContent {
+                        Button("Open Login Items…") { loginItem.openLoginItemsSettings() }
+                    } label: {
+                        Text("Waiting for your approval in System Settings. Meantime will not open at login until you allow it.")
+                            .font(Token.Font.secondary)
+                            .foregroundStyle(Token.Color.secondaryText)
                     }
-                if launchAtLoginFailed {
-                    Text("Meantime couldn't be added to Login Items. Move it to Applications, then try again.")
+                }
+                if loginItem.status == .unavailable {
+                    Text("Login Items are available in an installed release of Meantime, not in development builds.")
+                        .font(Token.Font.secondary)
+                        .foregroundStyle(Token.Color.secondaryText)
+                }
+                if let failure = loginItem.lastFailure {
+                    Text(failure == .enable
+                         ? "Meantime couldn't be added to Login Items. Move it to Applications, then try again."
+                         : "Meantime couldn't be removed from Login Items. Remove it in System Settings instead.")
                         .font(Token.Font.secondary)
                         .foregroundStyle(Token.Color.secondaryText)
                 }
@@ -80,5 +93,14 @@ struct GeneralPane: View {
         .formStyle(.grouped)
         .scrollIndicators(.hidden)
         .frame(width: Token.Size.paneWidth, height: Token.Size.paneHeight)
+        // The system owns this consent, so re-read it whenever the user could
+        // have changed it elsewhere: on first presentation, on returning to this
+        // retained pane, and on coming back from System Settings. Reads only:
+        // no timer, no polling, and never a registration.
+        .onAppear { loginItem.refresh() }
+        .onReceive(NotificationCenter.default.publisher(
+            for: NSApplication.didBecomeActiveNotification)) { _ in loginItem.refresh() }
+        .onReceive(NotificationCenter.default.publisher(
+            for: .settingsPaneDidAppear)) { _ in loginItem.refresh() }
     }
 }

@@ -133,6 +133,10 @@ final class SettingsTabViewController: NSTabViewController {
 
     override func tabView(_ tabView: NSTabView, didSelect tabViewItem: NSTabViewItem?) {
         super.tabView(tabView, didSelect: tabViewItem)
+        // Panes are retained, so a pane returning to view gets no SwiftUI
+        // appearance callback. One notification lets a pane re-read state it
+        // does not own (system login-item consent) without polling for it.
+        NotificationCenter.default.post(name: .settingsPaneDidAppear, object: nil)
         UserDefaults.standard.set(selectedTabViewItemIndex, forKey: Self.selectedPaneKey)
     }
 
@@ -221,4 +225,10 @@ private func confirmUnsavedClock(in window: NSWindow, session: ClockEditingSessi
             completion(false)
         }
     }
+}
+
+extension Notification.Name {
+    /// Posted when a Settings pane becomes the selected one, including a return
+    /// to a pane the tab controller kept alive.
+    static let settingsPaneDidAppear = Notification.Name("meantime.settingsPaneDidAppear")
 }

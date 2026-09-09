@@ -29,7 +29,7 @@ permissions, and non-preference state are untouched as well.
 | Time format | system | yes | preset-first; Custom accepts structurally valid Unicode (UTS-35), quoted literal text, and up to 256 graphemes |
 | Menu-bar text size | 13 pt | yes | 10–18 pt |
 | Element spacing | 4 pt | yes | 0–12 pt |
-| Open at login | off | yes | owned by the system login-item service, not stored in preferences; survives Restore Defaults |
+| Open at login | off | yes | owned by the system login-item service, not stored in preferences; survives Restore Defaults. Settings shows the real status, including a registration still waiting for approval in System Settings, and re-reads it when you come back to the pane |
 | Automatic update checks | on (release builds) | yes | persisted by Sparkle itself; manual check always available; survives Restore Defaults |
 | Panel row time | complete time of day | no | a custom menu-bar pattern is used in the panel only when it shows both an hour and a minute; anything else falls back to system short time, because a glance surface must answer "what time is it" fully. How often a pattern changes is not the test: `ss` changes every second and states no time at all |
 | Time-travel preview | now | transient | day + typed time; resets every time the panel opens; never persisted |

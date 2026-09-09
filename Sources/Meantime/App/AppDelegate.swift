@@ -47,6 +47,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.terminate(nil)
             return
         }
+        if CommandLine.arguments.contains("--diagnose-login-item") {
+            let passed = LoginItemDiagnostic.run()
+            print(passed ? "ALL CHECKS PASSED" : "CHECKS FAILED")
+            NSApp.terminate(nil)
+            return
+        }
         if CommandLine.arguments.contains("--diagnose-update-plan") {
             let passed = UpdatePlanDiagnostic.run()
             print(passed ? "ALL CHECKS PASSED" : "CHECKS FAILED")

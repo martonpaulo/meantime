@@ -6,6 +6,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-09-09
+
 ### Fixed
 
 - Quitting with unsaved changes now asks. Editing a clock label or the menu-bar format and then pressing Command-Q used to throw the change away without a word; Meantime now offers the same Save, Discard, and Cancel choice that closing Settings does, and Cancel keeps both the app and your edit.

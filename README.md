@@ -1,12 +1,13 @@
 <div align="center">
 
-<img src="docs/assets/app-icon.png" width="128" alt="Meantime app icon">
+<img src="docs/assets/app-icon-280.png" width="128" alt="Meantime app icon">
 
 # Meantime
 
 **World clocks in your macOS menu bar.**
 
-[![CI](https://github.com/martonpaulo/meantime/actions/workflows/ci.yml/badge.svg)](https://github.com/martonpaulo/meantime/actions/workflows/ci.yml)
+[![Validate](https://github.com/martonpaulo/meantime/actions/workflows/validate.yml/badge.svg)](https://github.com/martonpaulo/meantime/actions/workflows/validate.yml)
+[![Build and Test](https://github.com/martonpaulo/meantime/actions/workflows/build.yml/badge.svg)](https://github.com/martonpaulo/meantime/actions/workflows/build.yml)
 [![Release](https://img.shields.io/github/v/release/martonpaulo/meantime)](https://github.com/martonpaulo/meantime/releases/latest)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B-blue)](#install)
 [![MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -40,7 +41,7 @@ Open it, drag Meantime onto Applications, launch. Done: it updates itself.
 | ✏️ **Your format, your pattern** | Start with a common preset, write any Unicode pattern, or assemble one visually in the [interactive format builder](https://martonpaulo.com/meantime/format.html) |
 | 🏷️ **Labels & leading items** | "Mom", "Tokyo Office": any name, with a country flag, custom emoji, custom text, or nothing before it |
 | 🌐 **Every system time zone** | Place zones, UTC/GMT, and stable fixed-offset IANA identifiers |
-| 🚀 **Open at login** | Set it once, forget it |
+| 🚀 **Open at login** | Set it once, forget it. Settings shows the real system state, including a registration still waiting for your approval |
 
 ## 🔋 Fast and honest about energy
 
@@ -60,7 +61,8 @@ Meantime ever makes is checking this repository for updates ([Sparkle](https://s
 Native toolbar panes keep clock management, format presets, appearance,
 startup, updates, and app information separate. New clocks remain drafts until
 Add Clock; later edits stay inside Settings, preview live, and remain unsaved
-until Save. Leaving a dirty editor always offers commit, discard, and cancel.
+until Save. Leaving a dirty editor always offers commit, discard, and cancel:
+switching panes, closing the window, and quitting the app all ask.
 
 ## 🛠 Build from source
 
@@ -73,6 +75,11 @@ make dmg    # the full installer DMG
 `make` with no target lists everything. Docs: [architecture](docs/architecture.md) ·
 [UI patterns](docs/ui-patterns.md) · [feature defaults](docs/feature-defaults.md) ·
 [agent policy](AGENTS.md).
+
+CI is split by what each workflow can actually observe: **Validate** runs the
+repository invariants and the format-builder tests for every change, and
+**Build and Test** runs the warning-free release build and the suite only when
+Swift sources, the package manifest, or the packaged app resources change.
 
 Website acceptance covers Chromium and WebKit/Safari. `make check` covers domain
 and JavaScript behavior; browser layout, clipboard permissions, and assistive

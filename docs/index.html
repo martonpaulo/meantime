@@ -6,15 +6,44 @@
   <meta name="color-scheme" content="light dark">
   <title>Meantime | World clocks in your menu bar</title>
   <meta name="description" content="A native macOS menu bar app for world clocks: scheduled clocks, a quick month calendar, time travel, and a fully buildable time format.">
+  <meta name="theme-color" content="#f7f9ff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b0e1a" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://martonpaulo.com/meantime/">
   <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="apple-touch-icon" href="assets/app-icon.png">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Meantime">
+  <meta property="og:locale" content="en_US">
   <meta property="og:title" content="Meantime | World clocks in your menu bar">
-  <meta property="og:description" content="A native macOS menu bar app for world clocks.">
+  <meta property="og:description" content="A native macOS menu bar app for world clocks: scheduled clocks, a quick month calendar, time travel, and a fully buildable time format.">
   <meta property="og:url" content="https://martonpaulo.com/meantime/">
-  <meta property="og:image" content="https://martonpaulo.com/meantime/assets/app-icon.png">
+  <meta property="og:image" content="https://martonpaulo.com/meantime/assets/social-card.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Meantime: world clocks in your menu bar">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Meantime | World clocks in your menu bar">
+  <meta name="twitter:description" content="A native macOS menu bar app for world clocks: scheduled clocks, a quick month calendar, time travel, and a fully buildable time format.">
+  <meta name="twitter:image" content="https://martonpaulo.com/meantime/assets/social-card.jpg">
+  <meta name="twitter:image:alt" content="Meantime: world clocks in your menu bar">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Meantime",
+    "url": "https://martonpaulo.com/meantime/",
+    "description": "A native macOS menu bar app for world clocks: scheduled clocks, a quick month calendar, time travel, and a fully buildable time format.",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "macOS 26 or later",
+    "image": "https://martonpaulo.com/meantime/assets/social-card.jpg",
+    "screenshot": "https://martonpaulo.com/meantime/screenshots/panel.webp",
+    "downloadUrl": "https://github.com/martonpaulo/meantime/releases/latest",
+    "license": "https://opensource.org/licenses/MIT",
+    "author": { "@type": "Person", "name": "Marton Paulo" },
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
   <link rel="preload" as="image" href="screenshots/panel.webp" fetchpriority="high">
   <link rel="stylesheet" href="styles/main.css">
 </head>
@@ -22,7 +51,7 @@
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header" aria-label="Primary navigation">
     <a class="brand" href="#top" aria-label="Meantime home" aria-current="page">
-      <img src="assets/app-icon.png" width="36" height="36" alt="">
+      <img src="assets/app-icon-72.png" width="36" height="36" alt="">
       <span>Meantime</span>
     </a>
     <nav aria-label="Page sections">
@@ -35,7 +64,7 @@
 
   <main id="main">
     <section class="hero" id="top" aria-labelledby="hero-title">
-      <img class="hero-icon" src="assets/app-icon.png" width="140" height="140" alt="Meantime application icon">
+      <img class="hero-icon" src="assets/app-icon-280.png" width="140" height="140" alt="Meantime application icon">
       <p class="eyebrow">A native menu bar app for macOS</p>
       <h1 id="hero-title">World clocks in your menu bar.</h1>
       <p class="hero-summary">Keep colleagues, family, and travel plans one glance away, with a quick calendar and time travel built in.</p>
@@ -73,7 +102,7 @@
     </section>
 
     <section class="section download" id="download" aria-labelledby="download-title">
-      <img src="assets/app-icon.png" alt="" width="96" height="96">
+      <img src="assets/app-icon-280.png" alt="" width="96" height="96" loading="lazy" decoding="async">
       <p class="eyebrow">Latest stable release</p>
       <h2 id="download-title">Get Meantime</h2>
       <div class="actions">

@@ -34,7 +34,7 @@ check: ## Build + test + validate
 
 # -- Assets -------------------------------------------------------------------
 
-.PHONY: icon installer-assets regions
+.PHONY: icon installer-assets regions web-assets screenshots
 
 icon: ## Regenerate the app icon (Support/AppIcon.icns)
 	@$(SWIFT) scripts/make-icon.swift
@@ -45,6 +45,9 @@ installer-assets: icon ## Regenerate the DMG volume icon and background art
 
 regions: ## Regenerate the time-zone → region table from the system tz database
 	@bash scripts/make-regions.sh
+
+web-assets: ## Regenerate the social card and the website's app-icon sizes
+	@$(SWIFT) scripts/render-web-assets.swift
 
 screenshots: ## Refresh README/website screenshots from the real app
 	@bash scripts/capture-screenshots.sh

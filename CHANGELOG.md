@@ -22,6 +22,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- The website now carries complete metadata for search engines and link previews: a 1200x630 social card, full Open Graph and Twitter tags, JSON-LD, a sitemap, robots.txt, and a theme colour for light and dark. The app icon is served at the size each slot needs rather than at 512px everywhere.
 - The screenshots in the README and on the website are captures of the real windows now, so they carry the Mac's own shadow, corner radius and material instead of a flat render of the same view. They ship as lossless WebP: identical pixels, about 2.4 MB less to download.
 - The clock editor stays responsive with a long schedule. Offering the next Add Hours row for a twenty-window schedule took about 245 ms of the main thread and ran again on every keystroke in the label field; it now takes about 5 ms and only runs when the schedule itself changes.
 - Settings helper and caption text now reads its typography and colour from the shared secondary tokens, so a future change to those tokens reaches every surface at once. No visible change.

@@ -25,7 +25,7 @@ network request it ever makes is checking this repository for updates through
 
 <br />
 
-## 🌱 Quick Start
+## Quick Start
 
 Requires **macOS 26 or later** and the **Swift 6.2** toolchain.
 
@@ -44,7 +44,7 @@ make check
 
 <br />
 
-## 🛠 Commands
+## Commands
 
 `make` with no target lists everything. The ones that matter:
 
@@ -69,7 +69,7 @@ make check
 
 <br />
 
-## 🔐 Secrets and variables
+## Secrets and variables
 
 **No GitHub Actions secret is configured, and no workflow reads one.** Validate, Build and test, and
 Deploy all run on public inputs only. Releases are cut locally, so the signing material stays
@@ -182,4 +182,4 @@ Further reading: [architecture](docs/architecture.md) · [UI patterns](docs/ui-p
 
 [MIT](LICENSE) © 2026 Marton Paulo.
 
-Sparkle attribution in [ATTRIBUTIONS.md](ATTRIBUTIONS.md).
+Sparkle attribution in [NOTICE.md](NOTICE.md).

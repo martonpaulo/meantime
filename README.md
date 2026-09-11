@@ -19,7 +19,6 @@ straight from the system clock, the app wakes only as often as what you show cha
 network request it ever makes is checking this repository for updates through
 [Sparkle](https://sparkle-project.org).
 
-<br />
 
 ---
 
@@ -82,7 +81,6 @@ from a `.env` file; [.env.example](.env.example) documents names for your own sh
 
 `VERSION`, `BUILD`, `ZIP`, `DMG` and `SIG` are explicit `make` arguments, not credentials.
 
-<br />
 
 ---
 
@@ -160,7 +158,6 @@ Further reading: [architecture](docs/architecture.md) · [UI patterns](docs/ui-p
 [feature defaults](docs/feature-defaults.md) · [agent policy](AGENTS.md) ·
 [contributing](CONTRIBUTING.md) · [security](SECURITY.md).
 
-<br />
 
 ---
 

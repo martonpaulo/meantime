@@ -31,57 +31,51 @@ Requires **macOS 26 or later** and the **Swift 6.2** toolchain.
 ```bash
 git clone https://github.com/martonpaulo/meantime.git
 cd meantime
-make run    # build and run the debug app, unbundled
+make run
 ```
 
-The gate before any change lands is a warning-free build, the domain-kit tests, and the repository
-invariants:
-
-```bash
-make check
-```
+`make run` launches the debug app unbundled, which is enough for everything except update checks.
 
 <br />
 
 ## 🛠 Commands
-`make` with no target lists everything. The ones that matter:
+| Command | What it does |
+| --- | --- |
+| `make check` | Run the full gate before a commit: `build`, `test`, `validate` |
+| `make build` | Build the debug artifacts, which must be warning-free |
+| `make test` | Run the `MeantimeKit` unit tests |
+| `make run` | Run the debug app from the terminal, unbundled |
+| `make validate` | Check the repository invariants (`scripts/validate.sh`) |
+| `make app` | Build the Release `.app`, ad-hoc signed unless `DEVELOPER_ID_IDENTITY` is set |
+| `make dmg` | Build the installer DMG |
+| `make notarize` | Notarize and staple a signed DMG (`DMG=…`, `NOTARY_PROFILE`) |
+| `make sign-update` | Print the Sparkle appcast signature for a release zip (`ZIP=…`) |
+| `make appcast` | Update `appcast.xml` (`VERSION`, `BUILD`, `ZIP`, `SIG`) |
+| `make keys` | Generate the Sparkle signing key into the Keychain |
+| `make icon` | Regenerate the app icon artwork |
+| `make installer-assets` | Regenerate the installer art |
+| `make web-assets` | Regenerate the website art |
+| `make regions` | Rebuild the time-zone to region table from the system tz database |
+| `make social-card` | Render `docs/social-card.jpg` from `design/social-card/` |
+| `make screenshots` | Refresh the screenshots in `docs/screenshots/`, needing a Retina display and `cwebp` |
+| `make clean` | Remove the build artifacts |
 
-| Command                                                   | What it does                                                            |
-| --------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `make build`                                              | Build debug artifacts (must be warning-free)                            |
-| `make test`                                               | Run the `MeantimeKit` unit tests                                        |
-| `make run`                                                | Run the debug app from the terminal (unbundled)                         |
-| `make validate`                                           | Check the repository invariants (`scripts/validate.sh`)                 |
-| `make check`                                              | `build` + `test` + `validate`                                           |
-| `make app`                                                | Build the Release `.app` (ad-hoc unless `DEVELOPER_ID_IDENTITY` is set) |
-| `make dmg`                                                | Build the installer DMG                                                 |
-| `make notarize`                                           | Notarize and staple a signed DMG (`DMG=…`, `NOTARY_PROFILE`)            |
-| `make sign-update`                                        | Print the Sparkle appcast signature for a release zip (`ZIP=…`)         |
-| `make appcast`                                            | Update `appcast.xml` (`VERSION`, `BUILD`, `ZIP`, `SIG`)                 |
-| `make keys`                                               | Generate the Sparkle signing key into the Keychain                      |
-| `make icon` · `make installer-assets` · `make web-assets` | Regenerate icon and installer art                                       |
-| `make regions`                                            | Rebuild the time-zone → region table from the system tz database        |
-| `make social-card`                                        | Render `docs/social-card.jpg` from `design/social-card/`                |
-| `make screenshots`                                        | Refresh the screenshots in `docs/screenshots/`                          |
-| `make clean`                                              | Remove build artifacts                                                  |
+`make` with no target lists every target.
 
 <br />
 
 ## 🔐 Secrets and variables
-**No GitHub Actions secret is configured, and no workflow reads one.** Validate, Build and test, and
-Deploy all run on public inputs only. Releases are cut locally, so the signing material stays
-on the release Mac: the Developer ID identity and the Sparkle private key live in the **Keychain**,
-and the notary credentials live in a **`notarytool` credentials profile**. Nothing here is loaded
-from a `.env` file; [.env.example](.env.example) documents names for your own shell, not values.
+No GitHub Actions secret exists: releases are cut locally, so the Developer ID identity and the Sparkle private key stay in the **Keychain** and the notary credentials in a `notarytool` profile.
 
-| Name                                                     | Where it is read       | What it is                                                                       |
-| -------------------------------------------------------- | ---------------------- | -------------------------------------------------------------------------------- |
-| `DEVELOPER_ID_IDENTITY`                                  | `make app`, `make dmg` | The Developer ID Application identity **label**. Unset means an ad-hoc signature |
-| `NOTARY_PROFILE`                                         | `make notarize`        | The name of an existing `notarytool` Keychain profile                            |
-| `APP_OUTPUT`, `ZIP_OUTPUT`, `DMG_OUTPUT`, `DMG_WORK_DIR` | packaging targets      | Optional output paths; existing artifacts are never overwritten                  |
-| `SWIFT`                                                  | development targets    | Optional path to a different `swift` executable                                  |
-
-`VERSION`, `BUILD`, `ZIP`, `DMG` and `SIG` are explicit `make` arguments, not credentials.
+| Name | Where | What for |
+| --- | --- | --- |
+| `DEVELOPER_ID_IDENTITY` | Shell, `make app` and `make dmg` | Optional. The Developer ID Application identity label; unset means an ad-hoc signature |
+| `NOTARY_PROFILE` | Shell, `make notarize` | Optional. The name of an existing `notarytool` Keychain profile |
+| `APP_OUTPUT` | Shell, packaging targets | Optional. Output path for the built `.app`; existing artifacts are never overwritten |
+| `ZIP_OUTPUT` | Shell, packaging targets | Optional. Output path for the release zip |
+| `DMG_OUTPUT` | Shell, packaging targets | Optional. Output path for the installer DMG |
+| `DMG_WORK_DIR` | Shell, packaging targets | Optional. Scratch directory used while building the DMG |
+| `SWIFT` | Shell, development targets | Optional. Path to a different `swift` executable |
 
 ---
 

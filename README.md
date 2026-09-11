@@ -6,7 +6,9 @@
 
 World clocks in your macOS menu bar: scheduled clocks, quick calendar, time travel. Native, fast, private.
 
-[![Validate](https://github.com/martonpaulo/meantime/actions/workflows/validate.yml/badge.svg)](https://github.com/martonpaulo/meantime/actions/workflows/validate.yml) [![Build and test](https://github.com/martonpaulo/meantime/actions/workflows/build.yml/badge.svg)](https://github.com/martonpaulo/meantime/actions/workflows/build.yml) [![Swift 6.2](https://img.shields.io/badge/Swift-6.2-orange)](https://swift.org) [![Sparkle 2.9](https://img.shields.io/badge/Sparkle-2.9-blue)](https://sparkle-project.org)
+[![Validate](https://github.com/martonpaulo/meantime/actions/workflows/validate.yml/badge.svg)](https://github.com/martonpaulo/meantime/actions/workflows/validate.yml) [![Build and test](https://github.com/martonpaulo/meantime/actions/workflows/build.yml/badge.svg)](https://github.com/martonpaulo/meantime/actions/workflows/build.yml) [![Deploy](https://github.com/martonpaulo/meantime/actions/workflows/deploy.yml/badge.svg)](https://github.com/martonpaulo/meantime/actions/workflows/deploy.yml)
+
+[![Swift 6.2](https://img.shields.io/badge/Swift-6.2-orange)](https://swift.org) [![Sparkle 2.9](https://img.shields.io/badge/Sparkle-2.9-blue)](https://sparkle-project.org)
 
 </div>
 

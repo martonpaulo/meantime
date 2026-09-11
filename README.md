@@ -1,6 +1,6 @@
-<div align="center">
+<img src="docs/social-card.jpg" width="100%" alt="Meantime: world clocks in your macOS menu bar">
 
-<img src="docs/assets/app-icon-280.png" width="128" alt="Meantime app icon">
+<div align="center">
 
 # Meantime
 
@@ -11,10 +11,6 @@
 [![Release](https://img.shields.io/github/v/release/martonpaulo/meantime)](https://github.com/martonpaulo/meantime/releases/latest)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B-blue)](#install)
 [![MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-
-<img src="docs/screenshots/menu-bar.webp" alt="Two world clocks in the macOS menu bar" width="220">
-
-<img src="docs/screenshots/panel.webp" alt="The Meantime panel: clocks, month calendar, and time travel" width="466">
 
 </div>
 
@@ -104,7 +100,7 @@ git tag vx.y.z && git push --tags
 
 Then upload the DMG + zip to the GitHub release.
 
-`make screenshots` refreshes every image on this page and on the website. It
+`make screenshots` refreshes the screenshots in `docs/screenshots/`. It
 captures the real windows on screen with `screencapture -l<windowid>`, because
 the window shadow, corner radius and material are drawn by the window server
 and an offscreen render of the same view has none of them. It needs a Retina

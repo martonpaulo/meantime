@@ -46,8 +46,13 @@ installer-assets: icon ## Regenerate the DMG volume icon and background art
 regions: ## Regenerate the time-zone → region table from the system tz database
 	@bash scripts/make-regions.sh
 
-web-assets: ## Regenerate the social card and the website's app-icon sizes
+web-assets: ## Regenerate the website's app-icon sizes
 	@$(SWIFT) scripts/render-web-assets.swift
+
+social-card: ## Render docs/social-card.png from design/social-card/social-card.html
+	@npx --yes playwright@1.63.0 screenshot --viewport-size="1200,630" \
+		"file://$(CURDIR)/design/social-card/social-card.html" docs/social-card.png
+	@magick docs/social-card.png -strip -colors 256 -define png:compression-level=9 PNG8:docs/social-card.png
 
 screenshots: ## Refresh README/website screenshots from the real app
 	@bash scripts/capture-screenshots.sh

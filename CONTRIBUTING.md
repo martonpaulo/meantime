@@ -19,7 +19,9 @@ make run     # run the debug app
   prepared state; they don't compute it.
 - All visual constants come from the design tokens. No hardcoded sizes/colors.
 - No new dependencies without a clear, justified need.
-- English everywhere; [Conventional Commits](https://www.conventionalcommits.org).
+- English everywhere; [Conventional Commits](https://www.conventionalcommits.org). A commit
+  made for an issue ends its subject with `(#<issue number>)`.
+- Work on `main`; the project does not use feature branches.
 - Add focused tests for changed behavior; don't mirror implementation details.
 
 ## Before opening a pull request

@@ -36,6 +36,8 @@ make run    # build and run the debug app, unbundled
 `make check` is the gate before any change lands: a warning-free build, the domain-kit tests, and
 the repository invariants.
 
+<br />
+
 ## 🛠 Commands
 
 `make` with no target lists everything. The ones that matter:
@@ -59,6 +61,8 @@ the repository invariants.
 | `make screenshots` | Refresh the screenshots in `docs/screenshots/` |
 | `make clean` | Remove build artifacts |
 
+<br />
+
 ## 🔐 Secrets and variables
 
 **No GitHub Actions secret is configured, and no workflow reads one.** Validate, Build and Test, and
@@ -76,6 +80,8 @@ from a `.env` file; [.env.example](.env.example) documents names for your own sh
 
 `VERSION`, `BUILD`, `ZIP`, `DMG` and `SIG` are explicit `make` arguments, not credentials.
 
+<br />
+
 ## What it does
 
 | | |
@@ -90,6 +96,8 @@ from a `.env` file; [.env.example](.env.example) documents names for your own sh
 | 🌐 **Every system time zone** | Place zones, UTC/GMT, and stable fixed-offset IANA identifiers |
 | 🚀 **Open at login** | Set it once, forget it. Settings shows the real system state, including a registration still waiting for your approval |
 
+<br />
+
 ## Fast and honest about energy
 
 - The time comes **straight from the system clock**: never a private counter, never a delayed
@@ -98,12 +106,16 @@ from a `.env` file; [.env.example](.env.example) documents names for your own sh
   ~once an hour. Nothing visible ticking? No timer at all.
 - Sleep/wake, time-zone changes, clock changes → instant resync.
 
+<br />
+
 ## Settings
 
 Native toolbar panes keep clock management, format presets, appearance, startup, updates, and app
 information separate. New clocks remain drafts until Add Clock; later edits stay inside Settings,
 preview live, and remain unsaved until Save. Leaving a dirty editor always offers commit, discard,
 and cancel: switching panes, closing the window, and quitting the app all ask.
+
+<br />
 
 ## How CI is split
 
@@ -115,6 +127,8 @@ change.
 Website acceptance covers Chromium and WebKit/Safari. `make check` covers domain and JavaScript
 behavior; browser layout, clipboard permissions, and assistive technology still need the relevant
 real-browser or human checks.
+
+<br />
 
 ## Releasing (maintainers)
 
@@ -140,6 +154,8 @@ Further reading: [architecture](docs/architecture.md) · [UI patterns](docs/ui-p
 [feature defaults](docs/feature-defaults.md) · [agent policy](AGENTS.md) ·
 [contributing](CONTRIBUTING.md) · [security](SECURITY.md).
 
+<br />
+
 ## Limitations
 
 - **macOS 26 or later only.** There is no iOS, iPadOS or watchOS companion, and no older-macOS build.
@@ -149,6 +165,8 @@ Further reading: [architecture](docs/architecture.md) · [UI patterns](docs/ui-p
   translate itself when you change that zone.
 - `make screenshots` is a maintainer tool: it needs a Retina display and `cwebp`, and refuses to run
   without them.
+
+<br />
 
 ## License
 

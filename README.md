@@ -33,8 +33,12 @@ cd meantime
 make run    # build and run the debug app, unbundled
 ```
 
-`make check` is the gate before any change lands: a warning-free build, the domain-kit tests, and
-the repository invariants.
+The gate before any change lands is a warning-free build, the domain-kit tests, and the repository
+invariants:
+
+```bash
+make check
+```
 
 <br />
 

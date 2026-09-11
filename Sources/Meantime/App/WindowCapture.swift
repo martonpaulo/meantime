@@ -87,6 +87,9 @@ enum WindowCapture {
         let window = NSWindow(contentViewController: hosting)
         window.styleMask = [.titled, .closable, .miniaturizable]
         window.title = "Meantime Settings"
+        // Published captures keep the traffic lights and drop the words: the product's
+        // name is already beside every image.
+        window.titleVisibility = .hidden
         window.appearance = NSAppearance(named: .aqua)
         window.isReleasedWhenClosed = false
         // Fixed to the design tokens, so the capture is the same on any display.

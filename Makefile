@@ -49,10 +49,11 @@ regions: ## Regenerate the time-zone → region table from the system tz databas
 web-assets: ## Regenerate the website's app-icon sizes
 	@$(SWIFT) scripts/render-web-assets.swift
 
-social-card: ## Render docs/social-card.png from design/social-card/social-card.html
+social-card: ## Render docs/social-card.jpg from design/social-card/social-card.html (on a Mac)
 	@npx --yes playwright@1.63.0 screenshot --viewport-size="1200,630" \
-		"file://$(CURDIR)/design/social-card/social-card.html" docs/social-card.png
-	@magick docs/social-card.png -strip -colors 256 -define png:compression-level=9 PNG8:docs/social-card.png
+		"file://$(CURDIR)/design/social-card/social-card.html" $(TMPDIR)meantime-card.png
+	@magick $(TMPDIR)meantime-card.png -strip -quality 92 -sampling-factor 4:4:4 -interlace Plane docs/social-card.jpg
+	@rm -f $(TMPDIR)meantime-card.png
 
 screenshots: ## Refresh README/website screenshots from the real app
 	@bash scripts/capture-screenshots.sh

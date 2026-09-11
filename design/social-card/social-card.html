@@ -1,34 +1,53 @@
 <!doctype html>
-<!-- Meantime social card. Source of truth for docs/social-card.png, served at
-     https://meantime.martonpaulo.com/social-card.png (1200x630). Never edit the PNG.
-     Render with `make social-card` (Playwright screenshot, then an 8-bit PNG).
-     Layout, safe area and rules: the social card standard (skill-deck#261). Fonts: Inter, OFL (fonts/OFL.txt). -->
+<!-- Meantime social card. Source of truth for docs/social-card.jpg, served at
+     https://meantime.martonpaulo.com/social-card.jpg (1200x630). Never edit the PNG.
+     Render on a Mac (the drawn interface uses the system font): make social-card
+     System, grid and contrast rules: the social card standard (skill-deck#261).
+     Fonts: Gabarito and Figtree (OFL, fonts/*-OFL.txt), the typefaces of martonpaulo.com. -->
 <meta charset="utf-8">
+<title>Meantime social card</title>
 <style>
-  @font-face { font-family: "Inter Display"; font-weight: 700; src: url(fonts/Inter_28pt-Bold.ttf); }
-  @font-face { font-family: "Inter"; font-weight: 400; src: url(fonts/Inter_18pt-Regular.ttf); }
-  @font-face { font-family: "Inter"; font-weight: 500; src: url(fonts/Inter_24pt-Medium.ttf); }
-  @font-face { font-family: "Inter"; font-weight: 600; src: url(fonts/Inter_24pt-SemiBold.ttf); }
-  html, body { margin: 0; }
-  .card {
-    position: relative; width: 1200px; height: 630px; overflow: hidden;
-    background:
-      radial-gradient(760px 560px at 80% 45%, rgba(47, 99, 231, .26), transparent 64%),
-      radial-gradient(600px 380px at 0% 100%, rgba(47, 99, 231, .10), transparent 70%),
-      linear-gradient(160deg, #f9fbff 0%, #e8eefc 100%);
-    color: #111a33; font-family: "Inter", sans-serif;
-  }
-  .copy { position: absolute; left: 96px; top: 50%; transform: translateY(-54%); width: 480px; }
-  .icon { width: 104px; height: 104px; display: block; margin-bottom: 30px;
-          filter: drop-shadow(0 16px 28px rgba(47, 99, 231, .30)); }
-  .eyebrow { margin: 0 0 18px; font-weight: 600; font-size: 22px; letter-spacing: .12em;
-             text-transform: uppercase; color: #2352c9; }
-  h1 { margin: 0; font: 700 84px/1 "Inter Display", sans-serif; letter-spacing: -0.035em; }
-  .promise { margin: 22px 0 0; font-weight: 500; font-size: 38px; line-height: 1.18;
-             letter-spacing: -0.015em; color: #3a4666; text-wrap: balance; }
-  .domain { position: absolute; left: 96px; bottom: 62px; font-size: 24px; color: #6b7593; }
-  .shot { position: absolute; left: 690px; top: 70px; width: 470px;
-          filter: drop-shadow(0 30px 50px rgba(20, 40, 100, .22)); }
+@font-face { font-family: "Gabarito"; font-weight: 700; src: url(fonts/gabarito-latin-700-normal.woff2); }
+@font-face { font-family: "Figtree"; font-weight: 400; src: url(fonts/figtree-latin-400-normal.woff2); }
+@font-face { font-family: "Figtree"; font-weight: 500; src: url(fonts/figtree-latin-500-normal.woff2); }
+@font-face { font-family: "Figtree"; font-weight: 600; src: url(fonts/figtree-latin-600-normal.woff2); }
+@font-face { font-family: "Figtree"; font-weight: 700; src: url(fonts/figtree-latin-700-normal.woff2); }
+html, body { margin: 0; }
+.card { position: relative; width: 1200px; height: 630px; overflow: hidden; font-family: "Figtree", sans-serif;
+        color: var(--ink); background: var(--gradient); }
+.card::before { content: ""; position: absolute; inset: 0; background: var(--glow, none); }
+/* One grid for every card: the copy block is centred vertically in a 440px column at x=96;
+   the product visual always starts at x=600, a fixed gutter. */
+.copy { position: absolute; left: 96px; top: 50%; transform: translateY(-50%); width: 440px; z-index: 2; }
+.icon { width: 104px; height: 104px; display: block; margin-bottom: 30px; filter: drop-shadow(0 16px 26px rgba(0,0,0,.22)); }
+.eyebrow { display: inline-block; margin: 0 0 20px; padding: 8px 16px; border-radius: 999px;
+           background: var(--pill-bg); border: 1px solid var(--pill-line);
+           font-weight: 700; font-size: 19px; letter-spacing: .1em; text-transform: uppercase; }
+h1 { margin: 0; font: 700 88px/1 "Gabarito", sans-serif; letter-spacing: -0.03em; }
+.promise { margin: 20px 0 0; font-weight: 500; font-size: 38px; line-height: 1.2; letter-spacing: -0.01em;
+           color: var(--ink-soft); text-wrap: balance; }
+.domain { margin: 34px 0 0; font-size: 24px; font-weight: 500; color: var(--ink-soft); }
+/* The drawn interface: the system font, the way the real app renders. */
+.ui { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; color: #1f2937; }
+.win { position: absolute; background: #fff; border-radius: 22px;
+       box-shadow: 0 40px 80px rgba(15,23,42,.30), 0 8px 20px rgba(15,23,42,.12); }
+.bar { height: 11px; border-radius: 6px; background: #e5e7eb; }
+
+.card { --gradient: linear-gradient(135deg,#3b1683 0%,#5b21b6 45%,#7c3aed 80%,#a78bfa 100%); --glow: radial-gradient(620px 480px at 94% 88%,rgba(251,146,160,.38),transparent 62%); --ink: #fff; --ink-soft: rgba(255,255,255,.9);
+        --pill-bg: rgba(255,255,255,.14); --pill-line: rgba(255,255,255,.38); }
+.panel{left:600px;top:50%;transform:translateY(-50%);width:430px;padding:14px 18px;box-sizing:border-box;border-radius:18px;background:rgba(246,246,248,.98);font-size:15px}
+.clock{display:flex;align-items:center;gap:12px;padding:8px 2px}
+.clock .flag{font-size:20px}.clock .city{flex:1;display:flex;flex-direction:column;line-height:1.15}
+.clock .city b{font-weight:600;font-size:15px}.clock .city small{font-size:12px;color:#6b7280}
+.clock .time{font-size:19px;font-weight:500;font-variant-numeric:tabular-nums}
+.sep{height:1px;background:#e3e3e6;margin:8px -18px}
+.calhead{display:flex;justify-content:space-between;align-items:center;padding:6px 2px 10px;font-size:16px}
+.calhead .nav{color:#6b7280;font-size:15px}.calhead .nav i{font-style:normal;color:#c0c4cc}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;row-gap:9px;font-size:14px;font-variant-numeric:tabular-nums}
+.grid.wd{margin-bottom:8px;font-size:12px;font-weight:600;color:#6b7280}.grid .wk{color:#3b82f6}
+.grid .out{color:#c0c4cc}.grid .today{justify-self:center;width:26px;height:26px;line-height:24px;border-radius:50%;border:2px solid #2f63e7;color:#2f63e7;font-weight:700;box-sizing:border-box}
+.row{display:flex;justify-content:space-between;align-items:center;padding:4px 2px;font-size:14px}
+.row.muted{color:#4b5563}.field{background:#e9e9ec;border-radius:6px;padding:3px 10px;font-variant-numeric:tabular-nums}
 </style>
 <div class="card">
   <div class="copy">
@@ -36,7 +55,18 @@
     <p class="eyebrow">Free for Mac · Open source</p>
     <h1>Meantime</h1>
     <p class="promise">World clocks in your menu bar</p>
+    <p class="domain">meantime.martonpaulo.com</p>
   </div>
-  <img class="shot" src="../../docs/screenshots/panel.webp" alt="">
-  <div class="domain">meantime.martonpaulo.com</div>
+  <div class="win panel ui">
+    <div class="clock"><span class="flag">🇧🇷</span><span class="city"><b>Recife</b><small>GMT−3</small></span><span class="time">12:11 PM</span></div>
+    <div class="clock"><span class="flag">🇪🇸</span><span class="city"><b>Madrid</b><small>GMT+2</small></span><span class="time">5:11 PM</span></div>
+    <div class="sep"></div>
+    <div class="calhead"><b>July 2026</b><span class="nav">«&nbsp;&nbsp;‹&nbsp;&nbsp;<i>Today</i>&nbsp;&nbsp;›&nbsp;&nbsp;»</span></div>
+    <div class="grid wd"><span class="wk">S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span class="wk">S</span></div>
+    <div class="grid"><span class="out">28</span><span class="out">29</span><span class="out">30</span><span class="">1</span><span class="">2</span><span class="">3</span><span class="wk">4</span><span class="wk">5</span><span class="">6</span><span class="">7</span><span class="">8</span><span class="">9</span><span class="">10</span><span class="wk">11</span><span class="wk">12</span><span class="">13</span><span class="">14</span><span class="">15</span><span class="">16</span><span class="">17</span><span class="wk">18</span><span class="wk">19</span><span class="">20</span><span class="">21</span><span class="">22</span><span class="today">23</span><span class="">24</span><span class="wk">25</span><span class="wk">26</span><span class="">27</span><span class="">28</span><span class="">29</span><span class="">30</span><span class="">31</span><span class="out">1</span></div>
+    <div class="sep"></div>
+    <div class="row"><span>⟲&nbsp; Time Travel</span><span class="field">5:11 PM</span></div>
+    <div class="sep"></div>
+    <div class="row muted"><span>⚙&nbsp; Settings…</span><span>⏻&nbsp; Quit</span></div>
+  </div>
 </div>

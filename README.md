@@ -18,7 +18,6 @@ It is a **native macOS menu bar app with no account, no sync and no telemetry**.
 straight from the system clock, the app wakes only as often as what you show changes, and the only
 network request it ever makes is checking this repository for updates through
 [Sparkle](https://sparkle-project.org).
-
 <br />
 
 ---
@@ -81,6 +80,9 @@ from a `.env` file; [.env.example](.env.example) documents names for your own sh
 | `SWIFT` | development targets | Optional path to a different `swift` executable |
 
 `VERSION`, `BUILD`, `ZIP`, `DMG` and `SIG` are explicit `make` arguments, not credentials.
+<br />
+
+---
 
 <br />
 
@@ -155,6 +157,9 @@ them. The method, and the reason for each rule, is documented at the top of
 Further reading: [architecture](docs/architecture.md) · [UI patterns](docs/ui-patterns.md) ·
 [feature defaults](docs/feature-defaults.md) · [agent policy](AGENTS.md) ·
 [contributing](CONTRIBUTING.md) · [security](SECURITY.md).
+<br />
+
+---
 
 <br />
 

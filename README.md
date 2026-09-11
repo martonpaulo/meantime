@@ -175,7 +175,7 @@ Further reading: [architecture](docs/architecture.md) · [UI patterns](docs/ui-p
 
 <br />
 
-## License
+## License and attribution
 
 [MIT](LICENSE) © 2026 Marton Paulo.
 

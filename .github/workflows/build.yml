@@ -3,7 +3,7 @@
 # resources, so it is limited to the paths that change what it compiles. A
 # documentation or website change cannot alter this result, and the Validate
 # workflow still runs for those.
-name: Build and Test
+name: Build and test
 
 on:
   push:

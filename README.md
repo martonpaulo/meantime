@@ -6,7 +6,7 @@
 
 World clocks in your macOS menu bar: scheduled clocks, quick calendar, time travel. Native, fast, private.
 
-[![Validate](https://github.com/martonpaulo/meantime/actions/workflows/validate.yml/badge.svg)](https://github.com/martonpaulo/meantime/actions/workflows/validate.yml) [![Build and Test](https://github.com/martonpaulo/meantime/actions/workflows/build.yml/badge.svg)](https://github.com/martonpaulo/meantime/actions/workflows/build.yml) [![Swift 6.2](https://img.shields.io/badge/Swift-6.2-orange)](https://swift.org) [![Sparkle 2.9](https://img.shields.io/badge/Sparkle-2.9-blue)](https://sparkle-project.org)
+[![Validate](https://github.com/martonpaulo/meantime/actions/workflows/validate.yml/badge.svg)](https://github.com/martonpaulo/meantime/actions/workflows/validate.yml) [![Build and test](https://github.com/martonpaulo/meantime/actions/workflows/build.yml/badge.svg)](https://github.com/martonpaulo/meantime/actions/workflows/build.yml) [![Swift 6.2](https://img.shields.io/badge/Swift-6.2-orange)](https://swift.org) [![Sparkle 2.9](https://img.shields.io/badge/Sparkle-2.9-blue)](https://sparkle-project.org)
 
 </div>
 
@@ -46,41 +46,41 @@ make check
 
 `make` with no target lists everything. The ones that matter:
 
-| Command | What it does |
-|---|---|
-| `make build` | Build debug artifacts (must be warning-free) |
-| `make test` | Run the `MeantimeKit` unit tests |
-| `make run` | Run the debug app from the terminal (unbundled) |
-| `make validate` | Check the repository invariants (`scripts/validate.sh`) |
-| `make check` | `build` + `test` + `validate` |
-| `make app` | Build the Release `.app` (ad-hoc unless `DEVELOPER_ID_IDENTITY` is set) |
-| `make dmg` | Build the installer DMG |
-| `make notarize` | Notarize and staple a signed DMG (`DMG=…`, `NOTARY_PROFILE`) |
-| `make sign-update` | Print the Sparkle appcast signature for a release zip (`ZIP=…`) |
-| `make appcast` | Update `appcast.xml` (`VERSION`, `BUILD`, `ZIP`, `SIG`) |
-| `make keys` | Generate the Sparkle signing key into the Keychain |
-| `make icon` · `make installer-assets` · `make web-assets` | Regenerate icon and installer art |
-| `make regions` | Rebuild the time-zone → region table from the system tz database |
-| `make social-card` | Render `docs/social-card.jpg` from `design/social-card/` |
-| `make screenshots` | Refresh the screenshots in `docs/screenshots/` |
-| `make clean` | Remove build artifacts |
+| Command                                                   | What it does                                                            |
+| --------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `make build`                                              | Build debug artifacts (must be warning-free)                            |
+| `make test`                                               | Run the `MeantimeKit` unit tests                                        |
+| `make run`                                                | Run the debug app from the terminal (unbundled)                         |
+| `make validate`                                           | Check the repository invariants (`scripts/validate.sh`)                 |
+| `make check`                                              | `build` + `test` + `validate`                                           |
+| `make app`                                                | Build the Release `.app` (ad-hoc unless `DEVELOPER_ID_IDENTITY` is set) |
+| `make dmg`                                                | Build the installer DMG                                                 |
+| `make notarize`                                           | Notarize and staple a signed DMG (`DMG=…`, `NOTARY_PROFILE`)            |
+| `make sign-update`                                        | Print the Sparkle appcast signature for a release zip (`ZIP=…`)         |
+| `make appcast`                                            | Update `appcast.xml` (`VERSION`, `BUILD`, `ZIP`, `SIG`)                 |
+| `make keys`                                               | Generate the Sparkle signing key into the Keychain                      |
+| `make icon` · `make installer-assets` · `make web-assets` | Regenerate icon and installer art                                       |
+| `make regions`                                            | Rebuild the time-zone → region table from the system tz database        |
+| `make social-card`                                        | Render `docs/social-card.jpg` from `design/social-card/`                |
+| `make screenshots`                                        | Refresh the screenshots in `docs/screenshots/`                          |
+| `make clean`                                              | Remove build artifacts                                                  |
 
 <br />
 
 ## 🔐 Secrets and variables
 
-**No GitHub Actions secret is configured, and no workflow reads one.** Validate, Build and Test, and
-GitHub Pages all run on public inputs only. Releases are cut locally, so the signing material stays
+**No GitHub Actions secret is configured, and no workflow reads one.** Validate, Build and test, and
+Deploy all run on public inputs only. Releases are cut locally, so the signing material stays
 on the release Mac: the Developer ID identity and the Sparkle private key live in the **Keychain**,
 and the notary credentials live in a **`notarytool` credentials profile**. Nothing here is loaded
 from a `.env` file; [.env.example](.env.example) documents names for your own shell, not values.
 
-| Name | Where it is read | What it is |
-|---|---|---|
-| `DEVELOPER_ID_IDENTITY` | `make app`, `make dmg` | The Developer ID Application identity **label**. Unset means an ad-hoc signature |
-| `NOTARY_PROFILE` | `make notarize` | The name of an existing `notarytool` Keychain profile |
-| `APP_OUTPUT`, `ZIP_OUTPUT`, `DMG_OUTPUT`, `DMG_WORK_DIR` | packaging targets | Optional output paths; existing artifacts are never overwritten |
-| `SWIFT` | development targets | Optional path to a different `swift` executable |
+| Name                                                     | Where it is read       | What it is                                                                       |
+| -------------------------------------------------------- | ---------------------- | -------------------------------------------------------------------------------- |
+| `DEVELOPER_ID_IDENTITY`                                  | `make app`, `make dmg` | The Developer ID Application identity **label**. Unset means an ad-hoc signature |
+| `NOTARY_PROFILE`                                         | `make notarize`        | The name of an existing `notarytool` Keychain profile                            |
+| `APP_OUTPUT`, `ZIP_OUTPUT`, `DMG_OUTPUT`, `DMG_WORK_DIR` | packaging targets      | Optional output paths; existing artifacts are never overwritten                  |
+| `SWIFT`                                                  | development targets    | Optional path to a different `swift` executable                                  |
 
 `VERSION`, `BUILD`, `ZIP`, `DMG` and `SIG` are explicit `make` arguments, not credentials.
 
@@ -90,17 +90,17 @@ from a `.env` file; [.env.example](.env.example) documents names for your own sh
 
 ## What it does
 
-| | |
-|---|---|
-| 🕐 **Clocks in the menu bar** | One item per clock, or every clock combined into a single item |
-| 🎨 **Three styles per clock** | `09:47` · `🇺🇸 09:47` · a tiny analog face |
-| 📅 **Quick calendar** | Click the menu bar → see the month. "The 15th is a… Tuesday." |
-| 🔮 **Time travel** | Pick a day, type a time: every clock previews that moment |
-| ⏰ **Scheduled clocks** | Show the NY clock only 8–12 and 13–17 Mon–Fri *NY time*; it hides itself outside those hours and days |
-| ✏️ **Your format, your pattern** | Start with a common preset, write any Unicode pattern, or assemble one visually in the format builder |
-| 🏷️ **Labels & leading items** | "Mom", "Tokyo Office": any name, with a country flag, custom emoji, custom text, or nothing before it |
-| 🌐 **Every system time zone** | Place zones, UTC/GMT, and stable fixed-offset IANA identifiers |
-| 🚀 **Open at login** | Set it once, forget it. Settings shows the real system state, including a registration still waiting for your approval |
+|                                  |                                                                                                                        |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 🕐 **Clocks in the menu bar**    | One item per clock, or every clock combined into a single item                                                         |
+| 🎨 **Three styles per clock**    | `09:47` · `🇺🇸 09:47` · a tiny analog face                                                                              |
+| 📅 **Quick calendar**            | Click the menu bar → see the month. "The 15th is a… Tuesday."                                                          |
+| 🔮 **Time travel**               | Pick a day, type a time: every clock previews that moment                                                              |
+| ⏰ **Scheduled clocks**          | Show the NY clock only 8–12 and 13–17 Mon–Fri _NY time_; it hides itself outside those hours and days                  |
+| ✏️ **Your format, your pattern** | Start with a common preset, write any Unicode pattern, or assemble one visually in the format builder                  |
+| 🏷️ **Labels & leading items**    | "Mom", "Tokyo Office": any name, with a country flag, custom emoji, custom text, or nothing before it                  |
+| 🌐 **Every system time zone**    | Place zones, UTC/GMT, and stable fixed-offset IANA identifiers                                                         |
+| 🚀 **Open at login**             | Set it once, forget it. Settings shows the real system state, including a registration still waiting for your approval |
 
 <br />
 
@@ -126,7 +126,7 @@ and cancel: switching panes, closing the window, and quitting the app all ask.
 ## How CI is split
 
 CI is split by what each workflow can actually observe. **Validate** runs the repository invariants
-and the format-builder tests for every change, and **Build and Test** runs the warning-free release
+and the format-builder tests for every change, and **Build and test** runs the warning-free release
 build and the suite only when Swift sources, the package manifest, or the packaged app resources
 change.
 

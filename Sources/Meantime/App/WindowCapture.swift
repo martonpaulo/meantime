@@ -83,11 +83,11 @@ enum WindowCapture {
     }
 
     private static func paneWindow(_ view: some View) -> NSWindow {
-        let hosting = NSHostingController(rootView: AnyView(view.preferredColorScheme(.dark)))
+        let hosting = NSHostingController(rootView: AnyView(view.preferredColorScheme(.light)))
         let window = NSWindow(contentViewController: hosting)
         window.styleMask = [.titled, .closable, .miniaturizable]
         window.title = "Meantime Settings"
-        window.appearance = NSAppearance(named: .darkAqua)
+        window.appearance = NSAppearance(named: .aqua)
         window.isReleasedWhenClosed = false
         // Fixed to the design tokens, so the capture is the same on any display.
         window.setContentSize(NSSize(width: Token.Size.paneWidth, height: Token.Size.paneHeight))
@@ -103,12 +103,12 @@ enum WindowCapture {
             .environment(preview)
             .environment(timeSource)
             .environment(PanelModel())
-            .preferredColorScheme(.dark)
+            .preferredColorScheme(.light)
 
         let hosting = NSHostingView(rootView: AnyView(root))
         hosting.sizingOptions = [.intrinsicContentSize]
         hosting.frame.size = hosting.fittingSize
-        hosting.appearance = NSAppearance(named: .darkAqua)
+        hosting.appearance = NSAppearance(named: .aqua)
 
         // The real panel is a borderless status-item surface over the popover
         // material, so reproduce that rather than a titled window.
@@ -129,7 +129,7 @@ enum WindowCapture {
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = true
-        window.appearance = NSAppearance(named: .darkAqua)
+        window.appearance = NSAppearance(named: .aqua)
         window.isReleasedWhenClosed = false
         return window
     }

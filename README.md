@@ -23,6 +23,8 @@ network request it ever makes is checking this repository for updates through
 
 ---
 
+<br />
+
 ## 🌱 Quick Start
 
 Requires **macOS 26 or later** and the **Swift 6.2** toolchain.

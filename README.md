@@ -25,8 +25,7 @@ network request it ever makes is checking this repository for updates through
 
 <br />
 
-## Quick Start
-
+## 🌱 Quick Start
 Requires **macOS 26 or later** and the **Swift 6.2** toolchain.
 
 ```bash
@@ -44,8 +43,7 @@ make check
 
 <br />
 
-## Commands
-
+## 🛠 Commands
 `make` with no target lists everything. The ones that matter:
 
 | Command                                                   | What it does                                                            |
@@ -69,8 +67,7 @@ make check
 
 <br />
 
-## Secrets and variables
-
+## 🔐 Secrets and variables
 **No GitHub Actions secret is configured, and no workflow reads one.** Validate, Build and test, and
 Deploy all run on public inputs only. Releases are cut locally, so the signing material stays
 on the release Mac: the Developer ID identity and the Sparkle private key live in the **Keychain**,

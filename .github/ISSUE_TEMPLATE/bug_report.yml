@@ -1,0 +1,53 @@
+name: Bug report
+description: Report something in Meantime that does not work the way it should.
+title: "bug: "
+labels: ["type: bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the menu bar item…
+        2. Add a clock for…
+        3. Observe…
+    validations:
+      required: true
+
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+      placeholder: e.g. macOS 26.5
+    validations:
+      required: true
+
+  - type: input
+    id: meantime-version
+    attributes:
+      label: Meantime version
+      description: Shown in Settings under Updates.
+      placeholder: e.g. 1.0.0
+    validations:
+      required: true
+
+  - type: input
+    id: timezones
+    attributes:
+      label: Time zones involved
+      description: Only when the report is about a specific clock, schedule, or time travel.
+      placeholder: e.g. America/Sao_Paulo and Europe/Lisbon

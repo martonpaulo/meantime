@@ -80,6 +80,8 @@ fi
 PLIST_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Support/Info.plist)
 grep -Fq "Download Meantime $PLIST_VERSION" docs/index.html \
     || note "docs/index.html must name the shipped version on its download button (Download Meantime $PLIST_VERSION)"
+grep -Fq "releases/tag/v$PLIST_VERSION" docs/index.html \
+    || note "docs/index.html release notes link must point at releases/tag/v$PLIST_VERSION"
 
 # Every link that leaves the site carries the external-link arrow and rel="noopener".
 while IFS= read -r line; do

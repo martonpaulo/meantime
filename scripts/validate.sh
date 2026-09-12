@@ -97,13 +97,21 @@ done < <(grep -hoE '<a [^>]*href="https?://[^"]+"[^>]*>[^<]*(<svg[^>]*>.*</svg>)
     docs/index.html docs/format.html docs/404.html 2>/dev/null || true)
 
 # Website navigation stays identical across the landing page and builder.
-expected_navigation="Features|Format Builder|Download|GitHub"
+# The header nav carries this site's own destinations and no outward link; the
+# footer carries the outward links and no internal one.
+expected_navigation="Features|Format Builder|Download"
+expected_footer="Source|Issues|Releases"
 for page in docs/index.html docs/format.html; do
     navigation=$(sed -n '/<nav aria-label="Page sections">/,/<\/nav>/p' "$page" \
         | sed -E 's/<svg[^>]*>.*<\/svg>//g' \
         | sed -E -n 's/.*>([^<]+)<\/a>.*/\1/p' | paste -sd '|' -)
     [ "$navigation" = "$expected_navigation" ] \
         || note "$page navigation order must be $expected_navigation"
+    footer=$(sed -n '/<footer class="site-footer">/,/<\/footer>/p' "$page" \
+        | sed -E 's/<svg[^>]*>.*<\/svg>//g' \
+        | sed -E -n 's/.*>([^<]+)<\/a>.*/\1/p' | paste -sd '|' -)
+    [ "$footer" = "$expected_footer" ] \
+        || note "$page footer must be $expected_footer (got $footer)"
     grep -q 'aria-current="page"' "$page" \
         || note "$page must identify the current page"
 done

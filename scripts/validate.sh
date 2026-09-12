@@ -64,12 +64,41 @@ grep -q "Sitemap: ${SITE_ORIGIN}sitemap.xml" docs/robots.txt \
 if stale=$(grep -rElI 'martonpaulo\.com/meantime|martonpaulo\.github\.io' docs); then
     note "docs/ must not reference the old site location: $(echo "$stale" | paste -sd ' ' -)"
 fi
-[ -f docs/404.html ] || note "website must ship a 404 page"
+# The 404 page is part of the site, not a bare fallback: same header, same
+# footer, same design.
+if [ ! -f docs/404.html ]; then
+    note "website must ship a 404 page"
+else
+    for marker in 'class="site-header"' 'class="site-footer"' 'styles/main.css'; do
+        grep -Fq "$marker" docs/404.html || note "docs/404.html must carry $marker"
+    done
+fi
+
+# The website names the shipped version on its download buttons, so a release
+# that forgets the site fails here instead of shipping a page that advertises
+# the previous version.
+PLIST_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Support/Info.plist)
+grep -Fq "Download Meantime $PLIST_VERSION" docs/index.html \
+    || note "docs/index.html must name the shipped version on its download button (Download Meantime $PLIST_VERSION)"
+
+# Every link that leaves the site carries the external-link arrow and rel="noopener".
+while IFS= read -r line; do
+    case "$line" in
+        *'rel="noopener"'*) ;;
+        *) note "external link without rel=\"noopener\": $(printf '%s' "$line" | cut -c1-80)" ;;
+    esac
+    case "$line" in
+        *'class="external-icon"'*) ;;
+        *) note "external link without the external-link icon: $(printf '%s' "$line" | cut -c1-80)" ;;
+    esac
+done < <(grep -hoE '<a [^>]*href="https?://[^"]+"[^>]*>[^<]*(<svg[^>]*>.*</svg>)?</a>' \
+    docs/index.html docs/format.html docs/404.html 2>/dev/null || true)
 
 # Website navigation stays identical across the landing page and builder.
 expected_navigation="Features|Format Builder|Download|GitHub"
 for page in docs/index.html docs/format.html; do
     navigation=$(sed -n '/<nav aria-label="Page sections">/,/<\/nav>/p' "$page" \
+        | sed -E 's/<svg[^>]*>.*<\/svg>//g' \
         | sed -E -n 's/.*>([^<]+)<\/a>.*/\1/p' | paste -sd '|' -)
     [ "$navigation" = "$expected_navigation" ] \
         || note "$page navigation order must be $expected_navigation"

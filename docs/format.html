@@ -61,40 +61,45 @@
 
   <main id="main">
     <section class="section builder-page" aria-labelledby="title">
-      <h1 id="title">Time Format Builder</h1>
-      <p class="hint builder-intro">
-        Start with a common format, refine it with the grouped controls, then
-        copy the pattern into <strong>Meantime → Settings → Format → Custom</strong>.
-      </p>
-
       <div class="builder">
-        <div class="preview-card" aria-live="polite">
-          <div class="preview-time" id="preview">05:04</div>
-          <p class="preview-caption">Example date and time: August 8, 2026 at 5:04:09 AM</p>
-        </div>
+        <p class="eyebrow">Time format</p>
+        <h1 id="title">Time Format Builder</h1>
+        <p class="builder-intro">
+          Start with a common format, refine it with the grouped controls, then
+          copy the pattern into <strong>Meantime → Settings → Format → Custom</strong>.
+        </p>
 
-        <div class="preset-row">
-          <label for="preset">Start with</label>
-          <select id="preset">
-            <option value="HH:mm" selected>24-hour: 09:47</option>
-            <option value="HH:mm:ss">24-hour with seconds: 09:47:30</option>
-            <option value="h:mm a">12-hour: 9:47 AM</option>
-            <option value="h:mm:ss a">12-hour with seconds: 9:47:30 AM</option>
-            <option value="EEE d MMM · HH:mm">Date and time</option>
-            <option value="EEEE, MMMM d, yyyy · h:mm a">Full date and time</option>
-            <option value="custom">Custom</option>
-          </select>
+        <div class="builder-panel">
+          <div class="preview-card" aria-live="polite">
+            <div class="preview-time" id="preview">05:04</div>
+            <p class="preview-caption">Example date and time: August 8, 2026 at 5:04:09 AM</p>
+          </div>
+
+          <div class="preset-row">
+            <label for="preset">Start with</label>
+            <select id="preset">
+              <option value="HH:mm" selected>24-hour: 09:47</option>
+              <option value="HH:mm:ss">24-hour with seconds: 09:47:30</option>
+              <option value="h:mm a">12-hour: 9:47 AM</option>
+              <option value="h:mm:ss a">12-hour with seconds: 9:47:30 AM</option>
+              <option value="EEE d MMM · HH:mm">Date and time</option>
+              <option value="EEEE, MMMM d, yyyy · h:mm a">Full date and time</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
         </div>
 
         <div class="builder-sticky">
-          <div class="pattern-row">
-            <input id="pattern" type="text" spellcheck="false" autocomplete="off"
-                   aria-label="Unicode date and time pattern"
-                   aria-describedby="builder-status" value="HH:mm">
-            <button class="builder-button" id="clear" type="button">Clear</button>
-            <button class="builder-button primary" id="copy" type="button">Copy</button>
+          <div class="panel-foot">
+            <div class="pattern-row">
+              <input id="pattern" type="text" spellcheck="false" autocomplete="off"
+                     aria-label="Unicode date and time pattern"
+                     aria-describedby="builder-status" value="HH:mm">
+              <button class="builder-button" id="clear" type="button">Clear</button>
+              <button class="builder-button primary" id="copy" type="button">Copy</button>
+            </div>
+            <p class="builder-status" id="builder-status" role="status"></p>
           </div>
-          <p class="builder-status" id="builder-status" role="status"></p>
         </div>
 
         <div class="builder-groups" aria-label="Pattern fields and separators">
@@ -221,8 +226,6 @@
           The Custom field in Meantime accepts the full pattern syntax.
         </p>
       </div>
-
-      <a class="back button secondary" href="index.html">← Back to Meantime</a>
     </section>
   </main>
 

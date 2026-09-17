@@ -39,8 +39,6 @@ migration and its downstream effects.
   Increments only during an explicitly requested release, which also updates
   `CHANGELOG.md`, tags `vX.Y.Z`, and regenerates the appcast. Ordinary tasks
   add to `## [Unreleased]` and never bump a version
-- Agent automation: `disabled`. Work remains directly on `main`; no agent intake,
-  worker rules, authentication workflows, or automatic implementation/review are configured.
 - Browser acceptance: Chromium and WebKit/Safari for the landing page and Format
   Builder. Gecko is outside the selected acceptance set.
 - Commit subject: a commit made for an issue ends with `(#<issue number>)`.

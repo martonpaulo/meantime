@@ -53,24 +53,24 @@ fi
 # canonical origin; the old project path and the github.io host must never
 # reappear anywhere in the published set.
 SITE_ORIGIN="https://meantime.martonpaulo.com/"
-[ -f docs/CNAME ] && [ "$(cat docs/CNAME)" = "meantime.martonpaulo.com" ] \
-    || note "docs/CNAME must contain exactly meantime.martonpaulo.com"
-for page in docs/index.html docs/format.html; do
+[ -f site/CNAME ] && [ "$(cat site/CNAME)" = "meantime.martonpaulo.com" ] \
+    || note "site/CNAME must contain exactly meantime.martonpaulo.com"
+for page in site/index.html site/format.html; do
     grep -q "<link rel=\"canonical\" href=\"$SITE_ORIGIN" "$page" \
         || note "$page canonical must start with $SITE_ORIGIN"
 done
-grep -q "Sitemap: ${SITE_ORIGIN}sitemap.xml" docs/robots.txt \
+grep -q "Sitemap: ${SITE_ORIGIN}sitemap.xml" site/robots.txt \
     || note "robots.txt must point at ${SITE_ORIGIN}sitemap.xml"
 if stale=$(grep -rElI 'martonpaulo\.com/meantime|martonpaulo\.github\.io' docs); then
     note "docs/ must not reference the old site location: $(echo "$stale" | paste -sd ' ' -)"
 fi
 # The 404 page is part of the site, not a bare fallback: same header, same
 # footer, same design.
-if [ ! -f docs/404.html ]; then
+if [ ! -f site/404.html ]; then
     note "website must ship a 404 page"
 else
     for marker in 'class="site-header"' 'class="site-footer"' 'styles/main.css'; do
-        grep -Fq "$marker" docs/404.html || note "docs/404.html must carry $marker"
+        grep -Fq "$marker" site/404.html || note "site/404.html must carry $marker"
     done
 fi
 
@@ -78,10 +78,10 @@ fi
 # that forgets the site fails here instead of shipping a page that advertises
 # the previous version.
 PLIST_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Support/Info.plist)
-grep -Fq "Download Meantime $PLIST_VERSION" docs/index.html \
-    || note "docs/index.html must name the shipped version on its download button (Download Meantime $PLIST_VERSION)"
-grep -Fq "releases/tag/v$PLIST_VERSION" docs/index.html \
-    || note "docs/index.html release notes link must point at releases/tag/v$PLIST_VERSION"
+grep -Fq "Download Meantime $PLIST_VERSION" site/index.html \
+    || note "site/index.html must name the shipped version on its download button (Download Meantime $PLIST_VERSION)"
+grep -Fq "releases/tag/v$PLIST_VERSION" site/index.html \
+    || note "site/index.html release notes link must point at releases/tag/v$PLIST_VERSION"
 
 # Every link that leaves the site carries the external-link arrow and rel="noopener".
 while IFS= read -r line; do
@@ -94,14 +94,14 @@ while IFS= read -r line; do
         *) note "external link without the external-link icon: $(printf '%s' "$line" | cut -c1-80)" ;;
     esac
 done < <(grep -hoE '<a [^>]*href="https?://[^"]+"[^>]*>[^<]*(<svg[^>]*>.*</svg>)?</a>' \
-    docs/index.html docs/format.html docs/404.html 2>/dev/null || true)
+    site/index.html site/format.html site/404.html 2>/dev/null || true)
 
 # Website navigation stays identical across the landing page and builder.
 # The header nav carries this site's own destinations and no outward link; the
 # footer carries the outward links and no internal one.
 expected_navigation="Features|Format Builder|Download"
 expected_footer="Source|Issues|Releases"
-for page in docs/index.html docs/format.html; do
+for page in site/index.html site/format.html; do
     navigation=$(sed -n '/<nav aria-label="Page sections">/,/<\/nav>/p' "$page" \
         | sed -E 's/<svg[^>]*>.*<\/svg>//g' \
         | sed -E -n 's/.*>([^<]+)<\/a>.*/\1/p' | paste -sd '|' -)
@@ -119,54 +119,54 @@ done
 # The guided builder exposes every product-supported field and separator. The
 # raw input remains available for the rest of UTS-35.
 for token in yy yyyy M MM MMM MMMM d dd EEE EEEE a h hh H HH m mm s ss z zzzz XXX VV; do
-    if ! grep -q "data-token=\"$token\"" docs/format.html; then
+    if ! grep -q "data-token=\"$token\"" site/format.html; then
         note "format builder is missing $token"
     fi
 done
-if ! grep -q 'tr35-dates.html#Date_Format_Patterns' docs/format.html; then
+if ! grep -q 'tr35-dates.html#Date_Format_Patterns' site/format.html; then
     note "format builder must link to the official Unicode pattern documentation"
 fi
 for separator in '/' '-' '.' ' ' ':' ',' '·'; do
-    if ! grep -Fq "data-token=\"$separator\"" docs/format.html; then
+    if ! grep -Fq "data-token=\"$separator\"" site/format.html; then
         note "format builder is missing separator '$separator'"
     fi
 done
-if ! grep -q 'id="add-literal"' docs/format.html; then
+if ! grep -q 'id="add-literal"' site/format.html; then
     note "format builder must support literal text"
 fi
-if grep -Eqi 'free[[:space:]-]+tool' docs/*.html; then
+if grep -Eqi 'free[[:space:]-]+tool' site/*.html; then
     note "website must not advertise itself as a free tool"
 fi
-if ! grep -q 'hasUpperHour' docs/format.html; then
-    if ! grep -q 'hasUpperHour' docs/scripts/format-pattern.js; then
+if ! grep -q 'hasUpperHour' site/format.html; then
+    if ! grep -q 'hasUpperHour' site/scripts/format-pattern.js; then
         note "format builder must reject uppercase hours when a day period is present"
     fi
 fi
 node scripts/test-format-builder.js || note "format builder behavior tests failed"
-if grep -q 'const now = new Date' docs/format.html \
-    || grep -q 'scheduleRefresh' docs/format.html; then
+if grep -q 'const now = new Date' site/format.html \
+    || grep -q 'scheduleRefresh' site/format.html; then
     note "format builder preview must use a fixed illustrative date without a refresh timer"
 fi
-if ! grep -q ':focus-visible' docs/styles/main.css; then
+if ! grep -q ':focus-visible' site/styles/main.css; then
     note "website must expose a deliberate keyboard focus treatment"
 fi
-if ! grep -q 'screenshots/settings-clocks.webp' docs/index.html; then
+if ! grep -q 'screenshots/settings-clocks.webp' site/index.html; then
     note "homepage must show the current Settings UI"
 fi
-if ! grep -q 'screenshots/panel.webp' docs/index.html; then
+if ! grep -q 'screenshots/panel.webp' site/index.html; then
     note "homepage must show the current panel"
 fi
 # Screenshots are published as lossless WebP: identical pixels, the window
 # shadow's alpha preserved, and far fewer bytes than PNG.
-if ls docs/screenshots/*.png >/dev/null 2>&1; then
+if ls site/screenshots/*.png >/dev/null 2>&1; then
     note "screenshots must be published as lossless WebP, not PNG"
 fi
 for image_and_width in \
-    "docs/screenshots/menu-bar.webp:400" \
-    "docs/screenshots/panel.webp:840" \
-    "docs/screenshots/settings-clocks.webp:1120" \
-    "docs/screenshots/settings-format.webp:1120" \
-    "docs/screenshots/settings-general.webp:1120"; do
+    "site/screenshots/menu-bar.webp:400" \
+    "site/screenshots/panel.webp:840" \
+    "site/screenshots/settings-clocks.webp:1120" \
+    "site/screenshots/settings-format.webp:1120" \
+    "site/screenshots/settings-general.webp:1120"; do
     image="${image_and_width%:*}"
     minimum_width="${image_and_width##*:}"
     [ -f "$image" ] || { note "missing current screenshot $image"; continue; }
@@ -176,7 +176,7 @@ for image_and_width in \
 done
 # An image already carrying the window's own corner and shadow must not get a
 # second one from CSS: that clips at the wrong radius and stacks two shadows.
-if grep -A3 -E '^\.(hero|settings)-shot' docs/styles/main.css \
+if grep -A3 -E '^\.(hero|settings)-shot' site/styles/main.css \
     | grep -Eq 'border-radius|box-shadow'; then
     note "screenshots must not be given a second corner radius or shadow in CSS"
 fi
@@ -214,8 +214,8 @@ fi
 if ! grep -q 'lossless' scripts/capture-screenshots.sh; then
     note "screenshots must be encoded as lossless WebP"
 fi
-if rg -q '—' CHANGELOG.md CONTEXT.md CONTRIBUTING.md Makefile README.md \
-    Sources Support docs scripts --glob '!validate.sh'; then
+if grep -rq --exclude=validate.sh '—' CHANGELOG.md CONTEXT.md CONTRIBUTING.md \
+    Makefile README.md Sources Support docs site scripts; then
     note "project copy and documentation must not contain em dashes"
 fi
 

@@ -22,8 +22,9 @@ migration and its downstream effects.
 - Repository: `martonpaulo/meantime` (public)
 - Public identifiers: bundle `com.perso.meantime`; SwiftPM package `Meantime`,
   library target `MeantimeKit`, executable target `Meantime`
-- Landing page: `https://meantime.martonpaulo.com/`, built from `docs/`
-  in this repository and published by GitHub Pages
+- Landing page: `https://meantime.martonpaulo.com/`, built from `site/`
+  in this repository and published by GitHub Pages; `docs/` holds developer
+  documentation only and is never published
 - License: `MIT`, © 2026 Marton Paulo
 - Development language: English (code, comments, commits, filenames, tests,
   configuration, developer docs)
@@ -56,40 +57,9 @@ migration and its downstream effects.
 
 ## Product
 
-Meantime shows world clocks in the macOS menu bar. It is a native, accessory
-(menu-bar-only) app for Mac users coordinating work or personal plans across
-multiple time zones. It replaces repeated time-zone lookups with a glance and
-a transient preview of another moment.
-
-Success means users can read the correct time in each chosen zone, see scheduled
-clocks appear at the intended local boundaries, and preview a date/time without
-changing saved clocks. Correctness follows the system clock and user calendar;
-idle operation does no unnecessary work. These are observable product contracts,
-not claims that every current implementation path already satisfies them.
-
-- Add a clock for any time zone; give it a custom label and choose a country
-  flag, custom emoji, custom text, or no leading item.
-- Show any clock directly in the menu bar (its own item, or all clocks combined
-  into one), keep it panel-only, or schedule the days and hours — in the clock's
-  own zone — during which it appears.
-- The dropdown panel is a glance surface: complete times with GMT/day captions,
-  a quick month calendar, and typed time travel (pick a day, type a time) that
-  previews the moment across every clock and resets on close.
-- The time format starts with common presets and supports any custom Unicode
-  (UTS-35) pattern with a live preview; the website ships an interactive
-  grouped builder. The Mac's system format is the default.
-
-**Simple by design.** No accounts, no sync, no widgets, no analytics, no
-telemetry. The only network activity permitted is Sparkle update checks in the
-direct-download build. Do not add cloud services, background jobs, or content
-polling. Keep the surface small; new capability is a deliberate product change,
-not a default.
-
-Accounts, sync, analytics, and telemetry are excluded to keep personal clock
-preferences local and avoid a service dependency. Widgets and unrelated calendar
-management are excluded to keep the product focused on its menu-bar glance
-surface. The website helps users understand and configure Meantime; it is not a
-second hosted clock service.
+The product definition lives in [`docs/product.md`](docs/product.md): what
+Meantime is, what success means, and what it deliberately excludes. Read it
+before any product-facing change.
 
 ## Instruction hierarchy and sources of truth
 
@@ -319,9 +289,9 @@ procedure; a general skill keeps the surrounding workflow. Unclaimed tasks use
 normal skill triggering. Codex reads this root guidance; `CLAUDE.md` is a symlink
 to the same owner. No Gemini or Antigravity guidance surface is selected.
 
-## Personal skill paths
+## Agent skill paths
 
-- Product definition: this file, **Product** (canonical; do not duplicate it)
+- Product definition: `docs/product.md`
 - Domain glossary: `CONTEXT.md` (optional; create only when useful)
 - ADRs: `docs/adr/` (only for hard-to-reverse, non-obvious decisions)
 - Research notes: `docs/research/` (create only when persisting research)

@@ -1,4 +1,4 @@
-# UI patterns
+# Design system
 
 The contract every Meantime view follows. New UI reuses these; a genuinely new
 pattern is confirmed and documented before it lands (see the pattern-break

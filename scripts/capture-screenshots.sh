@@ -28,7 +28,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-OUT="docs/screenshots"
+OUT="site/screenshots"
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/meantime-screenshots.XXXXXX")
 BUNDLE="$WORK/Meantime Capture.app"
 cleanup() {

@@ -13,7 +13,7 @@ DerivedData/
 # Task logs and generated release artifacts (never durable)
 artifacts/
 
-# Disposable agent scratch space (see AGENTS.md → Personal skill paths)
+# Disposable agent scratch space (see AGENTS.md → Agent skill paths)
 .scratch/
 
 # Local secrets and signing configuration — never committed

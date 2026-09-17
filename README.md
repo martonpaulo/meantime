@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/social-card.jpg" width="100%" alt="Meantime: world clocks in your macOS menu bar">
+<img src="site/social-card.jpg" width="100%" alt="Meantime: world clocks in your macOS menu bar">
 
 # Meantime
 
@@ -56,8 +56,8 @@ make run
 | `make installer-assets` | Regenerate the installer art |
 | `make web-assets` | Regenerate the website art |
 | `make regions` | Rebuild the time-zone to region table from the system tz database |
-| `make social-card` | Render `docs/social-card.jpg` from `design/social-card/` |
-| `make screenshots` | Refresh the screenshots in `docs/screenshots/`, needing a Retina display and `cwebp` |
+| `make social-card` | Render `site/social-card.jpg` from `design/social-card/` |
+| `make screenshots` | Refresh the screenshots in `site/screenshots/`, needing a Retina display and `cwebp` |
 | `make clean` | Remove the build artifacts |
 
 `make` with no target lists every target.
@@ -164,7 +164,7 @@ of the same view has none of them. It needs a Retina display and `cwebp`, and re
 them. The method, and the reason for each rule, is documented at the top of
 [`scripts/capture-screenshots.sh`](scripts/capture-screenshots.sh).
 
-Further reading: [architecture](docs/architecture.md) · [UI patterns](docs/ui-patterns.md) ·
+Further reading: [architecture](docs/architecture.md) · [design system](docs/design-system.md) ·
 [feature defaults](docs/feature-defaults.md) · [agent policy](AGENTS.md) ·
 [contributing](CONTRIBUTING.md) · [security](SECURITY.md).
 

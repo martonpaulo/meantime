@@ -8,7 +8,7 @@
 // product's card (the shared social card standard).
 import AppKit
 
-let iconURL = URL(fileURLWithPath: "docs/assets/app-icon.png")
+let iconURL = URL(fileURLWithPath: "site/assets/app-icon.png")
 
 guard let icon = NSImage(contentsOf: iconURL) else {
     fatalError("missing \(iconURL.path)")
@@ -27,7 +27,7 @@ for side in [72, 280] {
     NSGraphicsContext.current?.imageInterpolation = .high
     icon.draw(in: NSRect(x: 0, y: 0, width: side, height: side))
     NSGraphicsContext.restoreGraphicsState()
-    let url = URL(fileURLWithPath: "docs/assets/app-icon-\(side).png")
+    let url = URL(fileURLWithPath: "site/assets/app-icon-\(side).png")
     try scaled.representation(using: .png, properties: [:])!.write(to: url)
     print("wrote \(url.path) at \(side)x\(side)")
 }

@@ -1,8 +1,8 @@
 "use strict";
 
 const assert = require("node:assert/strict");
-const { unquotedFields, validation } = require("../docs/scripts/format-pattern.js");
-const { EXAMPLE_DATE, parsePattern } = require("../docs/scripts/format-preview.js");
+const { unquotedFields, validation } = require("../site/scripts/format-pattern.js");
+const { EXAMPLE_DATE, parsePattern } = require("../site/scripts/format-preview.js");
 
 for (const pattern of ["h:mm a", "hh:mm a", "'H' h:mm a", "HH:mm 'a'"]) {
   assert.equal(validation(pattern).valid, true, `${pattern} should be valid`);

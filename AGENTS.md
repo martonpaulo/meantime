@@ -42,7 +42,7 @@ migration and its downstream effects.
 - Browser acceptance: Chromium and WebKit/Safari for the landing page and Format
   Builder. Gecko is outside the selected acceptance set.
 - Commit subject: a commit made for an issue ends with `(#<issue number>)`.
-- Merge policy: squash only for bot PRs; merge commits and rebase are disabled.
+- Merge policy: merge commit only for bot PRs, `gh pr merge <number> --merge --delete-branch`, so every branch commit reaches `main` (martonpaulo/skill-deck#277); squash and rebase are disabled.
   This does not authorize branches for ordinary project work.
 - Required approving review: disabled. Main-only direct delivery has no PR review gate.
 - Secret protection: GitHub secret scanning and push protection enabled.
@@ -50,7 +50,6 @@ migration and its downstream effects.
   `swiftui`, `time-travel`, `timezone`, `world-clock`.
 - Skills baseline revision: `7cfc324fcded57145c36cc678977c070ed800692`
 - Skills baseline applied: `2026-09-09`
-- Skills baseline divergence `merge-template-legacy` at `7cfc324fcded57145c36cc678977c070ed800692`: the owner approved squash-only bot PRs; the canonical publishing convention supersedes the setup template's stale merge-commit wording.
 - Delete branches after merge: enabled (bot PRs are the only branches)
 - Release, signing, and secret storage: see **Distribution & signing** below
 

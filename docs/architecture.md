@@ -65,4 +65,6 @@ Concurrency boundaries are explicit and minimal, per Swift 6.
 ## Distribution
 
 Direct download only: a notarized Developer ID DMG plus Sparkle auto-update via
-an appcast hosted in this repository. Signing material never enters the repo.
+an appcast hosted in this repository. Official releases are built, notarized,
+and published only by the tag-triggered Release workflow. Signing material
+never enters the repo.

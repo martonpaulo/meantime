@@ -1,0 +1,246 @@
+# Official releases come only from this workflow, on a pushed vX.Y.Z tag that
+# points at the current main commit. Local notarization is a rehearsal.
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Tests and validation
+        run: |
+          swift test
+          bash scripts/validate.sh
+
+      - name: Derive version
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          IFS=. read -r MAJOR MINOR PATCH <<< "$VERSION"
+          BUILD=$((MAJOR * 10000 + MINOR * 100 + PATCH))
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "build=$BUILD" >> "$GITHUB_OUTPUT"
+
+      - name: Enforce release source and version
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD: ${{ steps.version.outputs.build }}
+        run: |
+          git fetch origin main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || {
+            echo "Official release tags must point at the current main commit." >&2
+            exit 1
+          }
+          PLIST_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Support/Info.plist)
+          PLIST_BUILD=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Support/Info.plist)
+          test "$PLIST_VERSION" = "$VERSION" || {
+            echo "Tag version does not match Support/Info.plist." >&2
+            exit 1
+          }
+          test "$PLIST_BUILD" = "$BUILD" || {
+            echo "Derived build number does not match Support/Info.plist." >&2
+            exit 1
+          }
+
+      - name: Require official release credentials
+        env:
+          CERT: ${{ secrets.DEVELOPER_ID_CERT_P12 }}
+          CERT_PASSWORD: ${{ secrets.DEVELOPER_ID_CERT_PASSWORD }}
+          NOTARY_API_KEY: ${{ secrets.NOTARY_API_KEY }}
+          NOTARY_API_KEY_ID: ${{ secrets.NOTARY_API_KEY_ID }}
+          NOTARY_API_ISSUER_ID: ${{ secrets.NOTARY_API_ISSUER_ID }}
+          SPARKLE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          missing=()
+          [ -n "$CERT" ] || missing+=(DEVELOPER_ID_CERT_P12)
+          [ -n "$CERT_PASSWORD" ] || missing+=(DEVELOPER_ID_CERT_PASSWORD)
+          [ -n "$NOTARY_API_KEY" ] || missing+=(NOTARY_API_KEY)
+          [ -n "$NOTARY_API_KEY_ID" ] || missing+=(NOTARY_API_KEY_ID)
+          [ -n "$NOTARY_API_ISSUER_ID" ] || missing+=(NOTARY_API_ISSUER_ID)
+          [ -n "$SPARKLE_KEY" ] || missing+=(SPARKLE_PRIVATE_KEY)
+          if [ "${#missing[@]}" -ne 0 ]; then
+            echo "Official release blocked: missing required secrets: ${missing[*]}" >&2
+            exit 1
+          fi
+
+      # Official releases require an Apple-issued Developer ID Application
+      # certificate, imported into a temporary keychain on the ephemeral runner.
+      - name: Import Developer ID certificate
+        env:
+          CERT: ${{ secrets.DEVELOPER_ID_CERT_P12 }}
+          CERT_PASSWORD: ${{ secrets.DEVELOPER_ID_CERT_PASSWORD }}
+        run: |
+          umask 077
+          KEYCHAIN=build.keychain
+          security create-keychain -p ci "$KEYCHAIN"
+          security default-keychain -s "$KEYCHAIN"
+          security unlock-keychain -p ci "$KEYCHAIN"
+          echo "$CERT" | base64 --decode > cert.p12
+          # OpenSSL 3 PKCS#12 encryption and non-ASCII export passwords are not
+          # consistently accepted by macOS Security.framework. Validate the
+          # supplied password, then normalize the bundle into the legacy
+          # PKCS#12 profile that Keychain accepts. The unencrypted intermediate
+          # is permission-restricted and removed by the EXIT trap on all paths.
+          export CERT_PASSWORD
+          COMPAT_PASSWORD=meantime-ephemeral-ci-import
+          export COMPAT_PASSWORD
+          trap 'rm -f cert.p12 cert-extracted.pem cert-compatible.p12' EXIT
+          openssl pkcs12 -legacy -in cert.p12 -passin env:CERT_PASSWORD \
+            -nodes -out cert-extracted.pem
+          openssl pkcs12 -export -legacy -in cert-extracted.pem \
+            -passout env:COMPAT_PASSWORD -out cert-compatible.p12
+          security import cert-compatible.p12 -k "$KEYCHAIN" \
+            -P "$COMPAT_PASSWORD" -T /usr/bin/codesign
+          rm -f cert.p12 cert-extracted.pem cert-compatible.p12
+          trap - EXIT
+          security set-key-partition-list -S apple-tool:,apple: -s -k ci "$KEYCHAIN"
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN" \
+            | awk -F'"' '/Developer ID Application:/ {print $2; exit}')
+          case "$IDENTITY" in
+            "Developer ID Application:"*) ;;
+            *) echo "Official release blocked: P12 does not contain a valid Developer ID Application identity." >&2; exit 1 ;;
+          esac
+          echo "DEVELOPER_ID_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
+          echo "signing as: $IDENTITY"
+
+      # scripts/package-app.sh signs with DEVELOPER_ID_IDENTITY (hardened runtime).
+      - name: Build and package
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD: ${{ steps.version.outputs.build }}
+        run: scripts/package-app.sh "$VERSION" "$BUILD"
+
+      # The team App Store Connect API key is written to a private temporary file
+      # for scripts/notarize.sh and removed by the always-run step at the end.
+      - name: Write notary API key
+        env:
+          NOTARY_API_KEY: ${{ secrets.NOTARY_API_KEY }}
+          NOTARY_API_KEY_ID: ${{ secrets.NOTARY_API_KEY_ID }}
+          NOTARY_API_ISSUER_ID: ${{ secrets.NOTARY_API_ISSUER_ID }}
+        run: |
+          umask 077
+          KEY_PATH="$RUNNER_TEMP/notary/AuthKey.p8"
+          mkdir -p "$(dirname "$KEY_PATH")"
+          printf '%s\n' "$NOTARY_API_KEY" > "$KEY_PATH"
+          {
+            echo "NOTARY_API_KEY_PATH=$KEY_PATH"
+            echo "NOTARY_API_KEY_ID=$NOTARY_API_KEY_ID"
+            echo "NOTARY_API_ISSUER_ID=$NOTARY_API_ISSUER_ID"
+          } >> "$GITHUB_ENV"
+
+      # A ZIP cannot be stapled: staple the app and rebuild the Sparkle ZIP.
+      - name: Notarize, staple, and validate app
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          ZIP="artifacts/Meantime-$VERSION.zip"
+          scripts/notarize.sh "$ZIP"
+          xcrun stapler staple build/Meantime.app
+          xcrun stapler validate build/Meantime.app
+          codesign --verify --deep --strict --verbose=2 build/Meantime.app
+          spctl --assess --type execute --verbose=2 build/Meantime.app
+          rm "$ZIP"
+          ditto -c -k --keepParent build/Meantime.app "$ZIP"
+
+      # sign_update comes from the Sparkle version pinned in Package.resolved.
+      - name: Sign update for Sparkle
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          SIG=$(printf '%s\n' "$SPARKLE_PRIVATE_KEY" \
+            | scripts/sign-update.sh "artifacts/Meantime-$VERSION.zip" --ed-key-file -)
+          case "$SIG" in
+            *'sparkle:edSignature="'*'length="'*) ;;
+            *) echo "sign_update did not print the expected signature attributes." >&2; exit 1 ;;
+          esac
+          echo "SPARKLE_SIG_ATTRS=$SIG" >> "$GITHUB_ENV"
+
+      # scripts/make-dmg.sh signs the DMG with DEVELOPER_ID_IDENTITY.
+      - name: DMG
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: scripts/make-dmg.sh "$VERSION"
+
+      - name: Notarize, staple, and validate DMG
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          DMG="artifacts/Meantime-$VERSION.dmg"
+          scripts/notarize.sh "$DMG"
+          codesign --verify --verbose=2 "$DMG"
+          spctl --assess --type open --context context:primary-signature --verbose=2 "$DMG"
+          MOUNT=$(mktemp -d)
+          hdiutil attach "$DMG" -nobrowse -readonly -mountpoint "$MOUNT"
+          trap 'hdiutil detach "$MOUNT" -quiet || true; rmdir "$MOUNT" || true' EXIT
+          codesign --verify --deep --strict --verbose=2 "$MOUNT/Meantime.app"
+          spctl --assess --type execute --verbose=2 "$MOUNT/Meantime.app"
+
+      # Assets are staged in a draft and checked before the release becomes
+      # public, because the appcast step below may only advertise files that
+      # already exist.
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          awk -v heading="## [$VERSION]" '
+            index($0, heading) == 1 { printing=1; next }
+            printing && /^## / { exit }
+            printing { print }
+          ' CHANGELOG.md > release-notes.md
+          grep -q '[^[:space:]]' release-notes.md || {
+            echo "Missing CHANGELOG release notes for $VERSION" >&2
+            exit 1
+          }
+          ASSETS=("artifacts/Meantime-$VERSION.dmg" "artifacts/Meantime-$VERSION.zip")
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME already exists; resolve it by hand." >&2
+            exit 1
+          fi
+          gh release create "$GITHUB_REF_NAME" --draft --verify-tag \
+            --title "Meantime $VERSION" --notes-file release-notes.md "${ASSETS[@]}"
+          PUBLISHED=$(gh release view "$GITHUB_REF_NAME" --json assets \
+            --jq '.assets[] | "\(.name) \(.size)"')
+          for asset in "${ASSETS[@]}"; do
+            grep -qxF "$(basename "$asset") $(stat -f%z "$asset")" <<< "$PUBLISHED" || {
+              echo "Draft release is missing $(basename "$asset") or its size differs." >&2
+              exit 1
+            }
+          done
+          gh release edit "$GITHUB_REF_NAME" --draft=false --latest
+
+      # Only now, with the update ZIP downloadable, does the public feed learn
+      # about it. scripts/make-appcast.sh leaves an existing entry unchanged.
+      - name: Update appcast on main
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD: ${{ steps.version.outputs.build }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout main
+          scripts/make-appcast.sh "$VERSION" "$BUILD" \
+            "artifacts/Meantime-$VERSION.zip" "$SPARKLE_SIG_ATTRS"
+          if ! git diff --quiet appcast.xml; then
+            git add appcast.xml
+            git commit -m "chore(release): appcast entry for $VERSION"
+            # a concurrent main change must be reconciled, never discarded
+            git pull --rebase origin main
+            git push origin main
+          fi
+
+      - name: Remove notary API key
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/notary"

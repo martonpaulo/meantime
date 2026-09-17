@@ -48,7 +48,7 @@ make run
 | `make validate` | Check the repository invariants (`scripts/validate.sh`) |
 | `make app` | Build the Release `.app`, ad-hoc signed unless `DEVELOPER_ID_IDENTITY` is set |
 | `make dmg` | Build the installer DMG |
-| `make notarize` | Notarize and staple a signed DMG (`DMG=…`, `NOTARY_PROFILE`) |
+| `make notarize` | Rehearse notarization of a signed DMG (`DMG=…`, optional `NOTARY_PROFILE`) |
 | `make sign-update` | Print the Sparkle appcast signature for a release zip (`ZIP=…`) |
 | `make appcast` | Update `appcast.xml` (`VERSION`, `BUILD`, `ZIP`, `SIG`) |
 | `make keys` | Generate the Sparkle signing key into the Keychain |
@@ -65,12 +65,18 @@ make run
 <br />
 
 ## 🔐 Secrets and variables
-No GitHub Actions secret exists: releases are cut locally, so the Developer ID identity and the Sparkle private key stay in the **Keychain** and the notary credentials in a `notarytool` profile.
+Official releases are built by the **Release** workflow, which needs six repository secrets. Locally, the Developer ID identity and the Sparkle private key stay in the **Keychain** and the notary credentials in a `notarytool` profile.
 
 | Name | Where | What for |
 | --- | --- | --- |
+| `DEVELOPER_ID_CERT_P12` | Actions secret, Release | Base64 of the Developer ID Application certificate and key (`.p12`) |
+| `DEVELOPER_ID_CERT_PASSWORD` | Actions secret, Release | Password of that `.p12` |
+| `NOTARY_API_KEY` | Actions secret, Release and Notary credentials check | Contents of the team App Store Connect API key (`.p8`) |
+| `NOTARY_API_KEY_ID` | Actions secret, Release and Notary credentials check | ID of that API key |
+| `NOTARY_API_ISSUER_ID` | Actions secret, Release and Notary credentials check | Issuer ID of that API key |
+| `SPARKLE_PRIVATE_KEY` | Actions secret, Release | The Sparkle EdDSA private key that signs the update zip |
 | `DEVELOPER_ID_IDENTITY` | Shell, `make app` and `make dmg` | Optional. The Developer ID Application identity label; unset means an ad-hoc signature |
-| `NOTARY_PROFILE` | Shell, `make notarize` | Optional. The name of an existing `notarytool` Keychain profile |
+| `NOTARY_PROFILE` | Shell, `make notarize` | Optional. The `notarytool` Keychain profile for a local rehearsal; default `skd-notary` |
 | `APP_OUTPUT` | Shell, packaging targets | Optional. Output path for the built `.app`; existing artifacts are never overwritten |
 | `ZIP_OUTPUT` | Shell, packaging targets | Optional. Output path for the release zip |
 | `DMG_OUTPUT` | Shell, packaging targets | Optional. Output path for the installer DMG |
@@ -131,17 +137,26 @@ real-browser or human checks.
 
 ## Releasing (maintainers)
 
-One-time: `make keys` (Sparkle key → Keychain) and a `notarytool` credentials profile. Per release:
+Official releases come only from the **Release** workflow. Bump `CFBundleShortVersionString` and
+`CFBundleVersion` (`major × 10000 + minor × 100 + patch`) in `Support/Info.plist`, move the
+`## [Unreleased]` notes under `## [x.y.z] - date` in `CHANGELOG.md`, update the website version,
+push to `main`, then tag that exact commit:
+
+```bash
+git tag vx.y.z && git push origin vx.y.z
+```
+
+The workflow tests, signs, notarizes and staples, signs the Sparkle update, publishes the DMG and
+the update zip with the changelog notes, and commits the appcast entry to `main`. Run the
+**Notary credentials check** workflow after creating or rotating the API key.
+
+A local build is a rehearsal only and is never uploaded. It uses the Keychain Sparkle key
+(`make keys`) and the `skd-notary` `notarytool` profile:
 
 ```bash
 DEVELOPER_ID_IDENTITY="Developer ID Application: …" make dmg
-NOTARY_PROFILE=<profile> make notarize DMG=artifacts/Meantime-x.y.z.dmg
-make sign-update ZIP=artifacts/Meantime-x.y.z.zip
-make appcast VERSION=x.y.z BUILD=<n> ZIP=… SIG='…'
-git tag vx.y.z && git push --tags
+make notarize DMG=artifacts/Meantime-x.y.z.dmg
 ```
-
-Then upload the DMG and the zip to the GitHub release.
 
 `make screenshots` captures the real windows on screen with `screencapture -l<windowid>`, because
 the window shadow, corner radius and material are drawn by the window server and an offscreen render

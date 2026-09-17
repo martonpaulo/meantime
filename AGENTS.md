@@ -15,7 +15,8 @@ visibility, branch policy, versioning model, localization strategy, landing-page
 contract, or release policy only through an explicit task that describes the
 migration and its downstream effects.
 
-- Project and public name: `Meantime`
+- Project name: `meantime`
+- Public name: `Meantime`
 - Description: world clocks in your macOS menu bar — scheduled clocks, quick
   calendar, time travel. Native, fast, private.
 - Repository: `martonpaulo/meantime` (public)

@@ -69,7 +69,7 @@ dmg: app installer-assets ## Build the installer DMG
 	@bash scripts/make-dmg.sh
 
 notarize: ## Rehearse notarization of a signed DMG: args: DMG, env NOTARY_PROFILE (default skd-notary)
-	@bash scripts/notarize.sh "$(DMG)"
+	@bash scripts/notarize.sh --artifact "$(DMG)"
 
 sign-update: ## Print the appcast signature for a release zip: args: ZIP
 	@bash scripts/sign-update.sh $(ZIP)

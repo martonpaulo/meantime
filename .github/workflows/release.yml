@@ -144,7 +144,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           ZIP="artifacts/Meantime-$VERSION.zip"
-          scripts/notarize.sh "$ZIP"
+          scripts/notarize.sh --artifact "$ZIP"
           xcrun stapler staple build/Meantime.app
           xcrun stapler validate build/Meantime.app
           codesign --verify --deep --strict --verbose=2 build/Meantime.app
@@ -177,7 +177,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           DMG="artifacts/Meantime-$VERSION.dmg"
-          scripts/notarize.sh "$DMG"
+          scripts/notarize.sh --artifact "$DMG"
           codesign --verify --verbose=2 "$DMG"
           spctl --assess --type open --context context:primary-signature --verbose=2 "$DMG"
           MOUNT=$(mktemp -d)

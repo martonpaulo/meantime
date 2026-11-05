@@ -280,6 +280,7 @@ agreed, document it here in the same turn.
 - Final report includes: changed files, validation performed, artifacts
   kept/deleted, commit and push status, final `git status --short --branch`,
   unrelated dirty files, and remaining risks.
+- Never write a leftover-work file such as `REMAINING.md`; report what is left in the final reply.
 
 ## Skills
 

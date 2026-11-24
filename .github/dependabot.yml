@@ -7,8 +7,8 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "09:00"
-      timezone: "Europe/Madrid"
+      time: "06:17"
+      timezone: "UTC"
     open-pull-requests-limit: 5
     commit-message:
       prefix: "deps"
@@ -19,8 +19,8 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "09:30"
-      timezone: "Europe/Madrid"
+      time: "06:17"
+      timezone: "UTC"
     open-pull-requests-limit: 5
     commit-message:
       prefix: "ci"

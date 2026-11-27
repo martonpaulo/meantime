@@ -74,6 +74,9 @@ else
     done
 fi
 
+# The changelog keeps the Keep a Changelog shape, newest version matching Info.plist.
+bash scripts/release-notes.sh --check >/dev/null || note "CHANGELOG.md must pass scripts/release-notes.sh --check"
+
 # Every local asset address can be versioned at deploy time: root-relative, no committed ?v=.
 bash scripts/version-site-assets.sh --check \
     || note "site/ asset addresses must pass scripts/version-site-assets.sh --check"

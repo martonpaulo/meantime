@@ -10,7 +10,8 @@
    "scripts/skd/**",
    "scripts/lib/**",
    "scripts/validate-site.sh",
-   "scripts/version-site-assets.sh"
+   "scripts/version-site-assets.sh",
+   "scripts/release-notes.sh"
   ],
   "counts": {
    "scripts/capture-screenshots.sh": {
@@ -41,7 +42,11 @@
  "duplicates": {
   "depth": 1,
   "exclude": [
-   "scripts/skd/**"
+   "scripts/skd/**",
+   "scripts/lib/**",
+   "scripts/validate-site.sh",
+   "scripts/version-site-assets.sh",
+   "scripts/release-notes.sh"
   ],
   "counts": {
    "Sources": 4,

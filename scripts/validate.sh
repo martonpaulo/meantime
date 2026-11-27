@@ -77,6 +77,8 @@ fi
 # Every local asset address can be versioned at deploy time: root-relative, no committed ?v=.
 bash scripts/version-site-assets.sh --check \
     || note "site/ asset addresses must pass scripts/version-site-assets.sh --check"
+grep -Eq '^[^#]*scripts/version-site-assets[.]sh --site' .github/workflows/deploy.yml \
+    || note "deploy.yml must version the asset addresses of its staged copy"
 
 # The website names the shipped version on its download buttons, so a release
 # that forgets the site fails here instead of shipping a page that advertises

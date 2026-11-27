@@ -29,11 +29,18 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       # The deployed commit, which the deploy job's last step reads back from the live site.
+      # The deploy publishes a staged copy, so nothing it writes is ever committed.
+      - name: Stage the site
+        run: cp -R site "$RUNNER_TEMP/site"
       - name: Record the deployed commit
-        run: git rev-parse HEAD > site/build.txt
+        run: git rev-parse HEAD > "$RUNNER_TEMP/site/build.txt"
+      # Last step on the staged copy: every local asset address gets ?v=<md5>, so a browser never
+      # pairs new HTML with a cached old stylesheet, script or image.
+      - name: Version the asset addresses
+        run: bash scripts/version-site-assets.sh --site "$RUNNER_TEMP/site"
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          path: site
+          path: ${{ runner.temp }}/site
 
   deploy:
     permissions:

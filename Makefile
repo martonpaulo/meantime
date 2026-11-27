@@ -22,6 +22,10 @@ run: ## Run the debug app from the terminal (unbundled)
 
 validate: ## Check repository invariants
 	@bash scripts/validate.sh
+	@python3 scripts/text_check.py .
+	@python3 scripts/issue_links.py . --repo martonpaulo/meantime
+	@python3 scripts/dry_check.py
+	@python3 scripts/sleep_guard.py .
 
 check: ## Build + test + validate
 	@printf '\n$(BOLD)[1/3] Building$(RESET)\n'

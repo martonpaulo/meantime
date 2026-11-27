@@ -10,6 +10,17 @@ updates:
       time: "06:17"
       timezone: "UTC"
     open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
+      semver-major-days: 30
+      semver-minor-days: 3
+      semver-patch-days: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
+    groups:
+      swift-dependencies:
+        update-types: [minor, patch]
     commit-message:
       prefix: "deps"
 
@@ -22,5 +33,7 @@ updates:
       time: "06:17"
       timezone: "UTC"
     open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
     commit-message:
       prefix: "ci"

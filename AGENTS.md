@@ -19,6 +19,7 @@ migration and its downstream effects.
 - Code name: `Meantime`
 - Slug: `meantime`
 - Identifier name: `meantime`
+- Icon: `site/apple-touch-icon.png`
 - Description: world clocks in your macOS menu bar — scheduled clocks, quick
   calendar, time travel. Native, fast, private.
 - Repository: `martonpaulo/meantime` (public)
@@ -44,7 +45,7 @@ migration and its downstream effects.
 - Browser acceptance: Chromium and WebKit/Safari for the landing page and Format
   Builder. Gecko is outside the selected acceptance set.
 - Commit subject: a commit made for an issue ends with `(#<issue number>)`.
-- Merge policy: merge commit only for bot PRs, `gh pr merge <number> --merge --delete-branch`, so every branch commit reaches `main` (martonpaulo/skill-deck#277); squash and rebase are disabled.
+- Merge policy: merge commit only for bot PRs, `gh pr merge <number> --merge --delete-branch`, so every branch commit reaches `main` ([martonpaulo/skill-deck#277](https://github.com/martonpaulo/skill-deck/issues/277)); squash and rebase are disabled.
   This does not authorize branches for ordinary project work.
 - Required approving review: disabled. Main-only direct delivery has no PR review gate.
 - Secret protection: GitHub secret scanning and push protection enabled.
@@ -131,126 +132,14 @@ cannot establish them; never report those checks from DOM assertions alone.
 - **Swift 6 concurrency.** Explicit, minimal `@MainActor` / actor boundaries;
   do not regress concurrency safety.
 
-## Architecture (by responsibility)
+## Route map
 
-Two layers, kept apart:
+Before editing under a path, read the file its row names. A module with rules of its own keeps them in its own `AGENTS.md` of at most 150 lines, beside a `CLAUDE.md` symlink, and has a row here; this file stays at most 200 lines.
 
-1. **Domain kit** — pure logic with no AppKit/SwiftUI. Models, time formatting,
-   flag and city derivation, tick-granularity math, and the preferences
-   contract. All business rules live here **with unit tests**. Imports
-   Foundation only.
-2. **App surface** — the menu-bar controller, SwiftUI panel and settings,
-   lifecycle, login item, and Sparkle. Consumes the domain kit; owns no
-   business rules of its own.
-
-Tests target the domain kit. Keep the SwiftPM structure standard (package
-manifest at root, one library target for the kit, one executable for the app,
-one test target). Do not add extra targets or top-level folders for symmetry.
-
-## Design system
-
-- **All visual constants come from design tokens** — spacing, padding, sizes,
-  corner radii, font sizes/weights, colors, animation durations. No hardcoded
-  magic numbers in views. Prefer semantic token names over raw values.
-- **Compose, don't duplicate.** Anything that looks the same twice becomes one
-  reusable view built by composition. A clock row, a format-preset chip, a
-  labeled control — one definition, reused.
-- **Respect the platform.** Preserve native semantics, keyboard navigation,
-  focus, hover/pressed/disabled states, Dynamic Type, contrast, reduced
-  motion, and safe areas. Follow the current macOS HIG and design language.
-- Before any UI change, briefly critique the current UI, then plan layout,
-  controls, states, accessibility, and validation.
-
-## Time & Energy contract (the core differentiator)
-
-- **Single time source:** the system clock (`Date`), which macOS keeps
-  NTP-synced. Never maintain a private counter that can drift.
-- **Per-target-zone formatting** through the shared formatter, with formatters
-  cached per (time zone, pattern, locale). No formatter allocation on the hot
-  path.
-- **Granularity drives cadence.** Compute the coarsest field that any *visible*
-  clock displays (seconds → minutes → hours). Schedule exactly one update
-  aligned to the next boundary of that field; re-arm on each fire. If nothing
-  visible shows time (e.g. all menu-bar items are glyph-only or hidden), run no
-  timer at all.
-- **Boundary alignment, not intervals.** Fire at the next real minute/hour
-  boundary so the menu bar flips exactly on time with no accumulated drift.
-- **Resync immediately** on system clock change, time-zone change, and wake
-  from sleep. Correctness beats battery every time.
-
-## Feature defaults and configurability
-
-For every new user-facing behavior:
-
-- Define its default explicitly.
-- Decide whether it is user-configurable and record why. Prefer a setting when
-  both states are legitimate preferences; do not add settings for bug fixes,
-  mandatory accessibility behavior, or single-outcome details.
-- Store defaults in one place (the preferences defaults). Do not duplicate
-  fallback values in views, controllers, tests, or migrations.
-- Persist configurable preferences through the typed preferences layer, which
-  is the runtime source of truth.
-- Preserve existing user choices on upgrade; migrate a stored value only when
-  the old representation is invalid.
-- Register every configurable preference so Restore Defaults resets it. Reset
-  must not touch identity, permissions, or non-preference user data.
-
-A missing configurability decision is a review failure.
-
-## Distribution & signing
-
-- Distribution is **direct download only**: a notarized, stapled DMG signed
-  with the stable Developer ID Application identity, plus Sparkle auto-update
-  driven by an appcast hosted from the repository.
-- Sparkle is embedded only in the packaged app; the domain kit never imports
-  it, and update checks only start from a real installed bundle.
-- **Official releases come only from the tag workflow.** Pushing a `vX.Y.Z` tag
-  that points at the current `origin/main` commit runs the Release workflow: it
-  tests and validates, checks the tag against `CFBundleShortVersionString` and
-  the derived `CFBundleVersion`, signs with the Developer ID certificate in a
-  temporary keychain, notarizes and staples through `scripts/notarize.sh` with
-  the team App Store Connect API key, signs the Sparkle update, publishes the
-  DMG and the update zip with notes from `CHANGELOG.md`, then adds the appcast
-  entry on `main`. The Notary credentials check workflow verifies the API key
-  without building anything.
-- The workflow requires six repository secrets: `DEVELOPER_ID_CERT_P12`,
-  `DEVELOPER_ID_CERT_PASSWORD`, `NOTARY_API_KEY`, `NOTARY_API_KEY_ID`,
-  `NOTARY_API_ISSUER_ID`, and `SPARKLE_PRIVATE_KEY`.
-- **Local notarization is a rehearsal.** `scripts/notarize.sh` is the owner's
-  canonical copy shared by every macOS app; keep it byte-for-byte unchanged and
-  put project-specific steps in its callers. Locally it uses the `notarytool`
-  Keychain profile `NOTARY_PROFILE`, default `skd-notary`. Never publish a
-  locally built artifact as a release.
-- **Signing material is never committed.** Only the Sparkle public key ships in
-  the bundle; the private key lives in the Keychain locally and in the
-  `SPARKLE_PRIVATE_KEY` secret for CI. Credentials never enter the repository
-  or logs.
-
-## Conventions
-
-- Conventional Commits. **English everywhere** — code, comments, docs, copy,
-  errors, examples, file names.
-- Comments state constraints the code cannot show (platform quirks, why a
-  boundary exists), not narration of what the code already says.
-- Human-readable code over cleverness. Small, well-named units.
-- Search first; read the smallest useful chunk; reuse existing code, patterns,
-  components, formatters, helpers, and Makefile targets before adding new ones.
-- No new dependencies unless clearly required, justified, and consistent with a
-  native, low-cost menu-bar app.
-- Add or update focused tests only for changed behavior, regressions,
-  persistence contracts, accessibility-critical flows, or validation-sensitive
-  code. Avoid tests that mirror implementation details or duplicate coverage.
-
-## Pattern-break protocol
-
-This file is the source of truth for how Meantime is built. **If a task seems
-to require breaking an established pattern** — introducing a second way to
-format, a hardcoded dimension, a parallel persistence path, a new dependency, a
-per-item timer, business logic in a view, or a new architectural layer —
-**stop and confirm with the user before either forcing the change into the old
-pattern or defining a new one.** Name the pattern in tension, the options, and
-the tradeoff. Silent divergence is a defect. When a genuinely new pattern is
-agreed, document it here in the same turn.
+| Path | Read first |
+| :--- | :--- |
+| `Sources/`, `Tests/`, `site/` | `docs/patterns.md` |
+| `scripts/`, `.github/workflows/`, `appcast.xml` | `docs/distribution.md` |
 
 ## Git and completion
 

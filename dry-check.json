@@ -1,0 +1,55 @@
+{
+ "magicValues": {
+  "folders": [],
+  "exclude": [
+   "scripts/dry_check.py",
+   "scripts/issue_links.py", "scripts/live_build_check.py",
+   "scripts/sleep_guard.py",
+   "scripts/text_check.py",
+   "scripts/skd/**"
+  ],
+  "counts": {
+   "scripts/capture-screenshots.sh": {
+    "duration": 2,
+    "number": 1,
+    "url": 1
+   },
+   "scripts/make-appcast.sh": {
+    "url": 2
+   },
+   "scripts/make-keys.sh": {
+    "path": 1
+   },
+   "scripts/package-app.sh": {
+    "path": 2
+   },
+   "scripts/test-format-builder.js": {
+    "number": 5
+   },
+   "scripts/validate.sh": {
+    "port": 3
+   },
+   "site/scripts/format-preview.js": {
+    "number": 4
+   }
+  }
+ },
+ "duplicates": {
+  "depth": 1,
+  "exclude": [
+   "scripts/skd/**"
+  ],
+  "counts": {
+   "Sources": 4,
+   "scripts": 1
+  }
+ },
+ "documents": {
+  "files": [
+   "*.md",
+   "docs/**/*.md"
+  ],
+  "exclude": [],
+  "repeated": {}
+ }
+}

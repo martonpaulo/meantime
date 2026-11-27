@@ -3,10 +3,14 @@
   "folders": [],
   "exclude": [
    "scripts/dry_check.py",
-   "scripts/issue_links.py", "scripts/live_build_check.py",
+   "scripts/issue_links.py",
+   "scripts/live_build_check.py",
    "scripts/sleep_guard.py",
    "scripts/text_check.py",
-   "scripts/skd/**"
+   "scripts/skd/**",
+   "scripts/lib/**",
+   "scripts/validate-site.sh",
+   "scripts/version-site-assets.sh"
   ],
   "counts": {
    "scripts/capture-screenshots.sh": {

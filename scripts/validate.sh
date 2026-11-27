@@ -52,30 +52,18 @@ fi
 # The website is served from its own subdomain. Every absolute URL must use the
 # canonical origin; the old project path and the github.io host must never
 # reappear anywhere in the published set.
-SITE_ORIGIN="https://meantime.martonpaulo.com/"
 [ -f site/CNAME ] && [ "$(cat site/CNAME)" = "meantime.martonpaulo.com" ] \
     || note "site/CNAME must contain exactly meantime.martonpaulo.com"
-for page in site/index.html site/format.html; do
-    grep -q "<link rel=\"canonical\" href=\"$SITE_ORIGIN" "$page" \
-        || note "$page canonical must start with $SITE_ORIGIN"
-done
-grep -q "Sitemap: ${SITE_ORIGIN}sitemap.xml" site/robots.txt \
-    || note "robots.txt must point at ${SITE_ORIGIN}sitemap.xml"
 if stale=$(grep -rElI 'martonpaulo\.com/meantime|martonpaulo\.github\.io' docs); then
     note "docs/ must not reference the old site location: $(echo "$stale" | paste -sd ' ' -)"
-fi
-# The 404 page is part of the site, not a bare fallback: same header, same
-# footer, same design.
-if [ ! -f site/404.html ]; then
-    note "website must ship a 404 page"
-else
-    for marker in 'class="site-header"' 'class="site-footer"' 'styles/main.css'; do
-        grep -Fq "$marker" site/404.html || note "site/404.html must carry $marker"
-    done
 fi
 
 # The changelog keeps the Keep a Changelog shape, newest version matching Info.plist.
 bash scripts/release-notes.sh --check >/dev/null || note "CHANGELOG.md must pass scripts/release-notes.sh --check"
+
+# Every page: canonical URL, og:url, sitemap, header and footer parity, external-link targets,
+# breadcrumbs and screenshot twins, owned by the canonical site validator.
+bash scripts/validate-site.sh >/dev/null || note "site/ must pass scripts/validate-site.sh"
 
 # Every local asset address can be versioned at deploy time: root-relative, no committed ?v=.
 bash scripts/version-site-assets.sh --check \

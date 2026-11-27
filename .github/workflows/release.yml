@@ -196,11 +196,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          awk -v heading="## [$VERSION]" '
-            index($0, heading) == 1 { printing=1; next }
-            printing && /^## / { exit }
-            printing { print }
-          ' CHANGELOG.md > release-notes.md
+          scripts/release-notes.sh --version "$VERSION" > release-notes.md
           grep -q '[^[:space:]]' release-notes.md || {
             echo "Missing CHANGELOG release notes for $VERSION" >&2
             exit 1

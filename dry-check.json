@@ -7,6 +7,7 @@
    "scripts/live_build_check.py",
    "scripts/sleep_guard.py",
    "scripts/text_check.py",
+   "scripts/text_width_check.py",
    "scripts/skd/**",
    "scripts/lib/**",
    "scripts/validate-site.sh",

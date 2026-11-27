@@ -23,9 +23,6 @@
   --weight-body: 400;
   --weight-strong: 600;
   --weight-display: 700;
-  --measure: 68ch;
-  --measure-narrow: 44ch;
-  --measure-title: 16ch;
 }
 
 /* --- Meantime palette and page metrics ------------------------------------- */
@@ -80,7 +77,8 @@
    fleet's one landing-page design. Keep them in step across the three sites. */
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+/* The scrollbar keeps its space on every page, so short and long pages share one left edge. */
+html { scroll-behavior: smooth; scrollbar-gutter: stable; }
 /* The footer sits at the bottom of the viewport on a short page (the 404
    above all) instead of floating in the middle of it. svh keeps mobile browser
    chrome from pushing it off; vh is the fallback for anything older. */
@@ -161,7 +159,6 @@ main { flex: 1 0 auto; }
 .site-footer { margin-top: auto; }
 
 .hero { padding: 96px 0 72px; text-align: center; overflow: hidden; }
-.hero-copy { max-width: 820px; margin: 0 auto; }
 .eyebrow {
   margin: 0 0 12px; color: var(--accent);
   font-size: var(--text-xs); font-weight: var(--weight-display);
@@ -182,7 +179,7 @@ main { flex: 1 0 auto; }
    evens out the last lines of a long paragraph. */
 h1, h2, h3 { text-wrap: balance; }
 h1 {
-  max-width: var(--measure-title); margin: 0 auto;
+  margin: 0 auto;
   font-size: var(--text-3xl); line-height: var(--leading-tight);
   letter-spacing: var(--tracking-display); font-weight: var(--weight-display);
 }
@@ -190,7 +187,7 @@ h1 {
    shape instead of being cast by a square border box. */
 .hero-icon { margin: 0 auto 26px; filter: var(--icon-shadow); }
 .hero-summary {
-  max-width: var(--measure-narrow); margin: 26px auto 28px;
+  max-width: 30rem; margin: 26px auto 28px;
   color: var(--secondary); font-size: var(--text-lg); line-height: var(--leading-relaxed);
 }
 
@@ -217,7 +214,7 @@ h1 {
 
 .section { padding: 120px 0; border-top: 1px solid var(--line); }
 .section h2 {
-  max-width: var(--measure-title); margin: 0;
+  margin: 0;
   font-size: var(--text-2xl); line-height: var(--leading-snug);
   letter-spacing: var(--tracking-display); font-weight: var(--weight-display);
 }
@@ -225,7 +222,7 @@ h1 {
    22px, then whatever the section shows at 48px. */
 .section > :not(.eyebrow):not(h2) { margin-top: 48px; }
 .section > p:not(.eyebrow) {
-  max-width: var(--measure); margin: 22px 0 0;
+  margin: 22px 0 0;
   color: var(--secondary); font-size: var(--text-md); line-height: var(--leading-relaxed);
 }
 
@@ -244,7 +241,7 @@ h1 {
 .showcase-copy h2 { font-size: var(--text-xl); }
 .showcase > :not(.showcase-copy) { justify-self: end; max-height: 560px; }
 .showcase-copy > p:not(.eyebrow) {
-  max-width: var(--measure); margin: 22px 0 0;
+  margin: 22px 0 0;
   color: var(--secondary); font-size: var(--text-md); line-height: var(--leading-relaxed);
 }
 .showcase.figure-first { grid-template-columns: minmax(280px, 440px) minmax(0, 1fr); }
@@ -339,7 +336,7 @@ figcaption { padding: 16px 4px 2px; color: var(--secondary); font-size: var(--te
   letter-spacing: var(--tracking-display); font-weight: var(--weight-display);
 }
 .builder-intro {
-  max-width: var(--measure); margin: 22px 0 0;
+  margin: 22px 0 0;
   color: var(--secondary); font-size: var(--text-md); line-height: var(--leading-relaxed);
 }
 

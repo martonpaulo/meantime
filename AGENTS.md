@@ -37,6 +37,7 @@ migration and its downstream effects.
 - Branch policy: work only on `main`; never create, switch, or rename branches
 - Commit policy: commit automatically on task completion, one concern per commit
 - Push policy: push to `origin/main` automatically after committing. A cloud session pushes `main` too, only for a `runs: cloud` issue whose gates all ran there, and never for a change under a `mac_paths` entry of `.github/cloud.json`, which needs the Mac's Swift and Xcode toolchain and is handed off (owner, 2026-11-27). Cloud setup command: `bash scripts/cloud-setup.sh`.
+- Cloud hand-off: on (owner, 2026-11-28): a cloud session also delivers the `[cloud]` Tasks of a split issue, on `cloud/<issue>` when it cannot push `main`.
 - Product versioning: user-visible SemVer, canonical in the app's
   `CFBundleShortVersionString` (with a derived numeric `CFBundleVersion`).
   Increments only during an explicitly requested release, which also updates
